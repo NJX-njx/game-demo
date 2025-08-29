@@ -1,9 +1,9 @@
 window.addEventListener('load', function() {
     const platforms = [
-        {x: 200, y: 500, width: 300, height: 10},
-        {x: 400, y: 350, width: 200, height: 10},
-        {x: 600, y: 200, width: 150, height: 10},
-        {x: 50, y: 400, width: 100, height: 10}
+        {x: 200, y: 500, width: 300, height: 10,canSpawnEnemy:true},
+        {x: 400, y: 350, width: 200, height: 10,canSpawnEnemy:true},
+        {x: 600, y: 200, width: 150, height: 10,canSpawnEnemy:true},
+        {x: 50, y: 400, width: 100, height: 10,canSpawnEnemy:false}
     ];
     const walls=[
         {x:200,y:600,width:10,height:120},
@@ -16,6 +16,13 @@ window.addEventListener('load', function() {
     canvas.width = 800;
     canvas.height = 720;
     let enemies=[];
+    const Ground={
+        x:0,
+        y:canvas.height,
+        width: canvas.width,
+        height:10,
+        canSpawnEnemy:true
+    };
     class InputHandler {
         constructor() {
             this.keys = [];
@@ -259,7 +266,7 @@ window.addEventListener('load', function() {
         }
     }
     class Enemy{
-        constructor(gameWidth,gameHeight,minX,maxX){
+        constructor(gameWidth,gameHeight,spawnPoint){
             this.gameWidth=gameWidth;
             this.gameHeight=gameHeight;
             this.width=50;
@@ -267,16 +274,16 @@ window.addEventListener('load', function() {
 
             this.image=document.getElementById('enemyImage');
 
-            this.x=maxX;
-            this.y=this.gameHeight-this.height;
+            this.x=spawnPoint.x;
+            this.y=spawnPoint.y;
 
             this.frameX=0;
             this.frameY=0;
 
             this.speed=1;
             this.direction=-1;
-            this.minX=minX;
-            this.maxX=maxX;
+            this.minX=spawnPoint.minX;
+            this.maxX=spawnPoint.maxX;
 
             this.enemyattackedSound= new Audio('../music/sound/enemyattacked.wav');
 
@@ -326,6 +333,22 @@ window.addEventListener('load', function() {
                 }
             }
         }
+        checkonPlatform(){
+            if(this.y+this.height>=Ground.y){
+                this.y=Ground.y-this.height;
+                return;
+            }
+            for(let p of platforms){
+                if(this.y+this.height>=p.y&&
+                    this.y+this.height<=p.y+5&&
+                    this.x+this.width>p.x&&
+                    this.x<p.x+p.width
+                ){
+                    this.y=p.y-this.height;
+                    return;
+                }
+            }
+        }
         limitation(){
             if(this.x < 0){
                 this.x = 0;
@@ -354,8 +377,10 @@ window.addEventListener('load', function() {
                 this.enemyattackedSound.play();
             }
         }
+
         update(){
             if(this.isdead) return;
+            this.checkonPlatform();
             this.x+=this.speed*this.direction;
             if(this.x<=this.minX){
                 this.x=this.minX;
@@ -376,8 +401,26 @@ window.addEventListener('load', function() {
             }
         }
     }
-    enemies.push(new Enemy(canvas.width, canvas.height,0,800));
-    enemies.push(new Enemy(canvas.width, canvas.height,0,100));
+    function getRandomPlatformSpawnEnemy(){
+        const validAreas=[...platforms.filter(p=>p.canSpawnEnemy),Ground];
+        if(validAreas.length===0) return null;
+        const area=validAreas[Math.floor(Math.random()*validAreas.length)];
+        return {
+            x:area.x+Math.random()*(area.width-50),
+            y:area.y-50,
+            minX:area.x,
+            maxX:area.x+area.width-50
+        };
+    }
+    function spawnEnemy(cnt){
+        for(let i=0;i<cnt;i++){
+            const spawnPoint=getRandomPlatformSpawnEnemy();
+            if(spawnPoint){
+                enemies.push(new Enemy(canvas.width,canvas.height,spawnPoint));
+            }
+        }
+    }
+    spawnEnemy(3);
     function handleEnemies(){
         const playerAttackBox=player.getAttackBox();
         enemies=enemies.filter(enemy=>(!enemy.isdead)&&enemy.hp>0);
@@ -458,15 +501,25 @@ window.addEventListener('load', function() {
             ctx.restore();
         }
     }
-    function animate(){
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawPlatforms(ctx, platforms);
-        drawWalls(ctx, walls);
-        player.draw(ctx);
-        player.update(input);
-        handleEnemies();
-        drawDashCooldownBar(ctx, player, canvas);
+    let lastTime=0;
+    let maxGameFrameRate=60;
+    const targetFrameTime=1000/maxGameFrameRate;
+    function animate(currentTime){
+        if(!lastTime) lastTime=currentTime;
+        const deltaTime=currentTime-lastTime;
+        if(deltaTime>=targetFrameTime){
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawPlatforms(ctx, platforms);
+            drawWalls(ctx, walls);
+            player.draw(ctx);
+            player.update(input);
+            handleEnemies();
+            drawDashCooldownBar(ctx, player, canvas);
+            
+            lastTime=currentTime-(deltaTime%targetFrameTime);
+        }
+        
         requestAnimationFrame(animate);
     }
-    animate();
+    animate(0);
 });
