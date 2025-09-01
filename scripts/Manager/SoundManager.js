@@ -42,7 +42,6 @@ class SoundManager {
         Object.keys(this.soundsURL).forEach((kind) => {
             this.sounds[kind] = {};
             Object.keys(this.soundsURL[kind]).forEach((id) => {
-                console.log("load sound: ", this.soundsURL[kind][id]);
                 const audio = new Audio(this.soundsURL[kind][id]);
                 audio.loop = false;
                 this.sounds[kind][id] = audio;

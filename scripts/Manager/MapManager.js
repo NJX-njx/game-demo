@@ -16,20 +16,6 @@ class Interaction extends Hitbox {
     }
 }
 
-class Layer {
-    constructor() {
-        /** @type {Tile[]} */
-        this.tiles = [];
-        /** @type {number} */
-        this.opacity = 1;
-    }
-    draw(typename) {
-        for (let i of this.tiles) {
-            i.draw(typename);
-        }
-    }
-}
-
 class MapManager {
     constructor() {
         this.backgrounds = [];
