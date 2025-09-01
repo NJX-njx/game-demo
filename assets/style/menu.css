@@ -1,0 +1,412 @@
+/* ==============================================
+   1. 全局重置与基础样式
+   ============================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', system-ui, sans-serif; /* 保留原字体 */
+}
+
+body {
+    background-color: #1e293b; /* 原dark色 */
+    color: #f8fafc; /* 原light色 */
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* ==============================================
+   2. 背景层（保留背景图片）
+   ============================================== */
+.main-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0; /* 背景在最下层 */
+}
+
+.bg-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('../imgs/Title.png'); /* 保留原背景图片 */
+    background-size: cover; /* 图片覆盖全屏 */
+    background-position: center; /* 图片居中 */
+}
+
+/* ==============================================
+   3. 主内容区（按钮放在中下方）
+   ============================================== */
+.main-content {
+    position: relative;
+    z-index: 10; /* 内容在背景上层 */
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    /* 核心：让按钮组靠下（中下方） */
+    justify-content: flex-end; /* 垂直方向靠底 */
+    padding-bottom: 100px; /* 底部留空，避免贴边 */
+}
+
+/* 按钮组布局 */
+.button-group {
+    width: 100%;
+    max-width: 300px; /* 按钮组最大宽度 */
+    margin: 0 auto; /* 水平居中 */
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* 按钮间距 */
+}
+
+/* 通用按钮样式 */
+.btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px; /* 图标与文字间距 */
+}
+
+/* 开始游戏按钮 */
+.start-btn {
+    background-color: #fdfeff; /* 原primary色 */
+    color: #000407; /* 白色文字 */
+}
+
+.start-btn:hover {
+    background-color: rgba(3, 102, 241, 0.8); /*  hover透明 */
+    transform: scale(1.05); /*  hover放大 */
+}
+
+/* 查看成就按钮 */
+.achievement-btn {
+    background-color: #1e293b; /* 原dark色 */
+    color: #f8fafc; /* 白色文字 */
+    border: 1px solid rgba(3, 102, 241, 0.5); /* 原边框色 */
+}
+
+.achievement-btn:hover {
+    background-color: rgba(30, 41, 59, 0.8); /*  hover透明 */
+    transform: scale(1.05); /*  hover放大 */
+}
+
+/* 响应式：屏幕≥768px时按钮横向排列 */
+@media (min-width: 768px) {
+    .button-group {
+        flex-direction: row;
+        max-width: 600px;
+    }
+    .btn {
+        flex: 1; /* 按钮等分宽度 */
+    }
+}
+
+/* ==============================================
+   4. 成就面板样式
+   ============================================== */
+/* 面板遮罩（全屏） */
+.panel-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0; /* 默认隐藏 */
+    pointer-events: none; /* 默认不可点击 */
+    transition: opacity 0.3s ease;
+}
+
+/* 面板背景遮罩 */
+.panel-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(30, 41, 59, 0.8); /* 半透明黑 */
+    backdrop-filter: blur(8px); /* 背景模糊 */
+    cursor: pointer;
+}
+
+/* 面板内容区 */
+.panel-content {
+    position: relative; /* 相对定位，避免被遮罩覆盖 */
+    z-index: 1;
+    width: 100%;
+    max-width: 600px; /* 原max-w-4xl */
+    max-height: 80vh; /* 最大高度80%视窗 */
+    background-color: rgba(30, 41, 59, 0.9); /* 原bg-dark/90 */
+    border: 1px solid rgba(3, 102, 241, 0.3); /* 原边框色 */
+    border-radius: 12px; /* 原rounded-xl */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); /* 原shadow-2xl */
+    transform: scale(0.95); /* 原scale-95 */
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 面板标题栏 */
+.panel-header {
+    padding: 16px;
+    border-bottom: 1px solid rgba(3, 102, 241, 0.2); /* 原边框色 */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.panel-header h2 {
+    font-size: 20px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #f8fafc;
+}
+
+/* 面板关闭按钮 */
+.close-btn {
+    background: transparent;
+    border: none;
+    color: rgba(248, 250, 252, 0.6); /* 原text-light/60 */
+    font-size: 20px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.close-btn:hover {
+    color: #f8fafc; /* 原hover:text-light */
+}
+
+/* 成就过滤容器 */
+.filter-container {
+    padding: 16px;
+    border-bottom: 1px solid rgba(3, 102, 241, 0.2); /* 原边框色 */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px; /* 按钮间距 */
+}
+
+/* 过滤按钮 */
+.filter-btn {
+    padding: 4px 12px;
+    border-radius: 20px; /* 原rounded-full */
+    font-size: 14px;
+    background-color: rgba(30, 41, 59, 0.5); /* 原bg-dark/50 */
+    color: rgba(248, 250, 252, 0.6); /* 原text-light/60 */
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.filter-btn:hover {
+    background-color: rgba(3, 102, 241, 0.1); /* 原hover:bg-primary/10 */
+}
+
+/* 过滤按钮激活状态 */
+.filter-btn.active {
+    background-color: rgba(3, 102, 241, 0.2); /* 原bg-primary/20 */
+    color: #0366f1; /* 原text-primary */
+}
+
+/* 成就列表容器 */
+.achievement-list {
+    flex: 1; /* 占满剩余高度 */
+    overflow-y: auto; /* 滚动 */
+    padding: 16px;
+    display: grid;
+    grid-template-columns: 1fr; /* 原grid-cols-1 */
+    gap: 16px; /* 原gap-4 */
+}
+
+/* 响应式：屏幕≥640px时成就2列排列 */
+@media (min-width: 640px) {
+    .achievement-list {
+        grid-template-columns: repeat(2, 1fr); /* 原sm:grid-cols-2 */
+    }
+}
+
+/* 面板底部提示 */
+.panel-footer {
+    padding: 16px;
+    border-top: 1px solid rgba(3, 102, 241, 0.2); /* 原边框色 */
+    text-align: center;
+    color: rgba(248, 250, 252, 0.6); /* 原text-light/60 */
+    font-size: 14px;
+}
+
+.panel-footer kbd {
+    padding: 2px 6px;
+    background-color: rgba(30, 41, 59, 0.5); /* 原bg-dark/50 */
+    border: 1px solid rgba(248, 250, 252, 0.2); /* 原border-light/20 */
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+/* ==============================================
+   5. 成就项样式（JS动态生成）
+   ============================================== */
+.achievement-item {
+    background-color: rgba(30, 41, 59, 0.5); /* 原bg-dark/50 */
+    border-radius: 8px; /* 原rounded-lg */
+    padding: 16px;
+    border: 1px solid transparent;
+    transition: all 0.3s ease;
+    display: flex;
+    gap: 12px; /* 原gap-3 */
+}
+
+/* 已解锁成就 */
+.achievement-item.completed {
+    border-color: rgba(3, 102, 241, 0.3); /* 原border-primary/30 */
+}
+
+.achievement-item.completed:hover {
+    border-color: rgba(3, 102, 241, 0.6); /* 原hover:border-primary/60 */
+}
+
+/* 未解锁成就 */
+.achievement-item.incomplete {
+    border-color: rgba(248, 250, 252, 0.1); /* 原border-light/10 */
+    opacity: 0.7; /* 原opacity-70 */
+}
+
+.achievement-item.incomplete:hover {
+    border-color: rgba(248, 250, 252, 0.2); /* 原hover:border-light/20 */
+}
+
+/* 成就项悬停效果 */
+.achievement-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+}
+
+/* 成就图标 */
+.achievement-icon {
+    font-size: 24px; /* 原text-2xl */
+    flex-shrink: 0; /* 不收缩 */
+}
+
+.achievement-icon.completed {
+    color: #0366f1; /* 原text-primary */
+}
+
+.achievement-icon.incomplete {
+    color: rgba(248, 250, 252, 0.3); /* 原text-light/30 */
+}
+
+/* 成就内容区 */
+.achievement-text {
+    flex: 1; /* 占满剩余宽度 */
+}
+
+.achievement-title {
+    font-size: 18px; /* 原text-lg */
+    font-weight: bold;
+    margin-bottom: 4px; /* 原mb-1 */
+    color: #f8fafc;
+}
+
+.achievement-title.incomplete {
+    color: rgba(248, 250, 252, 0.6); /* 原text-light/60 */
+}
+
+.achievement-desc {
+    font-size: 14px; /* 原text-sm */
+    color: rgba(248, 250, 252, 0.6); /* 原text-light/60 */
+    margin-bottom: 8px; /* 原mb-2 */
+}
+
+.achievement-condition {
+    font-size: 12px; /* 原text-xs */
+    color: rgba(248, 250, 252, 0.4); /* 原text-light/40 */
+}
+
+/* ==============================================
+   6. 成就解锁提示框样式
+   ============================================== */
+.toast {
+    position: fixed;
+    top: 24px; /* 原top-6 */
+    right: 24px; /* 原right-6 */
+    z-index: 50;
+    background-color: rgba(30, 41, 59, 0.9); /* 原bg-dark/90 */
+    border: 1px solid rgba(236, 72, 153, 0.5); /* 原border-secondary/50 */
+    border-radius: 8px; /* 原rounded-lg */
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* 原shadow-lg */
+    max-width: 300px; /* 原max-w-xs */
+    transform: translateX(calc(100% + 24px)); /* 默认右移隐藏 */
+    transition: transform 0.5s ease; /* 原transition-transform */
+}
+
+.toast-inner {
+    display: flex;
+    gap: 12px; /* 原gap-3 */
+}
+
+.toast-icon {
+    font-size: 28px; /* 原text-3xl */
+    color: #ec4899; /* 原text-secondary */
+}
+
+.toast-content {
+    flex: 1;
+}
+
+.toast-label {
+    font-size: 14px; /* 原text-sm */
+    color: rgba(236, 72, 153, 0.8); /* 原text-secondary/80 */
+    margin-bottom: 4px;
+}
+
+.toast-title {
+    font-size: 18px; /* 原text-lg */
+    font-weight: bold;
+    color: #f8fafc;
+    margin-bottom: 4px;
+}
+
+.toast-desc {
+    font-size: 14px; /* 原text-sm */
+    color: rgba(248, 250, 252, 0.6); /* 原text-light/60 */
+}
+
+/* ==============================================
+   7. 滚动条美化
+   ============================================== */
+.achievement-list::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.achievement-list::-webkit-scrollbar-track {
+    background: rgba(30, 41, 59, 0.5);
+    border-radius: 3px;
+}
+
+.achievement-list::-webkit-scrollbar-thumb {
+    background: rgba(99, 102, 241, 0.4);
+    border-radius: 3px;
+}
+
+.achievement-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(99, 102, 241, 0.6);
+}
