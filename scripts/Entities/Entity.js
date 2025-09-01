@@ -8,23 +8,32 @@ class Jumping {
      * @param {number} jumpBufferTime 预输入时间（提前按跳跃键后，落地能自动跳）
      */
     constructor(baseJump, maxJump, gravity, coyoteTime, jumpBufferTime) {
-        this.baseJump = baseJump;               // 基础跳跃速度
-        this.maxJump = maxJump;                 // 最大跳跃速度
-        this.gravity = gravity;                 // 重力加速度
-        this.coyoteTime = coyoteTime;           // 跳跃宽限时间（离开地面后还能跳的时间）
-        this.jumpBufferTime = jumpBufferTime;   // 预输入时间（提前按跳跃键后，落地能自动跳）
+        this.baseJump = baseJump;
+        this.maxJump = maxJump;
+        this.gravity = gravity;
+        this.coyoteTime = coyoteTime;
+        this.jumpBuffer = new Cooldown(jumpBufferTime)
+        this.jumpBufferTime = jumpBufferTime;
 
         this.isJumping = false;
         this.isFalling = false;
         this.jumpVelocity = 0;
         this.chargeTime = 0;
         this.coyoteTimer = 0;
-        this.jumpBuffer = 0;
-        this.isSpaceHeld = false;
-        this.times = 1;
+        this.times = 1; //最大速度倍率，用于实现一些需要高跳的场景
     }
 
-    canJump(onGround, deltaTime) {
+    startJump() {
+        this.isJumping = true;
+        this.isFalling = false;
+        this.chargeTime = 0;
+        this.jumpBuffer.reset();
+        this.coyoteTimer = 0;
+        window.$game.soundManager.playSound(this.type, "jump");
+    }
+
+    updateJump(isSpaceHeld, deltaTime, onGround) {
+        this.jumpBuffer.tick(deltaTime);
         // 检查是否在地面上
         if (onGround) {
             this.coyoteTimer = this.coyoteTime; // 重置coyote时间
@@ -32,13 +41,14 @@ class Jumping {
             this.isFalling = false;
             if (!onGround & 2)
                 this.jumpVelocity = 0;
+            // 在弹性地面上跳跃更高，TODO:暂未实现检测
             if (onGround & 2)
                 this.times = 1.5;
             else
                 this.times = 1;
 
             // 如果跳跃缓冲器大于0，落地后立即跳跃
-            if (this.jumpBuffer > 0) {
+            if (!this.jumpBuffer.ready()) {
                 this.startJump();
             }
         } else {
@@ -47,27 +57,13 @@ class Jumping {
             this.coyoteTimer = Math.max(this.coyoteTimer - deltaTime, 0);
 
             // 当仍有coyote时间且已经按下空格时跳跃
-            if (!this.isJumping && this.jumpBuffer > 0 && this.coyoteTimer > 0) {
+            if (!this.isJumping && !this.jumpBuffer.ready() && this.coyoteTimer > 0) {
                 this.startJump();
             }
         }
-    }
-
-    startJump() {
-        this.isJumping = true;
-        this.isFalling = false;
-        this.chargeTime = 0;
-        this.jumpBuffer = 0;
-        this.coyoteTimer = 0;
-    }
-
-    updateJump(isSpaceHeld, deltaTime, type) {
         if (this.isJumping) {
             //蓄力跳
             if (!this.isFalling && isSpaceHeld && this.chargeTime < this.maxJump * this.times) {
-                // console.log("jumpingnow", this.chargeTime);
-                if (this.jumpVelocity < 1e-5)
-                    window.$game.soundManager.playSound(type + "-jump");
                 this.chargeTime += deltaTime;
                 this.jumpVelocity = Math.min(this.baseJump + (this.chargeTime / this.maxJump * this.times) * (this.maxJump * this.times - this.baseJump), this.maxJump * this.times);
                 //蓄力跳
@@ -78,34 +74,11 @@ class Jumping {
         } else if (this.isFalling) {
             this.updateFalling(deltaTime);
         }
-        this.reduceJumpBuffer(deltaTime);
     }
 
-    applyJump(position, deltaTime) {
-        position.y -= this.jumpVelocity * deltaTime;
-        return position;
-    }
-
-    reduceJumpBuffer(deltaTime) {
-        this.jumpBuffer = Math.max(this.jumpBuffer - deltaTime, 0);
-    }
-
-    setJumpBuffer() {
-        this.jumpBuffer = this.jumpBufferTime;
-    }
-    setFalling() {
-        this.isFalling = true;
-        this.isJumping = false;
-    }
-    resetJump() {
-        this.isJumping = false;
-        this.isFalling = false;
-        this.jumpVelocity = 0;
-    }
     updateFalling(deltaTime) {
         this.jumpVelocity -= this.gravity * deltaTime;
         this.jumpVelocity = Math.max(-6 * this.baseJump, this.jumpVelocity);
-
     }
 }
 
@@ -123,7 +96,6 @@ class Entity {
         this.hitbox = new Hitbox(position, size);
         this.jumping = new Jumping(4, 9, 0.5, 8, 15);
         this.MaxSpeed = 6;
-        this.isflying = 0;
         // 可选：攻击盒/受击盒
         this.attackBox = null;
         this.hurtBox = null;
@@ -131,11 +103,6 @@ class Entity {
 
     getCenter() {
         return this.hitbox.getCenter();
-    }
-
-    checkOutOfMap() {
-        if (this.hitbox.outofMap())
-            window.$game.restart();
     }
 
     isOnGround() {
@@ -153,7 +120,7 @@ class Entity {
     }
 
     /**
-     * 刚体移动与碰撞检测
+     * 刚体移动与碰撞检测， 根据速度更新位置，返回是否碰撞，0表示无碰撞，1表示x方向碰撞，2表示y方向碰撞，3表示xy方向均碰撞
      * @param {number} deltaTime
      * @returns {number}
      */
@@ -188,77 +155,67 @@ class Entity {
         return flag;
     }
 
-    updateJumping(deltaTime, control) {
-        this.jumping.canJump(this.isOnGround(), deltaTime);
-        this.jumping.updateJump(control, deltaTime, this.type);
+    updateY(deltaTime, control) {
+        this.jumping.updateJump(control, deltaTime, this.isOnGround());
     }
 
-    updateX(deltaTime, control, isPlayer) {
-        let move = control;
+    // 更新X轴速度
+    updateX(deltaTime, move) {
+        // 速度惯性和摩擦处理
+        const onGround = this.isOnGround();
         let nextVelocityX = this.velocity.x;
-        let decelerate = (now, deceleration) => {
-            return Math.sqrt(Math.max(now * now - deceleration * deltaTime * now * now, 0)) * Math.sign(now);
-        };
-        let onGround = this.isOnGround();
-        if (isPlayer && onGround && move)
-            window.$game.soundManager.playSound(this.type + '-walk');
-        if (isPlayer && (onGround & 4) && move) {
-            nextVelocityX = move * Math.min(Math.sqrt(Math.abs(this.velocity.x * this.velocity.x * this.velocity.x) + 3 * deltaTime), this.MaxSpeed * 3);
-        }
-        else if (move == 0 && (onGround & 4)) {
-            nextVelocityX = decelerate(this.velocity.x, 0.1);
-        } else if (isPlayer && !this.isflying && Math.abs(this.velocity.x) <= this.MaxSpeed) {
-            if (move == 0)
-                nextVelocityX = this.velocity.x * Math.exp(-0.5 * deltaTime);
-            else
-                nextVelocityX = move * Math.min(Math.sqrt(this.velocity.x * this.velocity.x + 10 * deltaTime), this.MaxSpeed);
+        // 地面逻辑
+        if (onGround) {
+            if (move === 0) {
+                // 地面摩擦减速
+                nextVelocityX *= Math.exp(-0.5 * deltaTime);
+            } else {
+                // 地面加速，带有惯性
+                const accel = 10 * deltaTime;
+                nextVelocityX = move * Math.min(Math.sqrt(this.velocity.x * this.velocity.x + accel), this.MaxSpeed);
+            }
+            if (move) {
+                window.$game.soundManager.playSound(this.type, 'walk');
+            }
         } else {
-
-            if (move == 0) {
-                if (this.isOnGround())
-                    nextVelocityX = decelerate(this.velocity.x, (0.16) * (1 + isPlayer));
-                else
-                    nextVelocityX = decelerate(this.velocity.x, (0.01) * (1 + isPlayer));
-            }
-            else if (move * this.velocity.x > 0) {
-                if (this.isOnGround())
-                    nextVelocityX = decelerate(this.velocity.x, 0.3);
-                else
-                    nextVelocityX = decelerate(this.velocity.x, 0.01);
-            }
-            else {
-                if (this.isOnGround())
-                    nextVelocityX = decelerate(this.velocity.x, 0.5);
-                else
-                    nextVelocityX = decelerate(this.velocity.x, 0.1);
-
+            // 空中逻辑
+            const airAccel = 0.3 * deltaTime; // 空中加速度
+            if (move !== 0) {
+                // 空中主动加速，逐步靠近move*MaxSpeed
+                nextVelocityX += airAccel * (move * this.MaxSpeed - this.velocity.x);
+                // 限制最大速度
+                if (Math.abs(nextVelocityX) > this.MaxSpeed) {
+                    nextVelocityX = this.MaxSpeed * Math.sign(nextVelocityX);
+                }
+            } else {
+                // 空中缓慢减速
+                nextVelocityX *= Math.exp(-0.05 * deltaTime);
             }
         }
         return nextVelocityX;
     }
 
-    updateXY(deltaTime, controllerX, controllerY, isPlayer) {
+    /**
+     * 
+     * @param {number} deltaTime 
+     * @param {function} controllerX 返回X轴控制输入，-1左，0无，1右
+     * @param {function} controllerY 返回Y轴控制输入，0无，1按住跳跃，在函数中应处理预输入
+     */
+    updateXY(deltaTime, controllerX, controllerY) {
         //此时的deltaTime当前环境下的1帧，在60帧环境下走了多少帧
         //于是在moveRigid函数中，需要将velocity乘上deltaTime代表在当前环境下走过的路程
-        this.isflying = Math.max(this.isflying - deltaTime, 0);
-        this.updateJumping(deltaTime, controllerY());
-        let nextVelocityY = -this.jumping.jumpVelocity;
-        let nextVelocityX = this.velocity.x;
-        nextVelocityX = this.updateX(deltaTime, controllerX(), isPlayer);
-        this.velocity.x = nextVelocityX;
-        this.velocity.y = nextVelocityY;
+        this.updateY(deltaTime, controllerY());
+        this.velocity.y = -this.jumping.jumpVelocity;
+        this.velocity.x = this.updateX(deltaTime, controllerX());
+
         let side = this.rigidMove(deltaTime);
-        if (side & 1) this.velocity.x = 0, this.isflying = 0;
-        if (side & 2) this.velocity.y = 0;
-        if (this.velocity.y == 0) {
-            this.jumping.jumpVelocity = 0;
-            this.jumping.setFalling();
-        }
+        if (side & 1) this.velocity.x = 0;
+        if (side & 2) this.velocity.y = this.jumping.jumpVelocity = 0;
     }
 
     update(deltaTime) {
         deltaTime = 60 * deltaTime / 1000;
-        this.updateXY(deltaTime, () => { return 0; }, () => { return 0; }, false);
+        this.updateXY(deltaTime, () => { return 0; }, () => { return 0; });
     }
 
     draw() {

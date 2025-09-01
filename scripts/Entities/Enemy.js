@@ -1,4 +1,4 @@
-class Animation {
+class Enemy_Animation {
     static Framerate = {
         "run": 6,
         "jump": 30,
@@ -26,23 +26,23 @@ class Animation {
         }
     }
     update(deltaTime) {
-        this.frameRun += deltaTime;
-        if (this.frameRun > Animation.Framerate[this.status]) {
-            ++this.frame;
-            this.frameRun = 0;
-        }
-        if (this.frame > Animation.Frames[this.status])
-            switch (this.status) {
-                case "run":
-                    this.frame = 1;
-                    break;
-                case "stand":
-                    this.frame = 1;
-                    break;
-                default:
-                    --this.frame;
-                    break;
-            }
+        // this.frameRun += deltaTime;
+        // if (this.frameRun > Animation.Framerate[this.status]) {
+        //     ++this.frame;
+        //     this.frameRun = 0;
+        // }
+        // if (this.frame > Animation.Frames[this.status])
+        //     switch (this.status) {
+        //         case "run":
+        //             this.frame = 1;
+        //             break;
+        //         case "stand":
+        //             this.frame = 1;
+        //             break;
+        //         default:
+        //             --this.frame;
+        //             break;
+        //     }
     }
     getFrame() {
         // return window.$game.textureManager.getTexture(this.status, this.frame * this.facing);
@@ -55,46 +55,23 @@ class Enemy extends Entity {
         this.Size = size;
         this.type = "enemy" + type;
         this.hp = 3;
-        this.alive = true;
         this.facing = 1;
-        this.animation = new Animation();
+        this.animation = new Enemy_Animation();
         // 攻击
-        this.isAttacking = false;
-        this.attackDuration = 1;
-        this.attackTimer = 0;
-        this.attackCooldown = new Cooldown(300);
-        this.attackBox = null;
-        this.attackDamage = 1;
-        this.attackSound = new Audio('assets/audios/attack1.wav');
-        // 跳跃
-        this.jumpSound1 = new Audio('assets/audios/jump1.wav');
-        this.jumpSound2 = new Audio('assets/audios/jump2.wav');
-        this.jumpCnt = 0;
+        this.initAttack()
         // 受击
         this.hurtBox = this.hitbox;
         this.isInvulnerable = false;
         this.invulnerableTime = 30;
         this.invulnerableTimer = 0;
+        this._unbind_list = [
+            window.$game.bus.on('tick', ({ deltaTime }) => this.update(deltaTime)),
+        ];
     }
 
     async update(deltaTime) {
-        if (!this.alive) return;
-        // 攻击输入
-        if (!this.isAttacking && this.attackCooldown.ready() && Math.abs(this.hitbox.position.x - window.$game.player.hitbox.position.x) < 30) {
-            this.isAttacking = true;
-            this.attackTimer = this.attackDuration; // 只持续一帧
-            this.attackCooldown.start();
-            if (this.attackSound) {
-                this.attackSound.currentTime = 0;
-                this.attackSound.play();
-            }
-            // 生成攻击判定盒（示例：面朝方向前方一格）
-            const offset = 0.5 * (this.facing >= 0 ? this.hitbox.size.x : -this.hitbox.size.x);
-            this.attackBox = new Hitbox(
-                this.hitbox.position.addVector(new Vector(offset, 0)),
-                new Vector(this.hitbox.size.x, this.hitbox.size.y)
-            );
-        }
+
+        this.attack.update(deltaTime);
         // 受击无敌计时
         if (this.isInvulnerable) {
             if (this.attackBox && this.attackBox.checkHit(window.$game.player.hurtBox)) {
@@ -106,21 +83,6 @@ class Enemy extends Entity {
                 this.invulnerableTimer = 0;
             }
         }
-
-        // 攻击计时
-        if (this.isAttacking && this.attackTimer > 0) {
-            if (this.attackBox && this.attackBox.checkHit(window.$game.player.hurtBox)) {
-                window.$game.player.takeDamage(this.attackDamage);
-            }
-            this.attackTimer -= deltaTime;
-            if (this.attackTimer <= 0) {
-                this.isAttacking = false;
-                this.attackBox = null;
-                this.attackTimer = 0;
-            }
-        }
-        // 冷却tick
-        this.attackCooldown.tick(deltaTime);
 
         // 移动与跳跃（用updateXY和jumping，仿照async update）
         const deltaFrame = 60 * deltaTime / 1000;
@@ -136,14 +98,8 @@ class Enemy extends Entity {
             },
             () => {
                 if (this.blockMove) return 0;
-                return window.$game.inputManager.firstDown("Space", () => {
-                    if (this.isOnGround()) {
-                        window.$game.statistics.jump++;
-                    }
-                    this.jumping.setJumpBuffer();
-                });
-            },
-            true
+                return 0;
+            }
         );
 
         if (this.jumping.jumpVelocity > 0) {
@@ -170,12 +126,98 @@ class Enemy extends Entity {
         this.invulnerableTimer = this.invulnerableTime;
         if (this.hp <= 0) {
             // 死亡逻辑
-            this.alive = false;
+            // 解绑所有事件
+            if (this._unbind_list) {
+                for (const unbind of this._unbind_list) {
+                    if (typeof unbind === 'function') unbind();
+                }
+                this._unbind_list = [];
+            }
+            // 从全局移除自己
+            if (window.enemies) {
+                const idx = window.enemies.indexOf(this);
+                if (idx !== -1) window.enemies.splice(idx, 1);
+            }
         }
     }
 
+    // 攻击初始化
+    initAttack() {
+        this.attack = {
+            state: "idle", // idle, startup, active, recovery
+            timer: 0,
+            attackBox: null,
+
+            damage: 1,
+            startupTime: 150,   // 前摇(ms)
+            activeTime: 1,     // 出招帧(ms)
+            recoveryTime: 200,  // 后摇(ms)
+            cooldownTime: 300,  // 总冷却(ms)，包含以上所有阶段
+
+            cooldown: null,
+
+            update: (deltaTime) => {
+                // 冷却 tick
+                this.attack.cooldown.tick(deltaTime);
+
+                switch (this.attack.state) {
+                    case "idle":
+                        if (this.attack.cooldown.ready() &&
+                            Math.abs(this.hitbox.getCenter().x - window.$game.player.hitbox.getCenter().x) < 30) {
+                            // 进入前摇
+                            this.attack.state = "startup";
+                            this.attack.timer = this.attack.startupTime;
+                            this.attack.cooldown.start(); // 冷却从前摇开始计
+                        }
+                        break;
+
+                    case "startup":
+                        this.attack.timer -= deltaTime;
+                        if (this.attack.timer <= 0) {
+                            // 播放音效
+                            window.$game.soundManager.playSound("enemy", "attack");
+                            // 进入出招
+                            this.attack.state = "active";
+                            this.attack.timer = this.attack.activeTime;
+
+                            const offset = 0.5 * (this.facing >= 0 ? this.hitbox.size.x : -this.hitbox.size.x);
+                            this.attack.attackBox = new Hitbox(
+                                this.hitbox.position.addVector(new Vector(offset, 0)),
+                                new Vector(this.hitbox.size.x * 0.8, this.hitbox.size.y * 0.5)
+                            );
+                        }
+                        break;
+
+                    case "active":
+                        this.attack.timer -= deltaTime;
+                        if (this.attack.attackBox) {
+                            // 命中检测
+                            if (this.attack.attackBox.checkHit(window.$game.player.hitbox)) {
+                                window.$game.player.takeDamage(this.attack.damage);
+                            }
+                        }
+                        if (this.attack.timer <= 0) {
+                            // 出招结束 → 清空判定盒
+                            this.attack.attackBox = null;
+                            this.attack.state = "recovery";
+                            this.attack.timer = this.attack.recoveryTime;
+                        }
+                        break;
+
+                    case "recovery":
+                        this.attack.timer -= deltaTime;
+                        if (this.attack.timer <= 0) {
+                            this.attack.state = "idle";
+                        }
+                        break;
+                }
+            }
+        };
+
+        this.attack.cooldown = new Cooldown(this.attack.cooldownTime);
+    }
+
     draw() {
-        if (!this.alive) return;
         const ctx = window.$game.ctx;
         ctx.drawImage(
             this.animation.getFrame(),

@@ -282,13 +282,7 @@ class InputManager {
     constructor(canvas) {
         this.keyboard = new KeyboardManager();
         this.mouse = new MouseManager(document.querySelector("#game-container"), canvas);
-        this.isHeld = {
-            "E": false,
-            "Space": false,
-            "Enter": false,
-            "ClickLeft": false,
-            "ClickRight": false,
-        }
+        this.isHeld = {};
     }
 
     // 检测按键是否按下
@@ -309,7 +303,7 @@ class InputManager {
         return ans
     }
 
-    // 检测按键是否为第一次按下
+    // 按键第一次按下执行操作operate，返回按键是否已经按下
     firstDown(key, operate) {
         if (this.isKeyDown(key)) {
             if (!this.isHeld[key]) {

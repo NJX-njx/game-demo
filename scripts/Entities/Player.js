@@ -26,153 +26,86 @@ class Player_Animation {
         }
     }
     update(deltaTime) {
-        this.frameRun += deltaTime;
-        if (this.frameRun > Animation.Framerate[this.status]) {
-            ++this.frame;
-            this.frameRun = 0;
-        }
-        if (this.frame > Animation.Frames[this.status])
-            switch (this.status) {
-                case "run":
-                    this.frame = 1;
-                    break;
-                case "stand":
-                    this.frame = 1;
-                    break;
-                default:
-                    --this.frame;
-                    break;
-            }
+        // this.frameRun += deltaTime;
+        // if (this.frameRun > Animation.Framerate[this.status]) {
+        //     ++this.frame;
+        //     this.frameRun = 0;
+        // }
+        // if (this.frame > Animation.Frames[this.status])
+        //     switch (this.status) {
+        //         case "run":
+        //             this.frame = 1;
+        //             break;
+        //         case "stand":
+        //             this.frame = 1;
+        //             break;
+        //         default:
+        //             --this.frame;
+        //             break;
+        //     }
     }
     getFrame() {
         // return window.$game.textureManager.getTexture(this.status, this.frame * this.facing);
         return window.$game.textureManager.getTexture("player", 0);
     }
 }
+
 class Player extends Entity {
     constructor(position, size = new Vector(50, 50), velocity = new Vector()) {
         super(position, size, velocity);
-        this.PlayerSize = size;
+        this.size = size;
         this.type = "player";
+        this.jumping.type = "player";
+
         this.hp = 5;
         this.alive = true;
         this.facing = 1;
         this.animation = new Player_Animation();
         // 冲刺
-        this.isDashing = false;
-        this.dashDuration = 100;
-        this.dashTimer = 0;
-        this.dashCooldown = new Cooldown(1000);
-        this.dashSpeed = 15;
-        this.dashSound = new Audio('assets/audios/dash.wav');
+        this.initDash();
         // 攻击
-        this.isAttacking = false;
-        this.attackDuration = 1;
-        this.attackTimer = 0;
-        this.attackCooldown = new Cooldown(300);
-        this.attackBox = null;
-        this.attackDamage = 1;
-        this.attackSound = new Audio('assets/audios/attack1.wav');
-        // 跳跃
-        this.jumpSound1 = new Audio('assets/audios/jump1.wav');
-        this.jumpSound2 = new Audio('assets/audios/jump2.wav');
-        this.jumpCnt = 0;
+        this.initAttack();
         // 受击
         this.hurtBox = this.hitbox;
-        this.isInvulnerable = false;
-        this.invulnerableTime = 30;
-        this.invulnerableTimer = 0;
+        this.invulnerableCooldown = new Cooldown(100);//受击间隔
+        this.controllerX = () => {
+            if (this.blockMove) return 0;
+            let moveLeft = window.$game.inputManager.isKeysDown(["A", "Left"]);
+            let moveRight = window.$game.inputManager.isKeysDown(["D", "Right"]);
+            let move = 0;
+            if (moveLeft && moveRight)
+                move = 0;
+            else if (moveLeft)
+                this.facing = move = -1;
+            else if (moveRight)
+                this.facing = move = 1;
+            return move;
+        }
+        this.controllerY = () => {
+            if (this.blockMove) return 0;
+            return window.$game.inputManager.firstDown("Space", () => {
+                this.jumping.jumpBuffer.start();
+            });
+        }
+        window.$game.bus.on('tick', ({ deltaTime }) => this.update(deltaTime));
     }
 
     async update(deltaTime) {
         if (!this.alive) return;
-        // 冲刺输入
-        if (!this.isDashing && this.dashCooldown.ready() && window.$game.inputManager.isKeyDown('K')) {
-            this.isDashing = true;
-            this.dashTimer = this.dashDuration;
-            this.dashCooldown.start();
-            if (this.dashSound) {
-                this.dashSound.currentTime = 0;
-                this.dashSound.play();
-            }
-        }
-        // 攻击输入
-        if (!this.isAttacking && this.attackCooldown.ready() && window.$game.inputManager.isKeyDown('J')) {
-            this.isAttacking = true;
-            this.attackTimer = this.attackDuration; // 只持续一帧
-            this.attackCooldown.start();
-            if (this.attackSound) {
-                this.attackSound.currentTime = 0;
-                this.attackSound.play();
-            }
-            // 生成攻击判定盒（示例：面朝方向前方一格）
-            const offset = 0.5 * (this.facing >= 0 ? this.hitbox.size.x : -this.hitbox.size.x);
-            this.attackBox = new Hitbox(
-                this.hitbox.position.addVector(new Vector(offset, 0)),
-                new Vector(this.hitbox.size.x, this.hitbox.size.y)
-            );
-        }
-        // 受击无敌计时
-        if (this.isInvulnerable) {
-            this.invulnerableTimer -= deltaTime;
-            if (this.invulnerableTimer <= 0) {
-                this.isInvulnerable = false;
-                this.invulnerableTimer = 0;
-            }
-        }
-        // 冲刺逻辑
-        if (this.isDashing && this.dashTimer > 0) {
-            this.velocity.x = this.dashSpeed * this.facing;
-            this.dashTimer -= deltaTime;
-            if (this.dashTimer <= 0) {
-                this.isDashing = false;
-                this.dashTimer = 0;
-            }
-        }
-        // 攻击逻辑
-        if (this.isAttacking && this.attackTimer > 0) {
-            window.enemies.forEach(enemy => {
-                if (this.attackBox && this.attackBox.checkHit(enemy.hurtBox)) {
-                    enemy.takeDamage(this.attackDamage);
-                }
-            });
-            this.attackTimer -= deltaTime;
-            if (this.attackTimer <= 0) {
-                this.isAttacking = false;
-                this.attackBox = null;
-                this.attackTimer = 0;
-            }
-        }
-        // 冷却tick
-        this.dashCooldown.tick(deltaTime);
-        this.attackCooldown.tick(deltaTime);
 
+        // 受击无敌冷却
+        this.invulnerableCooldown.tick(deltaTime);
+
+        // 攻击
+        this.attack.update(deltaTime);
+
+        // 冲刺
+        this.dash.update(deltaTime);
         // 移动与跳跃（用updateXY和jumping，仿照async update）
         const deltaFrame = 60 * deltaTime / 1000;
         let move = 0;
-        this.updateXY(deltaFrame,
-            () => {
-                if (this.blockMove) return 0;
-                let moveLeft = window.$game.inputManager.isKeysDown(["A", "Left"]);
-                let moveRight = window.$game.inputManager.isKeysDown(["D", "Right"]);
-                move = 0;
-                if (moveLeft)
-                    this.facing = move = -1;
-                if (moveRight)
-                    this.facing = move = 1;
-                return move;
-            },
-            () => {
-                if (this.blockMove) return 0;
-                return window.$game.inputManager.firstDown("Space", () => {
-                    if (this.isOnGround()) {
-                        window.$game.statistics.jump++;
-                    }
-                    this.jumping.setJumpBuffer();
-                });
-            },
-            true
-        );
+        // 冲刺期间跳过普通横向速度赋值，冲刺结束后只在下一帧才允许普通移动逻辑覆盖
+        this.updateXY(deltaFrame, this.controllerX(), this.controllerY());
 
         if (this.jumping.jumpVelocity > 0) {
             this.animation.setStatus("jump", this.facing);
@@ -190,29 +123,179 @@ class Player extends Entity {
         this.animation.update(deltaFrame);
     }
 
+    /**
+     * 
+     * @param {number} deltaTime 
+     * @param {number} cmd_X 返回X轴控制输入，-1左，0无，1右
+     * @param {number} cmd_Y 返回Y轴控制输入，0无，1按住跳跃，在函数中应处理预输入
+     */
+    updateXY(deltaTime, cmd_X, cmd_Y) {
+        if (!this.dash.isDashing) {
+            //此时的deltaTime当前环境下的1帧，在60帧环境下走了多少帧
+            //于是在moveRigid函数中，需要将velocity乘上deltaTime代表在当前环境下走过的路程
+            this.updateY(deltaTime, cmd_Y);
+            this.velocity.y = -this.jumping.jumpVelocity;
+            this.velocity.x = this.updateX(deltaTime, cmd_X);
+        }
+        let side = this.rigidMove(deltaTime);
+        if (side & 1) this.velocity.x = 0, this.dash.isDashing = 0;
+        if (side & 2) this.velocity.y = this.jumping.jumpVelocity = 0;
+    }
+
+    // 冲刺初始化
+    initDash() {
+        this.dash = {
+            isDashing: false,
+            dashDuration: 200,
+            dashCooldownTime: 600,
+            dashSpeed: 15,
+            dashDir: { x: 1, y: 0 },
+            dashDurationCooldown: null,
+            dashCooldown: null,
+            update: null
+        };
+        this.dash.dashDurationCooldown = new Cooldown(this.dash.dashDuration);
+        this.dash.dashCooldown = new Cooldown(this.dash.dashCooldownTime);
+        this.dash.update = (deltaTime) => {
+            this.dash.dashCooldown.tick(deltaTime);
+            // 检测8方向输入
+            let dx = 0, dy = 0;
+            if (window.$game.inputManager.isKeysDown(['A', 'Left'])) dx -= 1;
+            if (window.$game.inputManager.isKeysDown(['D', 'Right'])) dx += 1;
+            if (window.$game.inputManager.isKeysDown(['W', 'Up'])) dy -= 1;
+            if (window.$game.inputManager.isKeysDown(['S', 'Down'])) dy += 1;
+            // 冲刺按键检测
+            if (!this.dash.isDashing && this.dash.dashCooldown.ready() && window.$game.inputManager.isKeyDown('K')) {
+                // 没有方向输入时默认朝当前facing
+                if (dx === 0 && dy === 0) {
+                    dx = this.facing;
+                }
+                // 归一化方向
+                let len = Math.sqrt(dx * dx + dy * dy);
+                if (len === 0) len = 1;
+                this.dash.dashDir = { x: dx / len, y: dy / len };
+                this.dash.isDashing = true;
+                this.dash.dashDurationCooldown.start();
+                this.dash.dashCooldown.start();
+                window.$game.soundManager.playSound('player', 'dash');
+            }
+            // 冲刺状态逻辑
+            if (this.dash.isDashing) {
+                this.dash.dashDurationCooldown.tick(deltaTime);
+                this.velocity.x = this.dash.dashSpeed * this.dash.dashDir.x;
+                this.velocity.y = this.dash.dashSpeed * this.dash.dashDir.y;
+                if (this.dash.dashDurationCooldown.ready()) {
+                    this.dash.isDashing = false;
+                    this.jumping.jumpVelocity = - this.velocity.y;
+                }
+            }
+        };
+    }
+
+    // 攻击初始化
+    initAttack() {
+        this.attack = {
+            state: "idle", // idle, startup, active, recovery
+            timer: 0,
+            attackBox: null,
+
+            damage: 1,
+            startupTime: 150,   // 前摇(ms)
+            activeTime: 1,     // 出招帧(ms)
+            recoveryTime: 200,  // 后摇(ms)
+            cooldownTime: 300,  // 总冷却(ms)，包含以上所有阶段
+
+            cooldown: null,
+
+            update: (deltaTime) => {
+                // 冷却 tick
+                this.attack.cooldown.tick(deltaTime);
+
+                switch (this.attack.state) {
+                    case "idle":
+                        if (this.attack.cooldown.ready() &&
+                            window.$game.inputManager.isKeyDown('J')) {
+                            // 进入前摇
+                            this.attack.state = "startup";
+                            this.attack.timer = this.attack.startupTime;
+                            this.attack.cooldown.start(); // 冷却从前摇开始计
+                        }
+                        break;
+
+                    case "startup":
+                        this.attack.timer -= deltaTime;
+                        if (this.attack.timer <= 0) {
+                            // 播放音效
+                            window.$game.soundManager.playSound("player", "attack");
+                            // 进入出招
+                            this.attack.state = "active";
+                            this.attack.timer = this.attack.activeTime;
+
+                            const offset = 0.5 * (this.facing >= 0 ? this.hitbox.size.x : -this.hitbox.size.x);
+                            this.attack.attackBox = new Hitbox(
+                                this.hitbox.position.addVector(new Vector(offset, 0)),
+                                new Vector(this.hitbox.size.x * 0.8, this.hitbox.size.y * 0.5)
+                            );
+                        }
+                        break;
+
+                    case "active":
+                        this.attack.timer -= deltaTime;
+                        if (this.attack.attackBox) {
+                            // 命中检测
+                            window.enemies.forEach(enemy => {
+                                if (this.attack.attackBox.checkHit(enemy.hurtBox)) {
+                                    enemy.takeDamage(this.attack.damage);
+                                }
+                            });
+                        }
+                        if (this.attack.timer <= 0) {
+                            // 出招结束 → 清空判定盒
+                            this.attack.attackBox = null;
+                            this.attack.state = "recovery";
+                            this.attack.timer = this.attack.recoveryTime;
+                        }
+                        break;
+
+                    case "recovery":
+                        this.attack.timer -= deltaTime;
+                        if (this.attack.timer <= 0) {
+                            this.attack.state = "idle";
+                        }
+                        break;
+                }
+            }
+        };
+
+        this.attack.cooldown = new Cooldown(this.attack.cooldownTime);
+    }
+
     // 受击判定
     takeDamage(dmg) {
-        if (this.isInvulnerable) return;
+        if (!this.invulnerableCooldown.ready()) return;
         this.hp -= dmg;
-        this.isInvulnerable = true;
-        this.invulnerableTimer = this.invulnerableTime;
+        this.invulnerableCooldown.start();
         if (this.hp <= 0) {
-            // 死亡逻辑
-            this.alive = false;
+            window.$game.bus.emit('player.die');
         }
+    }
+
+    setPosition(position) {
+        this.hitbox.position = position;
     }
 
     draw() {
         if (!this.alive) return;
         const ctx = window.$game.ctx;
+        //  绘制玩家
         ctx.drawImage(
             this.animation.getFrame(),
             this.hitbox.position.x,
             this.hitbox.position.y,
-            this.PlayerSize.x,
-            this.PlayerSize.y);
+            this.size.x,
+            this.size.y);
         // 绘制血条
-        const hpBarWidth = this.PlayerSize.x;
+        const hpBarWidth = this.size.x;
         const hpBarHeight = 6;
         const hpBarX = this.hitbox.position.x;
         const hpBarY = this.hitbox.position.y - 12;
@@ -226,17 +309,17 @@ class Player extends Entity {
         ctx.strokeStyle = 'black';
         ctx.strokeRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
         ctx.restore();
-        if (this.onEvent)
-            ctx.drawImage(
-                window.$game.textureManager.getTexture("onEvent", 0),
-                this.hitbox.position.x + this.PlayerSize.x / 2 - halfSize,
-                this.hitbox.position.y - halfSize - basicSize,
-                basicSize, basicSize);
+        // if (this.onEvent)
+        //     ctx.drawImage(
+        //         window.$game.textureManager.getTexture("onEvent", 0),
+        //         this.hitbox.position.x + this.size.x / 2 - halfSize,
+        //         this.hitbox.position.y - halfSize - basicSize,
+        //         basicSize, basicSize);
         // this.drawBoxs(ctx);
     }
 
     drawBoxs(ctx) {
-        ctx.strokeStyleStyle = this.isInvulnerable ? '#cccccc' : '#00aaff';
+        ctx.strokeStyle = !this.invulnerableCooldown.ready() ? '#cccccc' : '#00aaff';
         ctx.strokeRect(this.hitbox.position.x, this.hitbox.position.y, this.hitbox.size.x, this.hitbox.size.y);
         // 绘制攻击判定盒
         if (this.attackBox) {

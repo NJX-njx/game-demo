@@ -1,16 +1,21 @@
 class Cooldown {
-    constructor(CooldownMaxTime) {
-        this.maxTime = CooldownMaxTime;
-        this.timer = 0;
+    constructor(sec = 0) {
+        this.t = 0;
+        this.cd = sec;
     }
     start() {
-        this.timer = this.maxTime;
+        this.t = this.cd;
     }
-    tick(deltaTime) {
-        if (this.timer > 0) this.timer -= deltaTime;
-        else this.timer = 0;
+    tick(dt) {
+        this.t = Math.max(0, this.t - dt);
     }
     ready() {
-        return this.timer === 0;
+        return this.t === 0;
+    }
+    reset() {
+        this.t = 0;
+    }
+    set(sec = 0) {
+        this.cd = sec;
     }
 }

@@ -1,20 +1,31 @@
 class Game {
     constructor() {
+        window.$game = this;
+        // 获取画布
         this.canvas = document.getElementById('canvas');
         this.ctx = this.canvas.getContext('2d');
 
+        // 输入管理
         this.inputManager = new InputManager(this.canvas);
+
+        // 资源管理
         this.dataManager = new DataManager();
+        this.textureManager = new TextureManager();
+        this.soundManager = new SoundManager();
+
+        // 事件总线
+        this.bus = new EventBus();
+
         this.mapManager = new MapManager();
         // this.viewData = new ViewData();
 
         this.saveManager = new SaveManager();
         // this.dialogManager = new DialogManager();
-        this.textureManager = new TextureManager();
-        this.soundManager = new SoundManager();
+
         // this.eventManager = new EventManager();
         // this.achievementManager = new AchievementManager();
-        this.player = new Player(canvas.width, canvas.height);
+
+        this.player = new Player(new Vector(100, 100));
 
         this.stop = false;
         this.isPaused = false;
@@ -40,11 +51,16 @@ class Game {
 
         // 初始化玩家
         const spawn = this.mapManager.getPlayerSpawn();
-        if (spawn) {
-            this.player = new Player(new Vector(spawn.x, spawn.y));
-        } else {
-            this.player = new Player(new Vector(500, 400)); // 默认出生点
-        }
+        this.player.setPosition(new Vector(spawn.x, spawn.y));
+
+        this.bus.on('tick_draw', () => {
+            const ctx = this.ctx;
+            ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            // 绘制地图
+            this.mapManager.draw(ctx);
+            this.player.draw();
+            window.enemies.forEach(enemy => enemy.draw());
+        });
 
         // 初始化敌人
         const enemySpawns = this.mapManager.getEnemySpawns();
@@ -62,55 +78,13 @@ class Game {
 
     loop(currentTime) {
         const deltaTime = currentTime - this.lastTime;
+
         if (deltaTime >= this.targetFrameTime) {
-            const ctx = this.ctx;
-            ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            // 绘制地图
-            this.mapManager.draw(ctx);
-            // 玩家
-            if (this.player) {
-                this.player.update(deltaTime);
-                this.player.draw();
-            }
-            // 敌人
-            if (window.enemies) {
-                for (const enemy of window.enemies) {
-                    enemy.update(deltaTime);
-                    enemy.draw();
-                }
-            }
-            drawDashCooldownBar(ctx, this.player, this.canvas);
+            this.bus.emit('tick', { deltaTime: deltaTime });
+            this.bus.emit('tick_draw');
             this.lastTime = currentTime - (deltaTime % this.targetFrameTime);
         }
         requestAnimationFrame(this.loop);
     }
 
-}
-
-function drawDashCooldownBar(ctx, player, canvas) {
-    if (player.dashCooldown > 0) {
-        const barMaxWidth = 200;
-        const barHeight = 20;
-        const barX = 20;
-        const barY = canvas.height - 40;
-        const percent = player.dashCooldown / player.dashCooldownMax;
-        const barWidth = barMaxWidth * percent;
-        ctx.save();
-        ctx.fillStyle = '#f7f4f4ff';
-        ctx.fillRect(barX, barY, barMaxWidth, barHeight);
-        ctx.fillStyle = '#8e8a8aff';
-        ctx.fillRect(barX, barY, barWidth, barHeight);
-        ctx.strokeStyle = '#222';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(barX, barY, barMaxWidth, barHeight);
-        ctx.font = "18px Arial";
-        ctx.fillStyle = "black";
-        ctx.textAlign = "left";
-        ctx.fillText(
-            ' ',
-            barX,
-            barY - 5
-        );
-        ctx.restore();
-    }
 }
