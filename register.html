@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册界面</title>
+    <link rel="stylesheet" href="assets/style/index.css"> <!-- 共用样式 -->
+</head>
+<body>
+    <!-- 主容器：中下方的注册表单 -->
+    <div class="main-content">
+        <div class="auth-box">
+            <h3 class="auth-title">新 生</h3>
+            <!-- 仅注册表单，无登录表单 -->
+            <form id="register-form" name="register-frm" onsubmit="return _register()" method="get">
+                <input class="auth-input" type="text" name="reg-id" placeholder="给自己取个名字吧" required>
+                <input class="auth-input" type="password" name="reg-password" placeholder="除了名字 还有什么是需要的呢" required>
+                <input class="auth-input" type="password" name="reg-password-confirm" placeholder="再输入一遍吧" required>
+                <button type="submit" class="auth-btn">前往回忆</button>
+            </form>
+            <!-- 跳转链接：去登录/返回首页 -->
+            <div class="auth-switch">
+                <a href="login.html" class="switch-link">前往回忆</a>
+                <a href="index.html" class="switch-link">返回首页</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 保留注册+本地存储函数 -->
+    <script>
+        function _save(data_name, _data) { localStorage.setItem(data_name, JSON.stringify(_data)); }
+        function _del(data_name) { localStorage.removeItem(data_name); }
+        function _get(data_name) { let _data = localStorage.getItem(data_name); return _data ? JSON.parse(_data) : null; }
+        function _clear() { /* 如需保留，可加此函数，或删除 */ }
+        
+        // 注册逻辑（原逻辑不变）
+        function _register() {
+            let regName = document.forms["register-frm"]["reg-id"].value;
+            let regPwd = document.forms["register-frm"]["reg-password"].value;
+            let regPwdConfirm = document.forms["register-frm"]["reg-password-confirm"].value;
+            
+            if (regName === '' || regPwd === '' || regPwdConfirm === '') { alert("请填写完整信息！"); return false; }
+            if (regPwd !== regPwdConfirm) { alert("两次密码不一致！"); return false; }
+            if (regPwd.length < 6) { alert("密码长度不能少于6位！"); return false; }
+            
+            let total = _get("player_cnt") || { cnt: 0 };
+            for (let i = 1; i <= total.cnt; i++) {
+                let _player = _get("player" + i);
+                if (_player && _player.name === regName) { alert("用户名已被注册！"); return false; }
+            }
+            
+            // 保存新账号
+            total.cnt += 1;
+            let newPlayer = { name: regName, password: regPwd, registerTime: new Date().toLocaleString() };
+            _save("player" + total.cnt, newPlayer);
+            _save("player_cnt", total);
+            
+            alert("注册成功！前往登录");
+            window.location.href = "login.html"; // 注册后跳转到登录页
+            return false;
+        }
+    </script>
+</body>
+</html>

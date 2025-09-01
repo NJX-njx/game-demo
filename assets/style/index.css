@@ -1,0 +1,136 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Microsoft YaHei", sans-serif;
+}
+body {
+    min-height: 100vh;
+    background-image: url('../imgs/Title.png');
+    background-color: black; 
+    background-size: cover;
+    /* 水平居中，垂直向上偏移 100px（数值可根据需求调整） */
+    background-position: center -200px;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    
+    position: relative;
+}
+.clear-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 8px 16px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 4px;
+    color: #2c3e50;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s;
+}
+.clear-btn:hover {
+    background-color: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+.main-content {
+    display: flex;
+    justify-content: center;
+    align-items:flex-end;
+    min-height: 100vh;
+    padding: 0 20px 5vh 20px;
+}
+.auth-box {
+    max-width: 350px; 
+    width: 100%; 
+}
+.auth-title {
+    text-align: center;
+    color: #f9fbfc;
+    font-size: 24px;
+    font-family:'KaiTi';
+    margin-bottom: 30px;
+    letter-spacing: 2px;
+}
+.auth-input {
+    width: 100%;
+    height: 38px;
+    margin-bottom: 20px;
+    padding: 0 16px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+.auth-btn {
+    width: 100%;
+    height: 48px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 10px;
+}
+.auth-btn:hover {
+    background-color: #5f99d2;
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+.auth-switch {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 25px;
+    font-size: 14px;
+}
+.switch-link {
+    color: #f8f9f9;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+.switch-link:hover {
+    color: #2980b9;
+    text-decoration: underline;
+}
+.hidden {
+    display: none !important;
+}
+.entry-box {
+    text-align: center;
+    padding: 30px;
+}
+.entry-title {
+    color: #f9fbfc;
+    font-size: 28px;
+    font-family: 'KaiTi';
+    margin-bottom: 40px;
+    letter-spacing: 3px;
+}
+.entry-btn {
+    width: 180px; /* 按钮宽度 */
+    height: 50px; /* 按钮高度 */
+    margin: 0 15px 20px; /* 按钮间距 */
+    background-color: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 6px;
+    color: #2c3e50;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s;
+}
+.entry-btn:hover {
+    background-color: #fff;
+    color: #3498db;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+}
+
+/* 响应式：手机端入口按钮样式 */
+@media (max-width: 450px) {
+    .entry-btn {
+        width: 100%; /* 手机端按钮全屏宽度 */
+        margin: 0 0 15px; /* 垂直排列间距 */
+    }
+}

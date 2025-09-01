@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>首页 - 选择登录/注册</title>
+    <link rel="stylesheet" href="assets/style/index.css"> <!-- 共用样式 -->
+</head>
+<body>
+    <!-- 清除存档按钮（可选，保留在入口页） -->
+    <button type="button" onclick="_clear()" class="clear-btn">清除账号存档</button>
+
+    <!-- 主容器：中下方的“登录/注册”按钮 -->
+    <div class="main-content">
+        <div class="entry-box">
+            <h3 class="entry-title">欢迎回来</h3>
+            <!-- 跳转按钮：点击进入新界面 -->
+            <button class="entry-btn" onclick="window.location.href='login.html'">回忆</button>
+            <button class="entry-btn" onclick="window.location.href='register.html'">新生</button>
+        </div>
+    </div>
+
+    <!-- 保留本地存储工具函数（清除存档需要） -->
+    <script>
+        function _save(data_name, _data) { localStorage.setItem(data_name, JSON.stringify(_data)); }
+        function _del(data_name) { localStorage.removeItem(data_name); }
+        function _get(data_name) { let _data = localStorage.getItem(data_name); return _data ? JSON.parse(_data) : null; }
+        function _clear() {
+            let total = _get("player_cnt") || { cnt: 0 };
+            for (let i = 1; i <= total.cnt; i++) { if (_get("player" + i)) _del("player" + i); }
+            _del("player_cnt");
+            alert("已清空所有账号存档！");
+        }
+    </script>
+</body>
+</html>
