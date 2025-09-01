@@ -185,7 +185,7 @@ class Enemy extends Entity {
                 if (lockOnMode === "attack" || lockOnMode === "seek_path") {
                     // 攻击模式或寻找路径模式：可以跳跃
                     // return window.$game.inputManager.firstDown("Space", () => {
-                    //     this.jumping.setJumpBuffer();
+                        // this.jumping.jumpBuffer.start();
                     // });
                 } else {
                     // 其他模式：不跳跃
@@ -371,7 +371,7 @@ class Enemy extends Entity {
 
         // 如果目标在敌人上方，尝试跳跃
         if (targetPos.y < enemyPos.y && this.isOnGround()) {
-            this.jumping.setJumpBuffer();
+            this.jumping.jumpBuffer.start();
         }
     }
 
