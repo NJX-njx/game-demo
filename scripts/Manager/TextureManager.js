@@ -31,8 +31,12 @@ class TextureManager {
     }
 
     getTexture(kind, id = "0") {
-        // console.debug("getTexture: ", kind, id);
-        return this.textures[kind][id];
+        if (this.textures[kind] && this.textures[kind][id]) {
+            return this.textures[kind][id];
+        } else {
+            console.warn(`TextureManager: 贴图不存在 kind='${kind}' id='${id}'`);
+            return null;
+        }
     }
 
     // /**

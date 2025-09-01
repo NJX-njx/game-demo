@@ -143,7 +143,7 @@ class MapManager {
         let texture = null;
         // 贴图命名建议：如 backgrounds/xxx, blocks/xxx, textures/xxx
         let key = type + 's';
-        // texture = window.$game.textureManager.getTexture(key, item.type);
+        texture = window.$game.textureManager.getTexture(key, item.type);
         if (texture) {
             ctx.drawImage(texture, item.position.x, item.position.y, item.size.x, item.size.y);
         } else {
