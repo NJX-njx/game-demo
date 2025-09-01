@@ -233,7 +233,7 @@ class Player extends Entity {
 
                             const offset = 0.5 * (this.facing >= 0 ? this.hitbox.size.x : -this.hitbox.size.x);
                             this.attack.attackBox = new Hitbox(
-                                this.hitbox.position.addVector(new Vector(offset, 0)),
+                                this.hitbox.position.addVector(new Vector(offset, this.hitbox.size.y * 0.25)),
                                 new Vector(this.hitbox.size.x * 0.8, this.hitbox.size.y * 0.5)
                             );
                         }
@@ -319,13 +319,20 @@ class Player extends Entity {
     }
 
     drawBoxs(ctx) {
-        ctx.strokeStyle = !this.invulnerableCooldown.ready() ? '#cccccc' : '#00aaff';
+        // 绘制敌人自身盒子
+        ctx.strokeStyle = this.isInvulnerable ? '#cccccc' : '#00aaff';
         ctx.strokeRect(this.hitbox.position.x, this.hitbox.position.y, this.hitbox.size.x, this.hitbox.size.y);
-        // 绘制攻击判定盒
-        if (this.attackBox) {
-            ctx.strokeStyle = '#ff0000';
-            ctx.strokeRect(this.attackBox.position.x, this.attackBox.position.y, this.attackBox.size.x, this.attackBox.size.y);
-        }
+
+        // ---- 调试用攻击判定框 ----
+        ctx.strokeStyle = '#ff0000';
+
+        // 计算判定框位置
+        const offset = 0.5 * (this.facing >= 0 ? this.hitbox.size.x : -this.hitbox.size.x);
+        const attackBoxPos = this.hitbox.position.addVector(new Vector(offset, this.hitbox.size.y * 0.2));
+        const attackBoxSize = new Vector(this.hitbox.size.x * 0.8, this.hitbox.size.y * 0.5);
+
+        ctx.strokeRect(attackBoxPos.x, attackBoxPos.y, attackBoxSize.x, attackBoxSize.y);
+
         ctx.restore();
     }
 }

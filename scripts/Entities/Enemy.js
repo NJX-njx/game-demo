@@ -87,7 +87,8 @@ class Enemy extends Entity {
                 lockOnMode = "seek_path";
                 // 寻找路径模式：检查是否有直接路径到达玩家
                 if (this.hasDirectPathToPlayer()) {
-                    shouldAttack = true;
+                    // 只在冷却完成后，有一定概率触发攻击
+                    shouldAttack = this.attack.cooldown.ready() && Math.random() < 0.2;
                 }
             }
         } else if (verticalDist < -50) {
@@ -99,7 +100,7 @@ class Enemy extends Entity {
                 lockOnMode = "wait";
                 // 等待模式：检查是否有安全的下跳路径
                 if (this.hasSafeDropPath()) {
-                    shouldAttack = true;
+                    shouldAttack = this.attack.cooldown.ready() && Math.random() < 0.3;
                 }
             }
         } else {
@@ -109,7 +110,8 @@ class Enemy extends Entity {
 
             if (horizontalDist < maxHorizontalDist && Math.abs(verticalDist) < maxVerticalDist) {
                 lockOnMode = "attack";
-                shouldAttack = true;
+                // 攻击模式下，每次冷却完成有 40% 概率触发攻击
+                shouldAttack = this.attack.cooldown.ready() && Math.random() < 0.4;
             }
         }
 
@@ -440,7 +442,7 @@ class Enemy extends Entity {
             startupTime: 150,   // 前摇(ms)
             activeTime: 1,     // 出招帧(ms)
             recoveryTime: 200,  // 后摇(ms)
-            cooldownTime: 300,  // 总冷却(ms)，包含以上所有阶段
+            cooldownTime: 1500,  // 总冷却(ms)，包含以上所有阶段
 
             cooldown: null,
 
@@ -469,7 +471,7 @@ class Enemy extends Entity {
 
                             const offset = 0.5 * (this.facing >= 0 ? this.hitbox.size.x : -this.hitbox.size.x);
                             this.attack.attackBox = new Hitbox(
-                                this.hitbox.position.addVector(new Vector(offset, 0)),
+                                this.hitbox.position.addVector(new Vector(offset, this.hitbox.size.y * 0.25)),
                                 new Vector(this.hitbox.size.x * 0.8, this.hitbox.size.y * 0.5)
                             );
                         }
@@ -531,13 +533,20 @@ class Enemy extends Entity {
     }
 
     drawBoxs(ctx) {
-        ctx.strokeStyleStyle = this.isInvulnerable ? '#cccccc' : '#00aaff';
+        // 绘制敌人自身盒子
+        ctx.strokeStyle = this.isInvulnerable ? '#cccccc' : '#00aaff';
         ctx.strokeRect(this.hitbox.position.x, this.hitbox.position.y, this.hitbox.size.x, this.hitbox.size.y);
-        // 绘制攻击判定盒
-        if (this.attackBox) {
-            ctx.strokeStyle = '#ff0000';
-            ctx.strokeRect(this.attackBox.position.x, this.attackBox.position.y, this.attackBox.size.x, this.attackBox.size.y);
-        }
+
+        // ---- 调试用攻击判定框 ----
+        ctx.strokeStyle = '#ff0000';
+
+        // 根据敌人当前状态和朝向计算判定框位置
+        const offset = 0.5 * (this.facing >= 0 ? this.hitbox.size.x : -this.hitbox.size.x);
+        const attackBoxPos = this.hitbox.position.addVector(new Vector(offset, this.hitbox.size.y * 0.25));
+        const attackBoxSize = new Vector(this.hitbox.size.x * 0.8, this.hitbox.size.y * 0.5);
+
+        ctx.strokeRect(attackBoxPos.x, attackBoxPos.y, attackBoxSize.x, attackBoxSize.y);
+
         ctx.restore();
     }
 }
