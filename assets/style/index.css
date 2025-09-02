@@ -79,11 +79,14 @@ body {
     box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
 }
 .auth-switch {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 25px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr; /* 三等分 */
+    margin-top: 20px;
     font-size: 14px;
+    text-align: center;
+    width: 100%; /* 保证跟按钮一样宽 */
 }
+
 .switch-link {
     color: #f8f9f9;
     text-decoration: none;
