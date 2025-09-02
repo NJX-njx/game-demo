@@ -56,6 +56,11 @@ class Player extends Entity {
         this.size = size;
         this.type = "player";
         this.jumping.type = "player";
+        this.base = {
+            hp: 100,
+            damage: 20,
+            attackCooldown: 600
+        }
 
         this.hp = 5;
         this.alive = true;
@@ -83,11 +88,10 @@ class Player extends Entity {
         }
         this.controllerY = () => {
             if (this.blockMove) return 0;
-            return window.$game.inputManager.firstDown("Space", () => {
+            if (window.$game.inputManager.isFirstDown("Space"))
                 this.jumping.jumpBuffer.start();
-            });
+            return window.$game.inputManager.isHeld("Space");
         }
-        window.$game.bus.on('tick', ({ deltaTime }) => this.update(deltaTime));
     }
 
     async update(deltaTime) {
@@ -101,7 +105,7 @@ class Player extends Entity {
 
         // 冲刺
         this.dash.update(deltaTime);
-        // 移动与跳跃（用updateXY和jumping，仿照async update）
+        // 移动与跳跃
         const deltaFrame = 60 * deltaTime / 1000;
         let move = 0;
         // 冲刺期间跳过普通横向速度赋值，冲刺结束后只在下一帧才允许普通移动逻辑覆盖
@@ -124,7 +128,7 @@ class Player extends Entity {
     }
 
     /**
-     * 
+     * 重写updateXY，实现冲刺时不计算摩擦和重力造成的速度改变
      * @param {number} deltaTime 
      * @param {number} cmd_X 返回X轴控制输入，-1左，0无，1右
      * @param {number} cmd_Y 返回Y轴控制输入，0无，1按住跳跃，在函数中应处理预输入
@@ -146,47 +150,61 @@ class Player extends Entity {
     initDash() {
         this.dash = {
             isDashing: false,
-            dashDuration: 200,
-            dashCooldownTime: 600,
+            dashDuration: 200,       // 冲刺持续时间
+            dashCooldownTime: 600,   // 恢复一段冲刺的冷却时间
             dashSpeed: 15,
             dashDir: { x: 1, y: 0 },
+
             dashDurationCooldown: null,
             dashCooldown: null,
+
+            dashMaxCount: 2,         // 最大段数
+            dashCount: 2,            // 当前可用段数
+
             update: null
         };
+
         this.dash.dashDurationCooldown = new Cooldown(this.dash.dashDuration);
         this.dash.dashCooldown = new Cooldown(this.dash.dashCooldownTime);
+
         this.dash.update = (deltaTime) => {
-            this.dash.dashCooldown.tick(deltaTime);
-            // 检测8方向输入
+            // --- 冲刺段数恢复逻辑 ---
+            if (this.isOnGround()) {
+                this.dash.dashCooldown.tick(deltaTime);
+                if (this.dash.dashCooldown.ready() && this.dash.dashCount < this.dash.dashMaxCount) {
+                    this.dash.dashCount++;
+                    this.dash.dashCooldown.start();
+                }
+            }
+
+            // --- 冲刺输入检测 ---
             let dx = 0, dy = 0;
             if (window.$game.inputManager.isKeysDown(['A', 'Left'])) dx -= 1;
             if (window.$game.inputManager.isKeysDown(['D', 'Right'])) dx += 1;
             if (window.$game.inputManager.isKeysDown(['W', 'Up'])) dy -= 1;
             if (window.$game.inputManager.isKeysDown(['S', 'Down'])) dy += 1;
-            // 冲刺按键检测
-            if (!this.dash.isDashing && this.dash.dashCooldown.ready() && window.$game.inputManager.isKeyDown('K')) {
-                // 没有方向输入时默认朝当前facing
-                if (dx === 0 && dy === 0) {
-                    dx = this.facing;
-                }
-                // 归一化方向
+
+            // 触发冲刺
+            if (!this.dash.isDashing && this.dash.dashCount > 0 && window.$game.inputManager.isKeyDown('K')) {
+                if (dx === 0 && dy === 0) dx = this.facing;
                 let len = Math.sqrt(dx * dx + dy * dy);
                 if (len === 0) len = 1;
+
                 this.dash.dashDir = { x: dx / len, y: dy / len };
                 this.dash.isDashing = true;
                 this.dash.dashDurationCooldown.start();
-                this.dash.dashCooldown.start();
+                this.dash.dashCount--;
                 window.$game.soundManager.playSound('player', 'dash');
             }
-            // 冲刺状态逻辑
+
+            // --- 冲刺状态 ---
             if (this.dash.isDashing) {
                 this.dash.dashDurationCooldown.tick(deltaTime);
                 this.velocity.x = this.dash.dashSpeed * this.dash.dashDir.x;
                 this.velocity.y = this.dash.dashSpeed * this.dash.dashDir.y;
                 if (this.dash.dashDurationCooldown.ready()) {
                     this.dash.isDashing = false;
-                    this.jumping.jumpVelocity = - this.velocity.y;
+                    this.jumping.jumpVelocity = -this.velocity.y;
                 }
             }
         };
@@ -200,25 +218,18 @@ class Player extends Entity {
             attackBox: null,
 
             damage: 1,
-            startupTime: 150,   // 前摇(ms)
+            startupTime: 100,   // 前摇(ms)
             activeTime: 1,     // 出招帧(ms)
-            recoveryTime: 200,  // 后摇(ms)
-            cooldownTime: 300,  // 总冷却(ms)，包含以上所有阶段
-
-            cooldown: null,
+            recoveryTime: 900,  // 后摇(ms)
 
             update: (deltaTime) => {
-                // 冷却 tick
-                this.attack.cooldown.tick(deltaTime);
-
                 switch (this.attack.state) {
                     case "idle":
-                        if (this.attack.cooldown.ready() &&
+                        if (this.attack.timer <= 0 &&
                             window.$game.inputManager.isKeyDown('J')) {
                             // 进入前摇
                             this.attack.state = "startup";
                             this.attack.timer = this.attack.startupTime;
-                            this.attack.cooldown.start(); // 冷却从前摇开始计
                         }
                         break;
 
@@ -266,8 +277,6 @@ class Player extends Entity {
                 }
             }
         };
-
-        this.attack.cooldown = new Cooldown(this.attack.cooldownTime);
     }
 
     // 受击判定
@@ -316,6 +325,7 @@ class Player extends Entity {
         //         this.hitbox.position.y - halfSize - basicSize,
         //         basicSize, basicSize);
         // this.drawBoxs(ctx);
+        this.drawDashUI(ctx);
     }
 
     drawBoxs(ctx) {
@@ -334,5 +344,22 @@ class Player extends Entity {
         ctx.strokeRect(attackBoxPos.x, attackBoxPos.y, attackBoxSize.x, attackBoxSize.y);
 
         ctx.restore();
+    }
+
+    drawDashUI(ctx) {
+        const max = this.dash.dashMaxCount;
+        const current = this.dash.dashCount;
+
+        const size = 8; // 每个方块的边长
+        const gap = 4;  // 间隔
+        const startX = this.hitbox.position.x + this.size.x / 2 - (max * (size + gap) - gap) / 2;
+        const y = this.hitbox.position.y - 24; // 血条上方一点
+
+        for (let i = 0; i < max; i++) {
+            ctx.fillStyle = i < current ? "cyan" : "gray"; // 已有 → 蓝色，缺失 → 灰色
+            ctx.fillRect(startX + i * (size + gap), y, size, size);
+            ctx.strokeStyle = "black";
+            ctx.strokeRect(startX + i * (size + gap), y, size, size);
+        }
     }
 }

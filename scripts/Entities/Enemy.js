@@ -64,9 +64,7 @@ class Enemy extends Entity {
         this.isInvulnerable = false;
         this.invulnerableTime = 30;
         this.invulnerableTimer = 0;
-        this._unbind_list = [
-            window.$game.bus.on('tick', ({ deltaTime }) => this.update(deltaTime)),
-        ];
+        this._unbind_list = [];
     }
 
     async update(deltaTime) {
@@ -185,7 +183,7 @@ class Enemy extends Entity {
                 if (lockOnMode === "attack" || lockOnMode === "seek_path") {
                     // 攻击模式或寻找路径模式：可以跳跃
                     // return window.$game.inputManager.firstDown("Space", () => {
-                        // this.jumping.jumpBuffer.start();
+                    // this.jumping.jumpBuffer.start();
                     // });
                 } else {
                     // 其他模式：不跳跃
@@ -417,17 +415,11 @@ class Enemy extends Entity {
         if (this.hp <= 0) {
             // 死亡逻辑
             // 解绑所有事件
-            if (this._unbind_list) {
-                for (const unbind of this._unbind_list) {
-                    if (typeof unbind === 'function') unbind();
-                }
-                this._unbind_list = [];
-            }
+            this._unbind_list.forEach((unbind) => unbind());
+            this._unbind_list = [];
             // 从全局移除自己
-            if (window.enemies) {
-                const idx = window.enemies.indexOf(this);
-                if (idx !== -1) window.enemies.splice(idx, 1);
-            }
+            const idx = window.enemies.indexOf(this);
+            if (idx !== -1) window.enemies.splice(idx, 1);
         }
     }
 

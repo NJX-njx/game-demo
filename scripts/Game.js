@@ -53,11 +53,16 @@ class Game {
         const spawn = this.mapManager.getPlayerSpawn();
         this.player.setPosition(new Vector(spawn.x, spawn.y));
 
+        this.bus.on('tick', ({ deltaTime }) => {
+            this.inputManager.update();
+            this.player.update(deltaTime);
+            window.enemies.forEach(enemy => enemy.update(deltaTime));
+        });
         this.bus.on('tick_draw', () => {
             const ctx = this.ctx;
             ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             // 绘制地图
-            this.mapManager.draw(ctx);
+            this.mapManager.draw();
             this.player.draw();
             window.enemies.forEach(enemy => enemy.draw());
         });

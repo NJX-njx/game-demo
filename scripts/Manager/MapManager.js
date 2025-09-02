@@ -101,7 +101,8 @@ class MapManager {
      * 渲染地图，显示顺序：背景-方块-贴图
      * @param {CanvasRenderingContext2D} ctx
      */
-    draw(ctx) {
+    draw() {
+        const ctx = window.$game.ctx;
         // 绘制背景
         for (const bg of this.backgrounds) {
             this.drawItem(ctx, bg, 'background');
