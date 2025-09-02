@@ -56,20 +56,25 @@ class Player extends Entity {
         this.size = size;
         this.type = "player";
         this.jumping.type = "player";
-        this.base = {
-            hp: 100,
-            damage: 20,
-            attackCooldown: 600
+        this.baseState = {
+            hp_max: 100,                //血量上限
+            hp: 100,                    //当前血量
+            attack_baseDamage: 20,      //基础伤害
+            attack_startupTime: 100,    //攻击前摇
+            attack_recoveryTime: 900,   //攻击后摇
+            dash_cooldownTime: 600,     //冲刺冷却
+            dash_maxCount: 1,            //冲刺段数
+            items: []
         }
 
         this.hp = 5;
-        this.alive = true;
         this.facing = 1;
         this.animation = new Player_Animation();
         // 冲刺
         this.initDash();
         // 攻击
         this.initAttack();
+        this.initRangedAttack();
         // 受击
         this.hurtBox = this.hitbox;
         this.invulnerableCooldown = new Cooldown(100);//受击间隔
@@ -95,14 +100,12 @@ class Player extends Entity {
     }
 
     async update(deltaTime) {
-        if (!this.alive) return;
-
         // 受击无敌冷却
         this.invulnerableCooldown.tick(deltaTime);
 
         // 攻击
         this.attack.update(deltaTime);
-
+        this.updateRangedAttack(deltaTime);
         // 冲刺
         this.dash.update(deltaTime);
         // 移动与跳跃
@@ -151,15 +154,15 @@ class Player extends Entity {
         this.dash = {
             isDashing: false,
             dashDuration: 200,       // 冲刺持续时间
-            dashCooldownTime: 600,   // 恢复一段冲刺的冷却时间
+            dashCooldownTime: this.baseState.dash_cooldownTime,   // 恢复一段冲刺的冷却时间
             dashSpeed: 15,
             dashDir: { x: 1, y: 0 },
 
             dashDurationCooldown: null,
             dashCooldown: null,
 
-            dashMaxCount: 2,         // 最大段数
-            dashCount: 2,            // 当前可用段数
+            dashMaxCount: this.baseState.dash_maxCount,         // 最大段数
+            dashCount: 0,            // 当前可用段数
 
             update: null
         };
@@ -279,6 +282,36 @@ class Player extends Entity {
         };
     }
 
+    // 远程攻击初始化
+    initRangedAttack() {
+        this.rangedCooldown = new Cooldown(300); // 300ms射击间隔
+        this.projectiles = []; // 存储玩家发射的远程攻击
+        this.updateRangedAttack = (deltaTime) => {
+            this.rangedCooldown.tick(deltaTime);
+
+            if (window.$game.inputManager.isKeyDown("L") && this.rangedCooldown.ready()) {
+                const speed = 12;
+                const dirX = this.facing; // 水平方向，可扩展为鼠标指向
+                const dirY = 0;
+                const projectile = new Projectile(
+                    this.hitbox.getCenter(),
+                    new Vector(speed * dirX, speed * dirY),
+                    this.attack.damage
+                );
+                this.projectiles.push(projectile);
+                this.rangedCooldown.start();
+                window.$game.soundManager.playSound("player", "shoot");
+            }
+
+            // 更新所有飞行物
+            this.projectiles.forEach(p => p.update(deltaTime));
+
+            // 移除已失效的飞行物
+            this.projectiles = this.projectiles.filter(p => !p.active);
+        }
+        this.drawProjectiles = () => this.projectiles.forEach(p => p.draw());
+    }
+
     // 受击判定
     takeDamage(dmg) {
         if (!this.invulnerableCooldown.ready()) return;
@@ -294,7 +327,6 @@ class Player extends Entity {
     }
 
     draw() {
-        if (!this.alive) return;
         const ctx = window.$game.ctx;
         //  绘制玩家
         ctx.drawImage(
@@ -317,7 +349,9 @@ class Player extends Entity {
         ctx.fillRect(hpBarX, hpBarY, currentHpWidth, hpBarHeight);
         ctx.strokeStyle = 'black';
         ctx.strokeRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
+        this.drawProjectiles();
         ctx.restore();
+
         // if (this.onEvent)
         //     ctx.drawImage(
         //         window.$game.textureManager.getTexture("onEvent", 0),

@@ -129,7 +129,7 @@ class Enemy extends Entity {
         // 根据锁敌模式更新移动策略
         this.updateMovementByMode(lockOnMode, horizontalDist, verticalDist);
 
-        // 移动与跳跃（用updateXY和jumping，仿照async update）
+        // 移动与跳跃
         const deltaFrame = 60 * deltaTime / 1000;
         let move = 0;
         this.updateXY(deltaFrame,
