@@ -1,7 +1,7 @@
 import { inputManager } from "./Manager/InputManager";
 import { textureManager } from "./Manager/TextureManager";
 import { soundManager } from "./Manager/SoundManager";
-import { bus } from "./Utils/EventBus";
+import { bus } from "./Manager/EventBus";
 import { mapManager } from "./Manager/MapManager";
 import { projectilesManager } from "./System/Attack/ProjectilesManager";
 import { attributeManager } from "./Manager/AttributeManager";

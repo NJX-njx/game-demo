@@ -7,7 +7,7 @@ import { game } from "../Game";
 import { textureManager } from "../Manager/TextureManager";
 import { soundManager } from "../Manager/SoundManager";
 import { inputManager } from "../Manager/InputManager";
-import { bus } from "../Utils/EventBus";
+import { bus } from "../Manager/EventBus";
 class Player_Animation {
     static Framerate = {
         "run": 6,
