@@ -3,11 +3,11 @@ window.$game.dataManager.resolve(
         "player": {
             "dash": "assets/audios/dash.wav",
             "jump": "assets/audios/jump1.wav",
-            "attack": "assets/audios/attack1.wav",
-            "shoot": "assets/audios/attack2.wav"
+            "meleeAttack": "assets/audios/attack1.wav",
+            "rangedAttack": "assets/audios/attack2.wav"
         },
-        "enemy": {
-            "attack": "assets/audios/attack1.wav"
+        "enemy1": {
+            "meleeAttack": "assets/audios/attack1.wav"
         }
     }
 )

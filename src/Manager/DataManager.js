@@ -1,4 +1,4 @@
-class DataManager {
+export class DataManager {
     constructor() { }
     async loadJSON(src) {
         let jsonp = document.createElement('script');

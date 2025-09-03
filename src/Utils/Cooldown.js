@@ -1,4 +1,4 @@
-class Cooldown {
+export class Cooldown {
     constructor(sec = 0) {
         this.t = 0;
         this.cd = sec;

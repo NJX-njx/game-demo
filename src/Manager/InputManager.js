@@ -278,7 +278,7 @@ class KeyboardManager {
     }
 }
 
-class InputManager {
+export class InputManager {
     constructor(canvas) {
         this.keyboard = new KeyboardManager();
         this.mouse = new MouseManager(document.querySelector("#game-container"), canvas);

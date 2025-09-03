@@ -1,3 +1,8 @@
+import { Entity } from "./Entity";
+import { Vector } from "../Utils/Vector";
+import { MeleeAttack } from "../System/Attack/MeleeAttack"
+import { RangedAttack } from "../System/Attack/RangedArrack"
+import { Cooldown } from "../Utils/Cooldown";
 class Player_Animation {
     static Framerate = {
         "run": 6,
@@ -50,7 +55,7 @@ class Player_Animation {
     }
 }
 
-class Player extends Entity {
+export class Player extends Entity {
     constructor(position, size = new Vector(50, 50), velocity = new Vector()) {
         super(position, size, velocity);
         this.size = size;
@@ -58,23 +63,44 @@ class Player extends Entity {
         this.jumping.type = "player";
         this.baseState = {
             hp_max: 100,                //血量上限
-            hp: 100,                    //当前血量
-            attack_baseDamage: 20,      //基础伤害
-            attack_startupTime: 100,    //攻击前摇
-            attack_recoveryTime: 900,   //攻击后摇
+            attack_baseDamage: 10,      //基础伤害
+            attack_baseMeleeStartupTime: 50,    //攻击前摇
+            attack_baseMeleeRecoveryTime: 900,   //攻击后摇
+            attack_baseRangedStartupTime: 150,    //攻击前摇
+            attack_baseRangedRecoveryTime: 700,   //攻击后摇
             dash_cooldownTime: 600,     //冲刺冷却
-            dash_maxCount: 1,            //冲刺段数
+            dash_maxCount: 1,           //冲刺段数
             items: []
         }
+        this.state = {
+            hp: this.baseState.hp_max,  //当前血量
+            hp_max: this.baseState.hp_max,
+            attack: {
+                damage: {
+                    melee: this.baseState.attack_baseDamage,
+                    ranged: this.baseState.attack_baseDamage
+                },
+                startupTime: {
+                    melee: this.baseState.attack_baseMeleeStartupTime,
+                    ranged: this.baseState.attack_baseRangedStartupTime
+                },
+                recoveryTime: {
+                    melee: this.baseState.attack_baseMeleeRecoveryTime,
+                    ranged: this.baseState.attack_baseRangedStartupTime
+                }
 
-        this.hp = 5;
+            },
+        }
+        this.attack = {
+            targetSelector: () => window.$game.enemies,
+            melee: new MeleeAttack(this),
+            ranged: new RangedAttack(this)
+        }
+
         this.facing = 1;
         this.animation = new Player_Animation();
         // 冲刺
         this.initDash();
-        // 攻击
-        this.initAttack();
-        this.initRangedAttack();
         // 受击
         this.hurtBox = this.hitbox;
         this.invulnerableCooldown = new Cooldown(100);//受击间隔
@@ -104,8 +130,10 @@ class Player extends Entity {
         this.invulnerableCooldown.tick(deltaTime);
 
         // 攻击
-        this.attack.update(deltaTime);
-        this.updateRangedAttack(deltaTime);
+        if (window.$game.inputManager.isKeyDown('J')) this.attack.melee.trigger();
+        if (window.$game.inputManager.isKeyDown('L')) this.attack.ranged.trigger();
+        this.attack.melee.update(deltaTime);
+        this.attack.ranged.update(deltaTime);
         // 冲刺
         this.dash.update(deltaTime);
         // 移动与跳跃
@@ -162,7 +190,7 @@ class Player extends Entity {
             dashCooldown: null,
 
             dashMaxCount: this.baseState.dash_maxCount,         // 最大段数
-            dashCount: 0,            // 当前可用段数
+            dashCount: 0,                                       // 当前可用段数
 
             update: null
         };
@@ -213,112 +241,14 @@ class Player extends Entity {
         };
     }
 
-    // 攻击初始化
-    initAttack() {
-        this.attack = {
-            state: "idle", // idle, startup, active, recovery
-            timer: 0,
-            attackBox: null,
-
-            damage: 1,
-            startupTime: 100,   // 前摇(ms)
-            activeTime: 1,     // 出招帧(ms)
-            recoveryTime: 900,  // 后摇(ms)
-
-            update: (deltaTime) => {
-                switch (this.attack.state) {
-                    case "idle":
-                        if (this.attack.timer <= 0 &&
-                            window.$game.inputManager.isKeyDown('J')) {
-                            // 进入前摇
-                            this.attack.state = "startup";
-                            this.attack.timer = this.attack.startupTime;
-                        }
-                        break;
-
-                    case "startup":
-                        this.attack.timer -= deltaTime;
-                        if (this.attack.timer <= 0) {
-                            // 播放音效
-                            window.$game.soundManager.playSound("player", "attack");
-                            // 进入出招
-                            this.attack.state = "active";
-                            this.attack.timer = this.attack.activeTime;
-
-                            const offset = 0.5 * (this.facing >= 0 ? this.hitbox.size.x : -this.hitbox.size.x);
-                            this.attack.attackBox = new Hitbox(
-                                this.hitbox.position.addVector(new Vector(offset, this.hitbox.size.y * 0.25)),
-                                new Vector(this.hitbox.size.x * 0.8, this.hitbox.size.y * 0.5)
-                            );
-                        }
-                        break;
-
-                    case "active":
-                        this.attack.timer -= deltaTime;
-                        if (this.attack.attackBox) {
-                            // 命中检测
-                            window.enemies.forEach(enemy => {
-                                if (this.attack.attackBox.checkHit(enemy.hurtBox)) {
-                                    enemy.takeDamage(this.attack.damage);
-                                }
-                            });
-                        }
-                        if (this.attack.timer <= 0) {
-                            // 出招结束 → 清空判定盒
-                            this.attack.attackBox = null;
-                            this.attack.state = "recovery";
-                            this.attack.timer = this.attack.recoveryTime;
-                        }
-                        break;
-
-                    case "recovery":
-                        this.attack.timer -= deltaTime;
-                        if (this.attack.timer <= 0) {
-                            this.attack.state = "idle";
-                        }
-                        break;
-                }
-            }
-        };
-    }
-
-    // 远程攻击初始化
-    initRangedAttack() {
-        this.rangedCooldown = new Cooldown(300); // 300ms射击间隔
-        this.projectiles = []; // 存储玩家发射的远程攻击
-        this.updateRangedAttack = (deltaTime) => {
-            this.rangedCooldown.tick(deltaTime);
-
-            if (window.$game.inputManager.isKeyDown("L") && this.rangedCooldown.ready()) {
-                const speed = 12;
-                const dirX = this.facing; // 水平方向，可扩展为鼠标指向
-                const dirY = 0;
-                const projectile = new Projectile(
-                    this.hitbox.getCenter(),
-                    new Vector(speed * dirX, speed * dirY),
-                    this.attack.damage
-                );
-                this.projectiles.push(projectile);
-                this.rangedCooldown.start();
-                window.$game.soundManager.playSound("player", "shoot");
-            }
-
-            // 更新所有飞行物
-            this.projectiles.forEach(p => p.update(deltaTime));
-
-            // 移除已失效的飞行物
-            this.projectiles = this.projectiles.filter(p => !p.active);
-        }
-        this.drawProjectiles = () => this.projectiles.forEach(p => p.draw());
-    }
-
     // 受击判定
     takeDamage(dmg) {
         if (!this.invulnerableCooldown.ready()) return;
-        this.hp -= dmg;
+        this.state.hp -= dmg;
         this.invulnerableCooldown.start();
-        if (this.hp <= 0) {
+        if (this.state.hp <= 0) {
             window.$game.bus.emit('player.die');
+            alert("你死了");
         }
     }
 
@@ -344,12 +274,11 @@ class Player extends Entity {
         ctx.fillStyle = 'red';
         ctx.fillRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
         ctx.fillStyle = 'green';
-        const currentHpPercent = Math.max(this.hp, 0) / 5;
+        const currentHpPercent = Math.max(this.state.hp, 0) / this.state.hp_max;
         const currentHpWidth = hpBarWidth * currentHpPercent;
         ctx.fillRect(hpBarX, hpBarY, currentHpWidth, hpBarHeight);
         ctx.strokeStyle = 'black';
         ctx.strokeRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
-        this.drawProjectiles();
         ctx.restore();
 
         // if (this.onEvent)

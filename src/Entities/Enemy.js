@@ -1,3 +1,8 @@
+import { Entity } from "./Entity";
+import { Vector } from "../Utils/Vector";
+import { Hitbox } from "../Utils/Hitbox";
+import { Cooldown } from "../Utils/Cooldown";
+import { MeleeAttack } from "../System/Attack/MeleeAttack";
 class Enemy_Animation {
     static Framerate = {
         "run": 6,
@@ -49,25 +54,56 @@ class Enemy_Animation {
         return window.$game.textureManager.getTexture("enemy", 0);
     }
 }
-class Enemy extends Entity {
+export class Enemy extends Entity {
     constructor(type, position, size = new Vector(50, 50), velocity = new Vector()) {
         super(position, size, velocity);
         this.Size = size;
         this.type = "enemy" + type;
-        this.hp = 3;
+
+        this.baseState = {
+            hp_max: 100,                //血量上限
+            attack_baseDamage: 10,      //基础伤害
+            attack_baseMeleeStartupTime: 50,    //攻击前摇
+            attack_baseMeleeRecoveryTime: 900,   //攻击后摇
+            attack_baseRangedStartupTime: 150,    //攻击前摇
+            attack_baseRangedRecoveryTime: 700,   //攻击后摇
+            items: []
+        }
+        this.state = {
+            hp: this.baseState.hp_max,  //当前血量
+            hp_max: this.baseState.hp_max,
+            attack: {
+                damage: {
+                    melee: this.baseState.attack_baseDamage,
+                    ranged: this.baseState.attack_baseDamage
+                },
+                startupTime: {
+                    melee: this.baseState.attack_baseMeleeStartupTime,
+                    ranged: this.baseState.attack_baseRangedStartupTime
+                },
+                recoveryTime: {
+                    melee: this.baseState.attack_baseMeleeRecoveryTime,
+                    ranged: this.baseState.attack_baseRangedStartupTime
+                }
+
+            },
+        }
         this.facing = 1;
         this.animation = new Enemy_Animation();
         // 攻击
-        this.initAttack()
+        this.attack = {
+            melee: new MeleeAttack(this),
+            targetSelector: () => [window.$game.player]
+        }
         // 受击
         this.hurtBox = this.hitbox;
-        this.isInvulnerable = false;
-        this.invulnerableTime = 30;
-        this.invulnerableTimer = 0;
+        this.invulnerableCooldown = new Cooldown(100);//受击间隔
         this._unbind_list = [];
     }
 
     async update(deltaTime) {
+        // 受击无敌冷却
+        this.invulnerableCooldown.tick(deltaTime);
         // 计算与玩家的距离
         const horizontalDist = Math.abs(this.hitbox.getCenter().x - window.$game.player.hitbox.getCenter().x);
         const verticalDist = this.hitbox.getCenter().y - window.$game.player.hitbox.getCenter().y;
@@ -86,7 +122,7 @@ class Enemy extends Entity {
                 // 寻找路径模式：检查是否有直接路径到达玩家
                 if (this.hasDirectPathToPlayer()) {
                     // 只在冷却完成后，有一定概率触发攻击
-                    shouldAttack = this.attack.cooldown.ready() && Math.random() < 0.2;
+                    shouldAttack = Math.random() < 0.2;
                 }
             }
         } else if (verticalDist < -50) {
@@ -98,7 +134,7 @@ class Enemy extends Entity {
                 lockOnMode = "wait";
                 // 等待模式：检查是否有安全的下跳路径
                 if (this.hasSafeDropPath()) {
-                    shouldAttack = this.attack.cooldown.ready() && Math.random() < 0.3;
+                    shouldAttack = Math.random() < 0.3;
                 }
             }
         } else {
@@ -109,22 +145,12 @@ class Enemy extends Entity {
             if (horizontalDist < maxHorizontalDist && Math.abs(verticalDist) < maxVerticalDist) {
                 lockOnMode = "attack";
                 // 攻击模式下，每次冷却完成有 40% 概率触发攻击
-                shouldAttack = this.attack.cooldown.ready() && Math.random() < 0.4;
+                shouldAttack = Math.random() < 0.4;
             }
         }
 
-        this.attack.update(deltaTime, shouldAttack);
-        // 受击无敌计时
-        if (this.isInvulnerable) {
-            if (this.attackBox && this.attackBox.checkHit(window.$game.player.hurtBox)) {
-                player.takeDamage(this.attackDamage);
-            }
-            this.invulnerableTimer -= deltaTime;
-            if (this.invulnerableTimer <= 0) {
-                this.isInvulnerable = false;
-                this.invulnerableTimer = 0;
-            }
-        }
+        if (shouldAttack) this.attack.melee.trigger()
+        this.attack.melee.update(deltaTime);
 
         // 根据锁敌模式更新移动策略
         this.updateMovementByMode(lockOnMode, horizontalDist, verticalDist);
@@ -408,94 +434,18 @@ class Enemy extends Entity {
 
     // 受击判定
     takeDamage(dmg) {
-        if (this.isInvulnerable) return;
-        this.hp -= dmg;
-        this.isInvulnerable = true;
-        this.invulnerableTimer = this.invulnerableTime;
-        if (this.hp <= 0) {
+        if (!this.invulnerableCooldown.ready()) return;
+        this.state.hp -= dmg;
+        this.invulnerableCooldown.start();
+        if (this.state.hp <= 0) {
             // 死亡逻辑
             // 解绑所有事件
             this._unbind_list.forEach((unbind) => unbind());
             this._unbind_list = [];
             // 从全局移除自己
-            const idx = window.enemies.indexOf(this);
-            if (idx !== -1) window.enemies.splice(idx, 1);
+            const idx = window.$game.enemies.indexOf(this);
+            if (idx !== -1) window.$game.enemies.splice(idx, 1);
         }
-    }
-
-    // 攻击初始化
-    initAttack() {
-        this.attack = {
-            state: "idle", // idle, startup, active, recovery
-            timer: 0,
-            attackBox: null,
-
-            damage: 1,
-            startupTime: 150,   // 前摇(ms)
-            activeTime: 1,     // 出招帧(ms)
-            recoveryTime: 200,  // 后摇(ms)
-            cooldownTime: 1500,  // 总冷却(ms)，包含以上所有阶段
-
-            cooldown: null,
-
-            update: (deltaTime, shouldAttack) => {
-                // 冷却 tick
-                this.attack.cooldown.tick(deltaTime);
-
-                switch (this.attack.state) {
-                    case "idle":
-                        if (this.attack.cooldown.ready() && shouldAttack) {
-                            // 进入前摇
-                            this.attack.state = "startup";
-                            this.attack.timer = this.attack.startupTime;
-                            this.attack.cooldown.start(); // 冷却从前摇开始计
-                        }
-                        break;
-
-                    case "startup":
-                        this.attack.timer -= deltaTime;
-                        if (this.attack.timer <= 0) {
-                            // 播放音效
-                            window.$game.soundManager.playSound("enemy", "attack");
-                            // 进入出招
-                            this.attack.state = "active";
-                            this.attack.timer = this.attack.activeTime;
-
-                            const offset = 0.5 * (this.facing >= 0 ? this.hitbox.size.x : -this.hitbox.size.x);
-                            this.attack.attackBox = new Hitbox(
-                                this.hitbox.position.addVector(new Vector(offset, this.hitbox.size.y * 0.25)),
-                                new Vector(this.hitbox.size.x * 0.8, this.hitbox.size.y * 0.5)
-                            );
-                        }
-                        break;
-
-                    case "active":
-                        this.attack.timer -= deltaTime;
-                        if (this.attack.attackBox) {
-                            // 命中检测
-                            if (this.attack.attackBox.checkHit(window.$game.player.hitbox)) {
-                                window.$game.player.takeDamage(this.attack.damage);
-                            }
-                        }
-                        if (this.attack.timer <= 0) {
-                            // 出招结束 → 清空判定盒
-                            this.attack.attackBox = null;
-                            this.attack.state = "recovery";
-                            this.attack.timer = this.attack.recoveryTime;
-                        }
-                        break;
-
-                    case "recovery":
-                        this.attack.timer -= deltaTime;
-                        if (this.attack.timer <= 0) {
-                            this.attack.state = "idle";
-                        }
-                        break;
-                }
-            }
-        };
-
-        this.attack.cooldown = new Cooldown(this.attack.cooldownTime);
     }
 
     draw() {
@@ -515,7 +465,7 @@ class Enemy extends Entity {
         ctx.fillStyle = 'red';
         ctx.fillRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
         ctx.fillStyle = 'green';
-        const currentHpPercent = Math.max(this.hp, 0) / 3;
+        const currentHpPercent = Math.max(this.state.hp, 0) / this.state.hp_max;
         const currentHpWidth = hpBarWidth * currentHpPercent;
         ctx.fillRect(hpBarX, hpBarY, currentHpWidth, hpBarHeight);
         ctx.strokeStyle = 'black';

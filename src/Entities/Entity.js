@@ -1,3 +1,6 @@
+import { Hitbox } from "../Utils/Hitbox";
+import { Vector } from "../Utils/Vector";
+import { Cooldown } from "../Utils/Cooldown"
 class Jumping {
     /**
      * 跳跃系统
@@ -82,7 +85,7 @@ class Jumping {
     }
 }
 
-class Entity {
+export class Entity {
     /**
      *
      * @param {Vector} position

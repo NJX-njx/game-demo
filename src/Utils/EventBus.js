@@ -1,4 +1,4 @@
-class EventBus {
+export class EventBus {
     constructor() { this.listeners = new Map(); }
     on(event, handler) {
         if (!this.listeners.has(event)) this.listeners.set(event, new Set());

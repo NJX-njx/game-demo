@@ -1,4 +1,4 @@
-class Hitbox {
+export class Hitbox {
     /**
      * @param {Vector} position
      * @param {Vector} size

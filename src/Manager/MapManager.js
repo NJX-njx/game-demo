@@ -1,3 +1,5 @@
+import { Hitbox } from "../Utils/Hitbox";
+import { Vector } from "../Utils/Vector";
 // Block类，继承自Hitbox
 class Block extends Hitbox {
     constructor(position, size, type) {
@@ -16,7 +18,7 @@ class Interaction extends Hitbox {
     }
 }
 
-class MapManager {
+export class MapManager {
     constructor() {
         this.backgrounds = [];
         this.blocks = [];

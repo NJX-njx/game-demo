@@ -1,4 +1,14 @@
-class Game {
+import { InputManager } from "./Manager/InputManager";
+import { DataManager } from "./Manager/DataManager";
+import { TextureManager } from "./Manager/TextureManager";
+import { SoundManager } from "./Manager/SoundManager";
+import { EventBus } from "./Utils/EventBus";
+import { MapManager } from "./Manager/MapManager";
+import { ProjectilesManager } from "./System/Attack/ProjectilesManager";
+import { Player } from "./Entities/Player";
+import { Enemy } from "./Entities/Enemy";
+import { Vector } from "./Utils/Vector";
+export class Game {
     constructor() {
         window.$game = this;
         // 获取画布
@@ -19,11 +29,12 @@ class Game {
         this.mapManager = new MapManager();
         // this.viewData = new ViewData();
 
-        this.saveManager = new SaveManager();
+        // this.saveManager = new SaveManager();
         // this.dialogManager = new DialogManager();
 
         // this.eventManager = new EventManager();
         // this.achievementManager = new AchievementManager();
+        this.projectilesManager = new ProjectilesManager();
 
         this.player = new Player(new Vector(100, 100));
 
@@ -56,7 +67,8 @@ class Game {
         this.bus.on('tick', ({ deltaTime }) => {
             this.inputManager.update();
             this.player.update(deltaTime);
-            window.enemies.forEach(enemy => enemy.update(deltaTime));
+            this.enemies.forEach(enemy => enemy.update(deltaTime));
+            this.projectilesManager.update(deltaTime);
         });
         this.bus.on('tick_draw', () => {
             const ctx = this.ctx;
@@ -64,15 +76,16 @@ class Game {
             // 绘制地图
             this.mapManager.draw();
             this.player.draw();
-            window.enemies.forEach(enemy => enemy.draw());
+            this.enemies.forEach(enemy => enemy.draw());
+            this.projectilesManager.draw(ctx);
         });
 
         // 初始化敌人
         const enemySpawns = this.mapManager.getEnemySpawns();
-        window.enemies = [];
+        this.enemies = [];
         if (Array.isArray(enemySpawns)) {
             for (const e of enemySpawns) {
-                window.enemies.push(new Enemy(e.type, new Vector(e.x, e.y)));
+                this.enemies.push(new Enemy(e.type, new Vector(e.x, e.y)));
             }
         }
     }

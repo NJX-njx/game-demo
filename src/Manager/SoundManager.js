@@ -1,4 +1,4 @@
-class SoundManager {
+export class SoundManager {
     constructor() {
         // this.bgmsFormal = [
         //     new Audio("./assets/audios/bgms/村上純 - かえり道.mp3"),

@@ -2,8 +2,8 @@ window.$game.dataManager.resolve(
     {
         playerSpawn: { x: 500, y: 300 },
         enemySpawns: [
-            { x: 300, y: 0, type: "enemy1" },
-            { x: 800, y: 0, type: "enemy2" }
+            { x: 300, y: 0, type: "1" },
+            { x: 800, y: 0, type: "1" }
         ],
         backgrounds: [
             { position: { x: 0, y: 0 }, size: { x: 1280, y: 720 }, type: "sky" },

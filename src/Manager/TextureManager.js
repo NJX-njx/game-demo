@@ -1,4 +1,4 @@
-class TextureManager {
+export class TextureManager {
     constructor() { }
 
     async load() {
