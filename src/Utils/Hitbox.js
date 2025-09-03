@@ -75,10 +75,6 @@ export class Hitbox {
         return null;
     }
 
-    outofMap() {
-        return !this.checkHit(window.$game.mapManager.mapHitbox);
-    }
-
     // 合并两个 hitbox，返回一个新的包含两个 hitbox 的最小 hitbox
     merge(other) {
         let newLeftup = new Vector(Math.min(this.position.x, other.position.x), Math.min(this.position.y, other.position.y));

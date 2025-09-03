@@ -1,21 +1,23 @@
 export class DataManager {
-    constructor() { }
-    async loadJSON(src) {
-        let jsonp = document.createElement('script');
-        jsonp.src = src;
-        let json = await new Promise((resolve) => {
-            this.resolve = resolve;
-            document.getElementById('resource').appendChild(jsonp);
-        });
-        return json;
+    constructor() {
+        if (DataManager.instance) return DataManager.instance;
+        DataManager.instance = this;
     }
+
+    async loadJSON(src) {
+        const res = await fetch(src);
+        if (!res.ok) throw new Error(`Failed to load JSON: ${src}`);
+        return await res.json();
+    }
+
     async loadImg(src) {
-        let img = await new Promise(resolve => {
-            let img = new Image();
+        return new Promise((resolve, reject) => {
+            const img = new Image();
             img.src = src;
-            document.getElementById('resource').appendChild(img);
             img.onload = () => resolve(img);
+            img.onerror = (err) => reject(new Error(`Failed to load image: ${src}`));
         });
-        return img;
     }
 }
+
+export const dataManager = new DataManager();

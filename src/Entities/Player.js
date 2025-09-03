@@ -3,6 +3,11 @@ import { Vector } from "../Utils/Vector";
 import { MeleeAttack } from "../System/Attack/MeleeAttack"
 import { RangedAttack } from "../System/Attack/RangedArrack"
 import { Cooldown } from "../Utils/Cooldown";
+import { game } from "../Game";
+import { textureManager } from "../Manager/TextureManager";
+import { soundManager } from "../Manager/SoundManager";
+import { inputManager } from "../Manager/InputManager";
+import { bus } from "../Utils/EventBus";
 class Player_Animation {
     static Framerate = {
         "run": 6,
@@ -50,14 +55,17 @@ class Player_Animation {
         //     }
     }
     getFrame() {
-        // return window.$game.textureManager.getTexture(this.status, this.frame * this.facing);
-        return window.$game.textureManager.getTexture("player", 0);
+        // return textureManager.getTexture(this.status, this.frame * this.facing);
+        return textureManager.getTexture("player", 0);
     }
 }
 
 export class Player extends Entity {
-    constructor(position, size = new Vector(50, 50), velocity = new Vector()) {
-        super(position, size, velocity);
+    constructor(size = new Vector(50, 50)) {
+        if (Player.instance)
+            return Player.instance;
+        super(new Vector(), size, new Vector());
+        Player.instance = this
         this.size = size;
         this.type = "player";
         this.jumping.type = "player";
@@ -92,7 +100,7 @@ export class Player extends Entity {
             },
         }
         this.attack = {
-            targetSelector: () => window.$game.enemies,
+            targetSelector: () => game.enemies,
             melee: new MeleeAttack(this),
             ranged: new RangedAttack(this)
         }
@@ -106,8 +114,8 @@ export class Player extends Entity {
         this.invulnerableCooldown = new Cooldown(100);//受击间隔
         this.controllerX = () => {
             if (this.blockMove) return 0;
-            let moveLeft = window.$game.inputManager.isKeysDown(["A", "Left"]);
-            let moveRight = window.$game.inputManager.isKeysDown(["D", "Right"]);
+            let moveLeft = inputManager.isKeysDown(["A", "Left"]);
+            let moveRight = inputManager.isKeysDown(["D", "Right"]);
             let move = 0;
             if (moveLeft && moveRight)
                 move = 0;
@@ -119,9 +127,9 @@ export class Player extends Entity {
         }
         this.controllerY = () => {
             if (this.blockMove) return 0;
-            if (window.$game.inputManager.isFirstDown("Space"))
+            if (inputManager.isFirstDown("Space"))
                 this.jumping.jumpBuffer.start();
-            return window.$game.inputManager.isHeld("Space");
+            return inputManager.isHeld("Space");
         }
     }
 
@@ -130,8 +138,8 @@ export class Player extends Entity {
         this.invulnerableCooldown.tick(deltaTime);
 
         // 攻击
-        if (window.$game.inputManager.isKeyDown('J')) this.attack.melee.trigger();
-        if (window.$game.inputManager.isKeyDown('L')) this.attack.ranged.trigger();
+        if (inputManager.isKeyDown('J')) this.attack.melee.trigger();
+        if (inputManager.isKeyDown('L')) this.attack.ranged.trigger();
         this.attack.melee.update(deltaTime);
         this.attack.ranged.update(deltaTime);
         // 冲刺
@@ -145,7 +153,6 @@ export class Player extends Entity {
         if (this.jumping.jumpVelocity > 0) {
             this.animation.setStatus("jump", this.facing);
         } else if (!this.isOnGround()) {
-            window.$game.statistics.jumpTime += deltaTime;
             if (this.jumping.jumpVelocity < 0)
                 this.animation.setStatus("fall", this.facing);
         } else {
@@ -210,13 +217,13 @@ export class Player extends Entity {
 
             // --- 冲刺输入检测 ---
             let dx = 0, dy = 0;
-            if (window.$game.inputManager.isKeysDown(['A', 'Left'])) dx -= 1;
-            if (window.$game.inputManager.isKeysDown(['D', 'Right'])) dx += 1;
-            if (window.$game.inputManager.isKeysDown(['W', 'Up'])) dy -= 1;
-            if (window.$game.inputManager.isKeysDown(['S', 'Down'])) dy += 1;
+            if (inputManager.isKeysDown(['A', 'Left'])) dx -= 1;
+            if (inputManager.isKeysDown(['D', 'Right'])) dx += 1;
+            if (inputManager.isKeysDown(['W', 'Up'])) dy -= 1;
+            if (inputManager.isKeysDown(['S', 'Down'])) dy += 1;
 
             // 触发冲刺
-            if (!this.dash.isDashing && this.dash.dashCount > 0 && window.$game.inputManager.isKeyDown('K')) {
+            if (!this.dash.isDashing && this.dash.dashCount > 0 && inputManager.isKeyDown('K')) {
                 if (dx === 0 && dy === 0) dx = this.facing;
                 let len = Math.sqrt(dx * dx + dy * dy);
                 if (len === 0) len = 1;
@@ -225,7 +232,7 @@ export class Player extends Entity {
                 this.dash.isDashing = true;
                 this.dash.dashDurationCooldown.start();
                 this.dash.dashCount--;
-                window.$game.soundManager.playSound('player', 'dash');
+                soundManager.playSound('player', 'dash');
             }
 
             // --- 冲刺状态 ---
@@ -246,8 +253,9 @@ export class Player extends Entity {
         if (!this.invulnerableCooldown.ready()) return;
         this.state.hp -= dmg;
         this.invulnerableCooldown.start();
+        console.log(this.state.hp);
         if (this.state.hp <= 0) {
-            window.$game.bus.emit('player.die');
+            bus.emit('player.die');
             alert("你死了");
         }
     }
@@ -256,8 +264,7 @@ export class Player extends Entity {
         this.hitbox.position = position;
     }
 
-    draw() {
-        const ctx = window.$game.ctx;
+    draw(ctx) {
         //  绘制玩家
         ctx.drawImage(
             this.animation.getFrame(),
@@ -283,7 +290,7 @@ export class Player extends Entity {
 
         // if (this.onEvent)
         //     ctx.drawImage(
-        //         window.$game.textureManager.getTexture("onEvent", 0),
+        //         textureManager.getTexture("onEvent", 0),
         //         this.hitbox.position.x + this.size.x / 2 - halfSize,
         //         this.hitbox.position.y - halfSize - basicSize,
         //         basicSize, basicSize);
@@ -326,3 +333,5 @@ export class Player extends Entity {
         }
     }
 }
+
+export const player = new Player();

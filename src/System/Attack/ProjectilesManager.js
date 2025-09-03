@@ -1,6 +1,9 @@
 import { Projectile } from "./Projectile";
 export class ProjectilesManager {
     constructor() {
+        if (ProjectilesManager.instance)
+            return ProjectilesManager.instance;
+        ProjectilesManager.instance = this;
         this.projectiles = [];
     }
 
@@ -36,3 +39,5 @@ export class ProjectilesManager {
         this.projectiles.length = 0;
     }
 }
+
+export const projectilesManager = new ProjectilesManager();

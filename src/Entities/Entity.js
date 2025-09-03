@@ -1,6 +1,8 @@
 import { Hitbox } from "../Utils/Hitbox";
 import { Vector } from "../Utils/Vector";
 import { Cooldown } from "../Utils/Cooldown"
+import { soundManager } from "../Manager/SoundManager";
+import { mapManager } from "../Manager/MapManager";
 class Jumping {
     /**
      * 跳跃系统
@@ -32,7 +34,7 @@ class Jumping {
         this.chargeTime = 0;
         this.jumpBuffer.reset();
         this.coyoteTimer = 0;
-        window.$game.soundManager.playSound(this.type, "jump");
+        soundManager.playSound(this.type, "jump");
     }
 
     updateJump(isSpaceHeld, deltaTime, onGround) {
@@ -113,10 +115,8 @@ export class Entity {
         if (this.velocity.y < 0) return false;
         this.hitbox.position.y += 1;
         let collided = false;
-        if (window.$game && window.$game.mapManager) {
-            const blocks = window.$game.mapManager.getBlockHitboxes();
-            collided = !!this.hitbox.checkHits(blocks, () => { });
-        }
+        const blocks = mapManager.getBlockHitboxes();
+        collided = !!this.hitbox.checkHits(blocks, () => { });
         this.hitbox.position.y -= 1;
         if (collided) this.isflying = 0;
         return collided;
@@ -133,7 +133,7 @@ export class Entity {
         let move = this.velocity.scale(deltaTime).round();
         let flag = 0;
         // 获取地图方块碰撞盒
-        let blocks = window.$game.mapManager.getBlockHitboxes();
+        let blocks = mapManager.getBlockHitboxes();
 
         // X方向
         for (let i = 0; i < Math.abs(move.x); ++i) {
@@ -178,7 +178,7 @@ export class Entity {
                 nextVelocityX = move * Math.min(Math.sqrt(this.velocity.x * this.velocity.x + accel), this.MaxSpeed);
             }
             if (move) {
-                window.$game.soundManager.playSound(this.type, 'walk');
+                soundManager.playSound(this.type, 'walk');
             }
         } else {
             // 空中逻辑
@@ -221,8 +221,8 @@ export class Entity {
         this.updateXY(deltaTime, () => { return 0; }, () => { return 0; });
     }
 
-    draw() {
-        window.$game.ctx.fillStyle = `rgba(221, 100, 0, 1)`;
-        window.$game.ctx.fillRect(this.hitbox.position.x, this.hitbox.position.y, this.hitbox.size.x, this.hitbox.size.y);
+    draw(ctx) {
+        ctx.fillStyle = `rgba(221, 100, 0, 1)`;
+        ctx.fillRect(this.hitbox.position.x, this.hitbox.position.y, this.hitbox.size.x, this.hitbox.size.y);
     }
 }

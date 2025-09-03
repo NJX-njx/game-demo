@@ -3,6 +3,10 @@ import { Vector } from "../Utils/Vector";
 import { Hitbox } from "../Utils/Hitbox";
 import { Cooldown } from "../Utils/Cooldown";
 import { MeleeAttack } from "../System/Attack/MeleeAttack";
+import { game } from "../Game";
+import { textureManager } from "../Manager/TextureManager";
+import { player } from "./Player";
+import { mapManager } from "../Manager/MapManager";
 class Enemy_Animation {
     static Framerate = {
         "run": 6,
@@ -50,8 +54,8 @@ class Enemy_Animation {
         //     }
     }
     getFrame() {
-        // return window.$game.textureManager.getTexture(this.status, this.frame * this.facing);
-        return window.$game.textureManager.getTexture("enemy", 0);
+        // return textureManager.getTexture(this.status, this.frame * this.facing);
+        return textureManager.getTexture("enemy", 0);
     }
 }
 export class Enemy extends Entity {
@@ -93,7 +97,7 @@ export class Enemy extends Entity {
         // 攻击
         this.attack = {
             melee: new MeleeAttack(this),
-            targetSelector: () => [window.$game.player]
+            targetSelector: () => [player]
         }
         // 受击
         this.hurtBox = this.hitbox;
@@ -105,8 +109,8 @@ export class Enemy extends Entity {
         // 受击无敌冷却
         this.invulnerableCooldown.tick(deltaTime);
         // 计算与玩家的距离
-        const horizontalDist = Math.abs(this.hitbox.getCenter().x - window.$game.player.hitbox.getCenter().x);
-        const verticalDist = this.hitbox.getCenter().y - window.$game.player.hitbox.getCenter().y;
+        const horizontalDist = Math.abs(this.hitbox.getCenter().x - player.hitbox.getCenter().x);
+        const verticalDist = this.hitbox.getCenter().y - player.hitbox.getCenter().y;
 
         // 分层锁敌逻辑
         let shouldAttack = false;
@@ -166,7 +170,7 @@ export class Enemy extends Entity {
                 // 根据锁敌模式决定移动行为
                 if (lockOnMode === "attack" || lockOnMode === "seek_path") {
                     // 攻击模式或寻找路径模式：朝向玩家移动
-                    if (this.hitbox.position.x < window.$game.player.hitbox.position.x) this.facing = move = 1;
+                    if (this.hitbox.position.x < player.hitbox.position.x) this.facing = move = 1;
                     else this.facing = move = -1;
                     move *= 0.3;
                 } else if (lockOnMode === "wait") {
@@ -181,7 +185,7 @@ export class Enemy extends Entity {
                     // 检查是否会撞墙，如果会撞墙则改变方向
                     const nextX = this.hitbox.position.x + this.facing * 2; // 检查前方2像素
                     const testHitbox = new Hitbox(new Vector(nextX, this.hitbox.position.y), this.hitbox.size);
-                    const blocks = window.$game.mapManager.getBlockHitboxes();
+                    const blocks = mapManager.getBlockHitboxes();
                     let willHitWall = false;
 
                     for (const block of blocks) {
@@ -208,9 +212,8 @@ export class Enemy extends Entity {
                 // 根据锁敌模式决定跳跃行为
                 if (lockOnMode === "attack" || lockOnMode === "seek_path") {
                     // 攻击模式或寻找路径模式：可以跳跃
-                    // return window.$game.inputManager.firstDown("Space", () => {
+                    // TODO:实现敌人跳跃逻辑
                     // this.jumping.jumpBuffer.start();
-                    // });
                 } else {
                     // 其他模式：不跳跃
                     return 0;
@@ -222,7 +225,6 @@ export class Enemy extends Entity {
         if (this.jumping.jumpVelocity > 0) {
             this.animation.setStatus("jump", this.facing);
         } else if (!this.isOnGround()) {
-            window.$game.statistics.jumpTime += deltaTime;
             if (this.jumping.jumpVelocity < 0)
                 this.animation.setStatus("fall", this.facing);
         } else {
@@ -237,11 +239,11 @@ export class Enemy extends Entity {
 
     // 检查是否有直接路径到达玩家
     hasDirectPathToPlayer() {
-        const playerPos = window.$game.player.hitbox.position;
+        const playerPos = player.hitbox.position;
         const enemyPos = this.hitbox.position;
 
         // 简单的路径检测：检查敌人和玩家之间是否有障碍物
-        const blocks = window.$game.mapManager.getBlockHitboxes();
+        const blocks = mapManager.getBlockHitboxes();
 
         // 创建从敌人到玩家的检测线
         const testHitbox = new Hitbox(
@@ -261,11 +263,11 @@ export class Enemy extends Entity {
 
     // 检查是否有安全的下跳路径
     hasSafeDropPath() {
-        const playerPos = window.$game.player.hitbox.position;
+        const playerPos = player.hitbox.position;
         const enemyPos = this.hitbox.position;
 
         // 检查敌人下方是否有安全的着陆点
-        const blocks = window.$game.mapManager.getBlockHitboxes();
+        const blocks = mapManager.getBlockHitboxes();
         const dropTestY = enemyPos.y + 100; // 测试下跳100像素
 
         // 创建下跳检测区域
@@ -309,11 +311,11 @@ export class Enemy extends Entity {
 
     // 寻找垂直路径
     seekVerticalPath() {
-        const playerPos = window.$game.player.hitbox.position;
+        const playerPos = player.hitbox.position;
         const enemyPos = this.hitbox.position;
 
         // 检查周围是否有可攀爬的平台
-        const blocks = window.$game.mapManager.getBlockHitboxes();
+        const blocks = mapManager.getBlockHitboxes();
         let nearestPlatform = null;
         let minDistance = Infinity;
 
@@ -365,7 +367,7 @@ export class Enemy extends Entity {
         // 检查是否会撞墙，如果会撞墙则改变方向
         const nextX = this.hitbox.position.x + this.facing * 2;
         const testHitbox = new Hitbox(new Vector(nextX, this.hitbox.position.y), this.hitbox.size);
-        const blocks = window.$game.mapManager.getBlockHitboxes();
+        const blocks = mapManager.getBlockHitboxes();
         let willHitWall = false;
 
         for (const block of blocks) {
@@ -401,11 +403,11 @@ export class Enemy extends Entity {
 
     // 寻找下跳点
     seekDropPoint() {
-        const playerPos = window.$game.player.hitbox.position;
+        const playerPos = player.hitbox.position;
         const enemyPos = this.hitbox.position;
 
         // 检查敌人下方是否有安全的着陆点
-        const blocks = window.$game.mapManager.getBlockHitboxes();
+        const blocks = mapManager.getBlockHitboxes();
         let bestDropPoint = null;
         let minDistance = Infinity;
 
@@ -443,13 +445,12 @@ export class Enemy extends Entity {
             this._unbind_list.forEach((unbind) => unbind());
             this._unbind_list = [];
             // 从全局移除自己
-            const idx = window.$game.enemies.indexOf(this);
-            if (idx !== -1) window.$game.enemies.splice(idx, 1);
+            const idx = game.enemies.indexOf(this);
+            if (idx !== -1) game.enemies.splice(idx, 1);
         }
     }
 
-    draw() {
-        const ctx = window.$game.ctx;
+    draw(ctx) {
         ctx.drawImage(
             this.animation.getFrame(),
             this.hitbox.position.x,

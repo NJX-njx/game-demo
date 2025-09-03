@@ -1,44 +1,22 @@
-import { InputManager } from "./Manager/InputManager";
-import { DataManager } from "./Manager/DataManager";
-import { TextureManager } from "./Manager/TextureManager";
-import { SoundManager } from "./Manager/SoundManager";
-import { EventBus } from "./Utils/EventBus";
-import { MapManager } from "./Manager/MapManager";
-import { ProjectilesManager } from "./System/Attack/ProjectilesManager";
-import { Player } from "./Entities/Player";
+import { inputManager } from "./Manager/InputManager";
+import { textureManager } from "./Manager/TextureManager";
+import { soundManager } from "./Manager/SoundManager";
+import { bus } from "./Utils/EventBus";
+import { mapManager } from "./Manager/MapManager";
+import { projectilesManager } from "./System/Attack/ProjectilesManager";
+import { player } from "./Entities/Player";
 import { Enemy } from "./Entities/Enemy";
 import { Vector } from "./Utils/Vector";
 export class Game {
     constructor() {
-        window.$game = this;
+        if (Game.instance)
+            return Game.instance;
+        Game.instance = this;
         // 获取画布
         this.canvas = document.getElementById('canvas');
         this.ctx = this.canvas.getContext('2d');
 
-        // 输入管理
-        this.inputManager = new InputManager(this.canvas);
-
-        // 资源管理
-        this.dataManager = new DataManager();
-        this.textureManager = new TextureManager();
-        this.soundManager = new SoundManager();
-
-        // 事件总线
-        this.bus = new EventBus();
-
-        this.mapManager = new MapManager();
-        // this.viewData = new ViewData();
-
-        // this.saveManager = new SaveManager();
-        // this.dialogManager = new DialogManager();
-
-        // this.eventManager = new EventManager();
-        // this.achievementManager = new AchievementManager();
-        this.projectilesManager = new ProjectilesManager();
-
-        this.player = new Player(new Vector(100, 100));
-
-        this.stop = false;
+        this.isStop = false;
         this.isPaused = false;
 
         this.lastTime = 0;
@@ -56,32 +34,33 @@ export class Game {
     }
 
     async init() {
-        await this.textureManager.load();
-        await this.soundManager.load();
-        await this.mapManager.loadRoom(1, 1);
+        await textureManager.load();
+        await soundManager.load();
+        await mapManager.loadRoom(1, 1);
 
         // 初始化玩家
-        const spawn = this.mapManager.getPlayerSpawn();
-        this.player.setPosition(new Vector(spawn.x, spawn.y));
+        const spawn = mapManager.getPlayerSpawn();
+        player.setPosition(new Vector(spawn.x, spawn.y));
 
-        this.bus.on('tick', ({ deltaTime }) => {
-            this.inputManager.update();
-            this.player.update(deltaTime);
+        bus.on('tick', ({ deltaTime }) => {
+            inputManager.update();
+            player.update(deltaTime);
             this.enemies.forEach(enemy => enemy.update(deltaTime));
-            this.projectilesManager.update(deltaTime);
+            projectilesManager.update(deltaTime);
         });
-        this.bus.on('tick_draw', () => {
+        bus.on('tick_draw', () => {
             const ctx = this.ctx;
             ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             // 绘制地图
-            this.mapManager.draw();
-            this.player.draw();
-            this.enemies.forEach(enemy => enemy.draw());
-            this.projectilesManager.draw(ctx);
+            mapManager.draw(ctx);
+            player.draw(ctx);
+            this.enemies.forEach(enemy => enemy.draw(ctx));
+            projectilesManager.draw(ctx);
         });
+        bus.on("player.die", () => this.stop())
 
         // 初始化敌人
-        const enemySpawns = this.mapManager.getEnemySpawns();
+        const enemySpawns = mapManager.getEnemySpawns();
         this.enemies = [];
         if (Array.isArray(enemySpawns)) {
             for (const e of enemySpawns) {
@@ -97,12 +76,25 @@ export class Game {
     loop(currentTime) {
         const deltaTime = currentTime - this.lastTime;
 
-        if (deltaTime >= this.targetFrameTime) {
-            this.bus.emit('tick', { deltaTime: deltaTime });
-            this.bus.emit('tick_draw');
-            this.lastTime = currentTime - (deltaTime % this.targetFrameTime);
+        if (!this.isPaused && !this.isStop && deltaTime >= this.targetFrameTime) {
+            bus.emit('tick', { deltaTime: deltaTime });
+            bus.emit('tick_draw');
         }
+        this.lastTime = currentTime - (deltaTime % this.targetFrameTime);
         requestAnimationFrame(this.loop);
     }
 
+    pause() {
+        this.isPaused = true;
+    }
+
+    continue() {
+        this.isPaused = false;
+    }
+
+    stop() {
+        this.isStop = true;
+    }
 }
+
+export const game = new Game();

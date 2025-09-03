@@ -1,5 +1,7 @@
 import { Hitbox } from "../Utils/Hitbox";
 import { Vector } from "../Utils/Vector";
+import { textureManager } from "./TextureManager";
+import { dataManager } from "./DataManager";
 // Block类，继承自Hitbox
 class Block extends Hitbox {
     constructor(position, size, type) {
@@ -20,6 +22,9 @@ class Interaction extends Hitbox {
 
 export class MapManager {
     constructor() {
+        if (MapManager.instance)
+            return MapManager.instance;
+        MapManager.instance = this;
         this.backgrounds = [];
         this.blocks = [];
         this.textures = [];
@@ -33,9 +38,9 @@ export class MapManager {
      * @param {number|string} room 房间编号或名称
      */
     async loadRoom(layer, room) {
-        const url = `assets/stages/layer${layer}/room${room}.js`;
+        const url = `assets/stages/layer${layer}/room${room}.json`;
         try {
-            const data = await window.$game.dataManager.loadJSON(url);
+            const data = await dataManager.loadJSON(url);
             this.rawMapData = JSON.parse(JSON.stringify(data)); // 深拷贝一份原始地图数据
             this.playerSpawn = data.playerSpawn ? { ...data.playerSpawn } : null;
             this.enemySpawns = Array.isArray(data.enemySpawns) ? data.enemySpawns.map(e => ({ ...e })) : [];
@@ -103,8 +108,7 @@ export class MapManager {
      * 渲染地图，显示顺序：背景-方块-贴图
      * @param {CanvasRenderingContext2D} ctx
      */
-    draw() {
-        const ctx = window.$game.ctx;
+    draw(ctx) {
         // 绘制背景
         for (const bg of this.backgrounds) {
             this.drawItem(ctx, bg, 'background');
@@ -132,7 +136,7 @@ export class MapManager {
         let texture = null;
         // 贴图命名建议：如 backgrounds/xxx, blocks/xxx, textures/xxx
         let key = type + 's';
-        texture = window.$game.textureManager.getTexture(key, item.type);
+        texture = textureManager.getTexture(key, item.type);
         if (texture) {
             ctx.drawImage(texture, item.position.x, item.position.y, item.size.x, item.size.y);
         } else {
@@ -159,3 +163,5 @@ export class MapManager {
     //     ctx.restore();
     // }
 }
+
+export const mapManager = new MapManager();

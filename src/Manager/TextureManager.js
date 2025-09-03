@@ -1,60 +1,52 @@
+import { dataManager } from "./DataManager";
+
 export class TextureManager {
-    constructor() { }
+    constructor() {
+        if (TextureManager.instance) return TextureManager.instance;
+        TextureManager.instance = this;
+    }
 
     async load() {
         this.tempCanvas = document.querySelector("canvas#buffer");
-        this.texturesURL = await window.$game.dataManager.loadJSON("assets/imgs/Textures.js");
+        // 改成标准 JSON 文件
+        this.texturesURL = await dataManager.loadJSON("assets/imgs/Textures.json");
         this.textures = {};
-        let resources = new Map();
-        let urls = [];
+        const resources = new Map();
 
-        Object.keys(this.texturesURL).forEach(async (kind) => {
-            Object.keys(this.texturesURL[kind]).forEach(async (id) => {
-                urls.push(this.texturesURL[kind][id])
-            });
-        });
+        const urls = [];
+        for (const kind of Object.keys(this.texturesURL)) {
+            for (const id of Object.keys(this.texturesURL[kind])) {
+                urls.push(this.texturesURL[kind][id]);
+            }
+        }
 
+        // 用 fetch + createImageBitmap
         const tasks = urls.map(async (url) => {
-            const img = await window.$game.dataManager.loadImg(url);
-            resources.set(url, await createImageBitmap(img));
-        })
-
-        await Promise.all(tasks)
-
-        Object.keys(this.texturesURL).forEach(async (kind) => {
-            this.textures[kind] = {};
-            Object.keys(this.texturesURL[kind]).forEach(async (id) => {
-                this.textures[kind][id] = resources.get(this.texturesURL[kind][id]);
-            });
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`Failed to load image: ${url}`);
+            const blob = await res.blob();
+            const bitmap = await createImageBitmap(blob);
+            resources.set(url, bitmap);
         });
-        // console.log("texture: ", this.textures);
+
+        await Promise.all(tasks);
+
+        for (const kind of Object.keys(this.texturesURL)) {
+            this.textures[kind] = {};
+            for (const id of Object.keys(this.texturesURL[kind])) {
+                this.textures[kind][id] = resources.get(this.texturesURL[kind][id]);
+            }
+        }
     }
 
     getTexture(kind, id = "0") {
         if (this.textures[kind] && this.textures[kind][id]) {
             return this.textures[kind][id];
         } else {
-            console.warn(`TextureManager: 贴图不存在 kind='${kind}' id='${id}'`);
+            // console.warn(`TextureManager: 贴图不存在 kind='${kind}' id='${id}'`);//TODO:调试暂时关闭
             return null;
         }
     }
-
-    // /**
-    //  *
-    //  * @param {ImageBitmap} texture
-    //  * @param {number} angle 0-180
-    //  */
-    // rotateTexture(texture, angle) {
-    //     const ctx = this.tempCanvas.getContext("2d");
-    //     this.tempCanvas.width = texture.width;
-    //     this.tempCanvas.height = texture.height;
-
-    //     ctx.translate(texture.width / 2, texture.height / 2);
-    //     ctx.rotate(angle * Math.PI / 180);
-    //     ctx.translate(-texture.width / 2, -texture.height / 2);
-
-    //     ctx.drawImage(texture, 0, 0);
-
-    //     return this.tempCanvas;
-    // }
 }
+
+export const textureManager = new TextureManager();

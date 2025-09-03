@@ -1,5 +1,6 @@
 import { Entity } from "../../Entities/Entity";
 import { Vector } from "../../Utils/Vector";
+import { projectilesManager } from "./ProjectilesManager";
 export class Projectile extends Entity {
     constructor(position, velocity, damage, targetSelector, size = new Vector(10, 10)) {
         super(position, size, velocity);
@@ -8,7 +9,7 @@ export class Projectile extends Entity {
         this.alive = true;
         this.hurtBox = this.hitbox;
         this.targetSelector = targetSelector;
-        window.$game.projectilesManager.add(this);
+        projectilesManager.add(this);
     }
 
     update(deltaTime) {

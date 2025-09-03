@@ -1,85 +1,61 @@
+import { dataManager } from "./DataManager";
+
 export class SoundManager {
     constructor() {
-        // this.bgmsFormal = [
-        //     new Audio("./assets/audios/bgms/村上純 - かえり道.mp3"),
-        //     new Audio("./assets/audios/bgms/阿保剛 - Christina I.mp3"),
-        // ];
+        if (SoundManager.instance) return SoundManager.instance;
+        SoundManager.instance = this;
         this.backgroundMusic = null;
         this.init();
     }
 
-    // playBGM(name = null) {
-    //     // console.log(name)
-    //     if (window.$game.chapterNow === "Outro" && name === null)
-    //         return;
-    //     if (this.backgroundMusic)
-    //         this.backgroundMusic.pause();
-    //     if (name)
-    //         this.backgroundMusic = this.bgms[ name ];
-    //     else
-    //         this.backgroundMusic = this.bgmsFormal[ Math.floor(Math.random() * this.bgmsFormal.length) ];
-    //     // console.log(this.backgroundMusic);
-    //     this.backgroundMusic.currentTime = 0;
-    //     this.backgroundMusic.volume = 0.5;
-    //     this.backgroundMusic.play();
-    //     if (name === null)
-    //         this.backgroundMusic.addEventListener('ended', this.handleClick);
-    //     document.removeEventListener('click', this.handleClick);
-    // }
-
     handleClick = () => {
-        // this.playBGM();
+        // 在用户点击后，尝试播放一个空音频或静音解锁
+        const dummy = new Audio();
+        dummy.muted = true;
+        dummy.play().catch(() => { });
+        document.removeEventListener("click", this.handleClick);
     };
 
     init() {
-        document.addEventListener('click', this.handleClick);
+        document.addEventListener("click", this.handleClick);
     }
-
 
     async load() {
         this.sounds = {};
-        this.soundsURL = await window.$game.dataManager.loadJSON("assets/audios/Sounds.js");
-        Object.keys(this.soundsURL).forEach((kind) => {
+        // 改成标准 JSON 文件
+        this.soundsURL = await dataManager.loadJSON("assets/audios/Sounds.json");
+
+        for (const kind of Object.keys(this.soundsURL)) {
             this.sounds[kind] = {};
-            Object.keys(this.soundsURL[kind]).forEach((id) => {
+            for (const id of Object.keys(this.soundsURL[kind])) {
                 const audio = new Audio(this.soundsURL[kind][id]);
                 audio.loop = false;
                 this.sounds[kind][id] = audio;
-            });
-        });
-
-        // this.bgms = {};
-        // this.bgmsURL = await window.$game.dataManager.loadJSON("./assets/audios/BGMs.json");
-        // Object.keys(this.bgmsURL).forEach((id) => {
-        //     const audio = new Audio(this.bgmsURL[ id ]);
-        //     audio.loop = true;
-        //     this.bgms[ id ] = audio;
-        // });
+            }
+        }
     }
 
     async playSound(kind, id = 0) {
-        /** @type {HTMLAudioElement} */
         const sound = this.sounds[kind] && this.sounds[kind][id];
         if (sound) {
             if (!sound.paused) {
-                if (kind == "walk")
-                    return;
-                /**
-                 * @type {HTMLAudioElement}
-                 */
+                if (kind === "walk") return;
                 const copy = sound.cloneNode();
                 copy.currentTime = 0;
-                copy.play().catch(error => {
+                copy.play().catch((error) => {
+                    console.error(`Error playing sound: ${kind + id}`, error);
+                });
+            } else {
+                sound.currentTime = 0;
+                sound.play().catch((error) => {
                     console.error(`Error playing sound: ${kind + id}`, error);
                 });
             }
-            else {
-                sound.play().catch(error => {
-                    console.error(`Error playing sound: ${kind + id}`, error);
-                });
-            }
-        } else {
-            console.warn(`Sound ${id} not found in AudioManager.`);
+        }
+        else {
+            // console.warn(`SoundManager: 音效不存在 kind='${kind}' id='${id}'`);//TODO:调试暂时关闭
         }
     }
 }
+
+export const soundManager = new SoundManager();

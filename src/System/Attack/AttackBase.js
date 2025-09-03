@@ -1,3 +1,4 @@
+import { soundManager } from "../../Manager/SoundManager";
 export class AttackBase {
     constructor(owner, type) {
         this.owner = owner;
@@ -42,7 +43,7 @@ export class AttackBase {
 
     enterActive() {
         this.state = "active";
-        window.$game.soundManager.playSound(this.owner.type, this.type + "Attack");
+        soundManager.playSound(this.owner.type, this.type + "Attack");
         this.onHit(this.owner, this.damage);
     }
 
