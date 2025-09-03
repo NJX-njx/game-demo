@@ -4,6 +4,7 @@ import { soundManager } from "./Manager/SoundManager";
 import { bus } from "./Utils/EventBus";
 import { mapManager } from "./Manager/MapManager";
 import { projectilesManager } from "./System/Attack/ProjectilesManager";
+import { attributeManager } from "./Manager/AttributeManager";
 import { player } from "./Entities/Player";
 import { Enemy } from "./Entities/Enemy";
 import { Vector } from "./Utils/Vector";
@@ -44,6 +45,7 @@ export class Game {
 
         bus.on('tick', ({ deltaTime }) => {
             inputManager.update();
+            attributeManager.update(deltaTime);
             player.update(deltaTime);
             this.enemies.forEach(enemy => enemy.update(deltaTime));
             projectilesManager.update(deltaTime);
