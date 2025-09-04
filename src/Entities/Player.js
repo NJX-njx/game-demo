@@ -60,7 +60,7 @@ class Player_Animation {
     }
 }
 
-export class Player extends Entity {
+class Player extends Entity {
     constructor(size = new Vector(50, 50)) {
         if (Player.instance)
             return Player.instance;

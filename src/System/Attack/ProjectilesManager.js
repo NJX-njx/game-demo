@@ -1,5 +1,5 @@
 import { Projectile } from "./Projectile";
-export class ProjectilesManager {
+class ProjectilesManager {
     constructor() {
         if (ProjectilesManager.instance)
             return ProjectilesManager.instance;

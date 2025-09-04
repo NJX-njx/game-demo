@@ -1,4 +1,4 @@
-export class EventBus {
+class EventBus {
     constructor() {
         if (EventBus.instance)
             return EventBus.instance;

@@ -283,7 +283,7 @@ class KeyboardManager {
     }
 }
 
-export class InputManager {
+class InputManager {
     constructor() {
         this.keyboard = new KeyboardManager();
         this.mouse = new MouseManager();

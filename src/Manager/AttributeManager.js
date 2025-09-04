@@ -16,7 +16,7 @@ export const AttributeTypes = {
     ]
 };
 
-export class AttributeManager {
+class AttributeManager {
     constructor() {
         if (AttributeManager.instance) return AttributeManager.instance;
         AttributeManager.instance = this;

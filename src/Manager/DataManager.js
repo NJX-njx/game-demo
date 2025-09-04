@@ -1,4 +1,4 @@
-export class DataManager {
+class DataManager {
     constructor() {
         if (DataManager.instance) return DataManager.instance;
         DataManager.instance = this;

@@ -8,7 +8,7 @@ import { attributeManager } from "./Manager/AttributeManager";
 import { player } from "./Entities/Player";
 import { Enemy } from "./Entities/Enemy";
 import { Vector } from "./Utils/Vector";
-export class Game {
+class Game {
     constructor() {
         if (Game.instance)
             return Game.instance;

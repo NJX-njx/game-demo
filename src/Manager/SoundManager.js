@@ -1,6 +1,6 @@
 import { dataManager } from "./DataManager";
 
-export class SoundManager {
+class SoundManager {
     constructor() {
         if (SoundManager.instance) return SoundManager.instance;
         SoundManager.instance = this;

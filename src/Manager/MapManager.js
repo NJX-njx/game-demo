@@ -20,7 +20,7 @@ class Interaction extends Hitbox {
     }
 }
 
-export class MapManager {
+class MapManager {
     constructor() {
         if (MapManager.instance)
             return MapManager.instance;

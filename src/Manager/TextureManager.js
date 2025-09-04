@@ -1,6 +1,6 @@
 import { dataManager } from "./DataManager";
 
-export class TextureManager {
+class TextureManager {
     constructor() {
         if (TextureManager.instance) return TextureManager.instance;
         TextureManager.instance = this;
