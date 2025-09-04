@@ -1,4 +1,5 @@
 import { Duration } from "../Utils/Duration";
+
 export const AttributeTypes = {
     player: {
         ATK: "PLAYER_ATK",
@@ -6,6 +7,8 @@ export const AttributeTypes = {
         SPD: "PLAYER_SPD",
         HEAL: "PLAYER_HEAL",
         DMG: "PLAYER_DMG",
+        AttackStartupTime: "PLAYER_AttackStartupTime",
+        AttackRecoveryTime: "PLAYER_AttackRecoveryTime",
         HP_CONTINUES_DEC: "PLAYER_HP_CONTINUES_DEC",
         MeteeStartupTime: "PLAYER_MeteeStartupTime",
         MeteeRecoveryTime: "PLAYER_MeteeRecoveryTime",
@@ -17,13 +20,22 @@ export const AttributeTypes = {
         HP: "ENEMY_HP",
         DMG: "ENEMY_DMG",
         DMG_DEC: "ENEMY_DMG_DEC",
+        AttackStartupTime: "ENEMY_AttackStartupTime",
+        AttackRecoveryTime: "ENEMY_AttackRecoveryTime",
         MeteeStartupTime: "ENEMY_MeteeStartupTime",
         MeteeRecoveryTime: "ENEMY_MeteeRecoveryTime",
         RangedStartupTime: "ENEMY_RangedStartupTime",
         RangedRecoveryTime: "ENEMY_RangedRecoveryTime"
     },
     boss: {
-        // 可扩展 boss 属性
+        ATK: "BOSS_ATK",
+        HP: "BOSS_HP",
+        AttackStartupTime: "BOSS_AttackStartupTime",
+        AttackRecoveryTime: "BOSS_AttackRecoveryTime",
+        MeteeStartupTime: "BOSS_MeteeStartupTime",
+        MeteeRecoveryTime: "BOSS_MeteeRecoveryTime",
+        RangedStartupTime: "BOSS_RangedStartupTime",
+        RangedRecoveryTime: "BOSS_RangedRecoveryTime"
     }
 };
 
@@ -34,6 +46,23 @@ class AttributeManager {
 
         // 属性存储结构： key -> source -> [{value, timer}]
         this.attributes = {};
+        this.validAttributes = new Set();
+
+        this._initValidAttributes(AttributeTypes);
+    }
+
+    /**
+     * 扁平化 AttributeTypes，将所有合法属性名加入 Set
+     * @param {object} obj 
+     */
+    _initValidAttributes(obj) {
+        for (const key in obj) {
+            if (typeof obj[key] === "object") {
+                this._initValidAttributes(obj[key]);
+            } else {
+                this.validAttributes.add(obj[key]);
+            }
+        }
     }
 
     /**
@@ -42,13 +71,9 @@ class AttributeManager {
      * @returns {boolean}
      */
     _checkAttr(key) {
-        for (const type of Object.keys(AttributeTypes)) {
-            if (Object.values(AttributeTypes[type]).includes(key)) {
-                return true;
-            }
-        }
-        console.warn(`[AttributeManager] Unknown attribute key: ${key}`);
-        return false;
+        const exists = this.validAttributes.has(key);
+        if (!exists) console.warn(`[AttributeManager] 属性 "${key}" 不存在`);
+        return exists;
     }
 
     /**
