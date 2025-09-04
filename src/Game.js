@@ -1,7 +1,7 @@
 import { inputManager } from "./Manager/InputManager";
 import { textureManager } from "./Manager/TextureManager";
 import { soundManager } from "./Manager/SoundManager";
-import { bus } from "./Manager/EventBus";
+import { eventBus as bus, EventTypes } from "./Manager/EventBus";
 import { mapManager } from "./Manager/MapManager";
 import { projectilesManager } from "./System/Attack/ProjectilesManager";
 import { attributeManager } from "./Manager/AttributeManager";
@@ -43,14 +43,14 @@ class Game {
         const spawn = mapManager.getPlayerSpawn();
         player.setPosition(new Vector(spawn.x, spawn.y));
 
-        bus.on('tick', ({ deltaTime }) => {
+        bus.on(EventTypes.game.tick, ({ deltaTime }) => {
             inputManager.update();
             attributeManager.update(deltaTime);
             player.update(deltaTime);
             this.enemies.forEach(enemy => enemy.update(deltaTime));
             projectilesManager.update(deltaTime);
         });
-        bus.on('tick_draw', () => {
+        bus.on(EventTypes.game.tick, () => {
             const ctx = this.ctx;
             ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             // 绘制地图
@@ -58,8 +58,8 @@ class Game {
             player.draw(ctx);
             this.enemies.forEach(enemy => enemy.draw(ctx));
             projectilesManager.draw(ctx);
-        });
-        bus.on("player.die", () => this.stop())
+        }, { priority: -1 });
+        bus.on(EventTypes.player.die, () => this.stop());
 
         // 初始化敌人
         const enemySpawns = mapManager.getEnemySpawns();
@@ -79,8 +79,7 @@ class Game {
         const deltaTime = currentTime - this.lastTime;
 
         if (!this.isPaused && !this.isStop && deltaTime >= this.targetFrameTime) {
-            bus.emit('tick', { deltaTime: deltaTime });
-            bus.emit('tick_draw');
+            bus.emit(EventTypes.game.tick, { deltaTime: deltaTime });
         }
         this.lastTime = currentTime - (deltaTime % this.targetFrameTime);
         requestAnimationFrame(this.loop);

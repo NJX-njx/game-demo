@@ -7,7 +7,7 @@ import { game } from "../Game";
 import { textureManager } from "../Manager/TextureManager";
 import { soundManager } from "../Manager/SoundManager";
 import { inputManager } from "../Manager/InputManager";
-import { bus } from "../Manager/EventBus";
+import { eventBus as bus, EventTypes } from "../Manager/EventBus";
 class Player_Animation {
     static Framerate = {
         "run": 6,
@@ -255,7 +255,7 @@ class Player extends Entity {
         this.invulnerableCooldown.start();
         console.log(this.state.hp);
         if (this.state.hp <= 0) {
-            bus.emit('player.die');
+            bus.emit(EventTypes.player.die);
             alert("你死了");
         }
     }
