@@ -217,8 +217,8 @@ export class Entity {
     }
 
     update(deltaTime) {
-        deltaTime = 60 * deltaTime / 1000;
-        this.updateXY(deltaTime, () => { return 0; }, () => { return 0; });
+        deltaFrame = 60 * deltaTime / 1000;
+        this.updateXY(deltaFrame, () => { return 0; }, () => { return 0; });
     }
 
     draw(ctx) {

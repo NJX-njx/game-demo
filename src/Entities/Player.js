@@ -133,7 +133,7 @@ class Player extends Entity {
         }
     }
 
-    async update(deltaTime) {
+    update(deltaTime) {
         // 受击无敌冷却
         this.invulnerableCooldown.tick(deltaTime);
 

@@ -105,7 +105,7 @@ export class Enemy extends Entity {
         this._unbind_list = [];
     }
 
-    async update(deltaTime) {
+    update(deltaTime) {
         // 受击无敌冷却
         this.invulnerableCooldown.tick(deltaTime);
         // 计算与玩家的距离
