@@ -15,6 +15,9 @@ class Game {
         Game.instance = this;
         // 获取画布
         this.canvas = document.getElementById('canvas');
+        // 禁用右键菜单和拖拽（禁不掉浏览器的右键手势）
+        canvas.addEventListener('contextmenu', e => e.preventDefault());
+        canvas.addEventListener('dragstart', e => e.preventDefault());
         this.ctx = this.canvas.getContext('2d');
 
         this.isStop = false;
@@ -71,8 +74,8 @@ class Game {
         bus.on({
             event: EventTypes.game.tick,
             handler: () => {
-            const ctx = this.ctx;
-            ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                const ctx = this.ctx;
+                ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 mapManager.draw(ctx); // 绘制地图
                 projectilesManager.draw(ctx); // 绘制子弹
                 this.enemies.forEach(enemy => enemy.draw(ctx)); //绘制敌人
