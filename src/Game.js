@@ -43,23 +43,47 @@ class Game {
         const spawn = mapManager.getPlayerSpawn();
         player.setPosition(new Vector(spawn.x, spawn.y));
 
-        bus.on(EventTypes.game.tick, ({ deltaTime }) => {
-            inputManager.update();
-            attributeManager.update(deltaTime);
-            player.update(deltaTime);
-            this.enemies.forEach(enemy => enemy.update(deltaTime));
-            projectilesManager.update(deltaTime);
+        // bus.on({
+        //     event: EventTypes.game.tick,
+        //     handler: ({ deltaTime }) => itemManager.update(deltaTime),
+        //     priority: 1
+        // });
+        bus.on({
+            event: EventTypes.game.tick,
+            handler: ({ deltaTime }) => attributeManager.update(deltaTime),
+            priority: 0.7
         });
-        bus.on(EventTypes.game.tick, () => {
+        bus.on({
+            event: EventTypes.game.tick,
+            handler: ({ deltaTime }) => player.update(deltaTime),
+            priority: 0.5
+        });
+        bus.on({
+            event: EventTypes.game.tick,
+            handler: ({ deltaTime }) => this.enemies.forEach(enemy => enemy.update(deltaTime)),
+            priority: 0.3
+        });
+        bus.on({
+            event: EventTypes.game.tick,
+            handler: ({ deltaTime }) => projectilesManager.update(deltaTime),
+            priority: 0.1
+        });
+        bus.on({
+            event: EventTypes.game.tick,
+            handler: () => {
             const ctx = this.ctx;
             ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            // 绘制地图
-            mapManager.draw(ctx);
-            player.draw(ctx);
-            this.enemies.forEach(enemy => enemy.draw(ctx));
-            projectilesManager.draw(ctx);
-        }, { priority: -1 });
-        bus.on(EventTypes.player.die, () => this.stop());
+                mapManager.draw(ctx); // 绘制地图
+                projectilesManager.draw(ctx); // 绘制子弹
+                this.enemies.forEach(enemy => enemy.draw(ctx)); //绘制敌人
+                player.draw(ctx); //绘制玩家
+            }, priority: -1
+        });
+
+        bus.on({
+            event: EventTypes.player.die,
+            handler: () => this.stop()
+        });
 
         // 初始化敌人
         const enemySpawns = mapManager.getEnemySpawns();
@@ -77,9 +101,9 @@ class Game {
 
     loop(currentTime) {
         const deltaTime = currentTime - this.lastTime;
-
-        if (!this.isPaused && !this.isStop && deltaTime >= this.targetFrameTime) {
-            bus.emit(EventTypes.game.tick, { deltaTime: deltaTime });
+        if (deltaTime >= this.targetFrameTime) {
+            inputManager.update();
+            if (!this.isPaused && !this.isStop) bus.emit(EventTypes.game.tick, { deltaTime: deltaTime });
         }
         this.lastTime = currentTime - (deltaTime % this.targetFrameTime);
         requestAnimationFrame(this.loop);

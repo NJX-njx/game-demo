@@ -2,19 +2,17 @@ export const EventTypes = {
     game: {
         tick: "GAME_TICK"
     },
+    item: {
+        gain: "ITEM_GAIN"
+    },
     player: {
-        die: "PLAYER_DIE"
+        die: "PLAYER_DIE",
+        hp: "PLAYER_HP",
+        heal: "PLAYER_HEAL"
     },
     enemy: {},
     boss: {}
 };
-
-/**
- * @typedef {Object} EventOptions
- * @property {number} [priority]   优先级（默认 0，数值越大越先执行）
- * @property {number} [maxCalls]   最大触发次数（默认 Infinity）
- * @property {Function} [onDispose] 注销时的回调函数
- */
 
 class EventBus {
     constructor() {
@@ -56,14 +54,15 @@ class EventBus {
 
     /**
      * 注册事件监听器
-     * @param {string} event - 事件名称
-     * @param {Function} handler - 回调函数
-     * @param {EventOptions} [options] 
+     * @param {object} options
+     * @param {string} options.event - 事件名称
+     * @param {Function} options.handler - 回调函数
+     * @param {number} [options.priority] - 优先级（默认 0）
+     * @param {number} [options.maxCalls] - 最大触发次数（默认 Infinity）
+     * @param {Function} [options.onDispose] - 注销时回调
      * @returns {Function} - 注销函数
      */
-    on(event, handler, options = {}) {
-        const { priority = 0, maxCalls = Infinity, onDispose = null } = options;
-
+    on({ event, handler, priority = 0, maxCalls = Infinity, onDispose = null }) {
         this._checkEvent(event);
         if (!this.listeners.has(event)) this.listeners.set(event, []);
 
