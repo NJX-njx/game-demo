@@ -8,6 +8,8 @@ import { attributeManager } from "./Manager/AttributeManager";
 import { player } from "./Entities/Player";
 import { Enemy } from "./Entities/Enemy";
 import { Vector } from "./Utils/Vector";
+import { itemManager } from "./System/Item/ItemManager";
+import { ItemConfigs } from "./System/Item/ItemConfigs";
 class Game {
     constructor() {
         if (Game.instance)

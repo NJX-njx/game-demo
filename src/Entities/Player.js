@@ -7,7 +7,8 @@ import { game } from "../Game";
 import { textureManager } from "../Manager/TextureManager";
 import { soundManager } from "../Manager/SoundManager";
 import { inputManager } from "../Manager/InputManager";
-import { eventBus as bus, EventTypes } from "../Manager/EventBus";
+import { eventBus as bus, EventTypes as Events } from "../Manager/EventBus";
+import { attributeManager as AM, AttributeTypes as Attrs } from "../Manager/AttributeManager";
 class Player_Animation {
     static Framerate = {
         "run": 6,
@@ -134,6 +135,7 @@ class Player extends Entity {
     }
 
     update(deltaTime) {
+        bus.emit(Events.player.hpPercent, this.state.hp / this.state.hp_max)
         // 受击无敌冷却
         this.invulnerableCooldown.tick(deltaTime);
 
@@ -255,9 +257,31 @@ class Player extends Entity {
         this.invulnerableCooldown.start();
         console.log(this.state.hp);
         if (this.state.hp <= 0) {
-            bus.emit(EventTypes.player.die);
-            alert("你死了");
+            // -----判定阻止死亡-----
+            if (bus.emitReduce(Events.player.fatelDmg, true, (_, next) => next)) {
+                bus.emit(Events.player.die);
+                alert("你死了");
+            }
         }
+    }
+
+    /**
+     * 受治疗
+     * @param {number} amount - 基础治疗量
+     * @param {string|null} source - 来源（道具、技能等）
+     */
+    takeHeal(amount, source = null) {
+        // -----计算属性加成-----
+        let modifiedAmount = amount * (1 + AM.getAttrSum(Attrs.player.HEAL));
+        // -----计算事件影响治疗量-----
+        modifiedAmount = bus.emitReduce(
+            Events.player.heal,
+            modifiedAmount,
+            (_, next) => next
+        );
+        // -----实际回血-----
+        const finalAmount = Math.max(0, modifiedAmount);
+        this.state.hp = Math.min(this.state.hp_max, this.state.hp + finalAmount);
     }
 
     setPosition(position) {
