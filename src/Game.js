@@ -40,7 +40,7 @@ class Game {
     async init() {
         await textureManager.load();
         await soundManager.load();
-        await mapManager.loadRoom(1, 1);
+        await mapManager.loadRoom(0, 1);
 
         // 初始化玩家
         const spawn = mapManager.getPlayerSpawn();
