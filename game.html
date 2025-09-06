@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Purana: Abyss Return</title>
-    <link rel="stylesheet" href="assets/style/base.css">
+    <link rel="stylesheet" href="/assets/style/base.css">
 </head>
 
 <body>
@@ -16,29 +16,8 @@
 
     <div id="resource" style="display: none;"></div>
 
-    <script src="scripts/Utils/Vector.js"></script>
-    <script src="scripts/Utils/Hitbox.js"></script>
-    <script src="scripts/Utils/Cooldown.js"></script>
-    <script src="scripts/Utils/EventBus.js"></script>
-    <script src="scripts/Manager/SaveManager.js"></script>
-    <script src="scripts/Manager/DataManager.js"></script>
-    <script src="scripts/Manager/TextureManager.js"></script>
-    <script src="scripts/Manager/InputManager.js"></script>
-    <script src="scripts/Manager/SoundManager.js"></script>
-    <script src="scripts/Manager/MapManager.js"></script>
-    
-    <script src="scripts/Entities/Entity.js"></script>
-    <script src="scripts/Entities/Enemy.js"></script>
-    <script src="scripts/Entities/Player.js"></script>
-    <script src="scripts/Game.js"></script>
-    <script>
-        window.onload = () => {
-            new Game();
-            window.$game.init().then(() => {
-                window.$game.start();
-            });
-        }
-    </script>
+    <!-- Vite 入口 -->
+    <script type="module" src="/dist/main.js"></script>
 </body>
 
 </html>

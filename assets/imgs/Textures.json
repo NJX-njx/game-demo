@@ -1,0 +1,20 @@
+{
+    "player": {
+        "0": "assets/imgs/像素小人/character.png"
+    },
+    "enemy": {
+        "0": "assets/imgs/敌对生物/creep1.png"
+    },
+    "backgrounds": {
+        "brick_R": "assets/imgs/map/地块元素/砖块深红.png",
+        "yellow": "assets/imgs/map/background/房间02.png",
+        "ICU": "assets/imgs/map/地块元素/墙面手术室.png"
+    },
+    "blocks": {
+        "black": "assets/imgs/map/地块元素/纯黑.png"
+    },
+    "textures": {
+        "door": "assets/imgs/map/地块元素/门.png",
+        "bed": "assets/imgs/map/地块元素/手术床.png"
+    }
+}

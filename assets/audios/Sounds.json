@@ -1,0 +1,11 @@
+{
+    "player": {
+        "dash": "assets/audios/dash.wav",
+        "jump": "assets/audios/jump1.wav",
+        "meleeAttack": "assets/audios/attack1.wav",
+        "rangedAttack": "assets/audios/attack2.wav"
+    },
+    "enemy1": {
+        "meleeAttack": "assets/audios/attack1.wav"
+    }
+}
