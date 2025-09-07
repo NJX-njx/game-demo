@@ -332,6 +332,12 @@ class InputManager {
     isReleased(key) {
         return !this.keyCurrState.get(key) && this.keyPrevState.get(key);
     }
+    reset() {
+        this.keyPrevState.clear();
+        this.keyCurrState.clear();
+        this.mouse.left = false;
+        this.mouse.right = false;
+    }
 }
 
 export const inputManager = new InputManager()

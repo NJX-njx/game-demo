@@ -1,7 +1,5 @@
 import { game } from "./Game.js";
 
-window.onload = () => {
-    game.init().then(() => {
-        game.start();
-    });
+window.onload = async() => {
+    await game.start();
 };
