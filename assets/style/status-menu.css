@@ -1,0 +1,177 @@
+.status-menu {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 800px;
+    background: rgba(0, 0, 0, 0.95);
+    border: 2px solid #ffffff;
+    border-radius: 8px;
+    z-index: 200; /* 高于画布(1)和对话(100)，确保顶层显示 */
+    display: none;
+    pointer-events: auto;
+}
+
+.status-menu.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+.status-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #555;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.status-header h2 {
+    color: #ffffff;
+    margin: 0;
+    font-size: 24px;
+    font-family: 'Noto Sans SC', sans-serif;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: #ffffff;
+    font-size: 28px;
+    cursor: pointer;
+    transition: color 0.2s;
+    padding: 0 8px; /* 扩大点击区域 */
+}
+
+.close-btn:hover {
+    color: #ff4444;
+}
+
+.status-content {
+    padding: 20px;
+    display: flex;
+    gap: 30px;
+}
+
+.soul-section {
+    flex: 1;
+    background: rgba(30, 30, 30, 0.8);
+    padding: 15px;
+    border-radius: 6px;
+}
+
+.soul-section h3 {
+    color: #ffffff;
+    margin-top: 0;
+    font-size: 18px;
+    border-bottom: 1px solid #777;
+    padding-bottom: 8px;
+}
+
+.soul-value {
+    color: #4CAF50;
+    font-size: 48px;
+    text-align: center;
+    margin: 20px 0;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(76, 175, 80, 0.8);
+}
+
+.inventory-section {
+    flex: 2;
+    background: rgba(30, 30, 30, 0.8);
+    padding: 15px;
+    border-radius: 6px;
+}
+
+.inventory-section h3 {
+    color: #ffffff;
+    margin-top: 0;
+    font-size: 18px;
+    border-bottom: 1px solid #777;
+    padding-bottom: 8px;
+}
+
+.items-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.item-slot {
+    background: rgba(50, 50, 50, 0.6);
+    border: 1px solid #666;
+    border-radius: 4px;
+    padding: 10px;
+    text-align: center;
+    color: #ffffff;
+    transition: border-color 0.2s;
+}
+
+.item-slot:hover {
+    border-color: #fff; /*  hover时高亮边框 */
+}
+
+.item-slot.empty {
+    background: rgba(50, 50, 50, 0.3);
+    color: #888;
+}
+
+/* 空槽位默认图标 */
+.item-slot.empty .item-icon::after {
+    content: "□";
+    font-size: 30px;
+    color: #666;
+}
+
+.item-icon {
+    width: 50px;
+    height: 50px;
+    margin: 0 auto 5px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.item-name {
+    font-size: 14px;
+    margin-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* 道具名过长时省略 */
+}
+
+.item-count {
+    font-size: 12px;
+    color: #bbb;
+}
+
+.status-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #555;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.menu-btn {
+    background: #333;
+    border: 1px solid #666;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+}
+
+.menu-btn:hover {
+    background: #555;
+    border-color: #888;
+}
+
+/* 修复动画与默认定位冲突 */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translate(-50%, -55%); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+}

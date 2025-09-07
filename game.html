@@ -1,18 +1,23 @@
 <!DOCTYPE html>
 <html lang="zh">
+
 <head>
     <meta charset="UTF-8">
     <title>Purana: Abyss Return</title>
+    <!-- 样式引入顺序：基础样式 → 对话样式 → 状态菜单样式 -->
     <link rel="stylesheet" href="/assets/style/base.css">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/style/dialog.css">
+    <link rel="stylesheet" href="assets/style/status-menu.css">
 </head>
+
 <body>
     <div id="game">
         <div id="game-container">
+            <!-- 游戏画布（最底层） -->
             <canvas id="canvas" width="1280" height="720"></canvas>
-            
-            <!-- 对话系统DOM -->
+
+            <!-- 对话系统（中层，优先级低于菜单） -->
             <div class="dialogue-container">
                 <div class="dialogue-box">
                     <div class="character-name" id="character-name"></div>
@@ -22,10 +27,34 @@
                     </div>
                 </div>
             </div>
+
+            <!-- 状态菜单（顶层，优先级最高） -->
+            <div id="status-menu" class="status-menu">
+                <div class="status-header">
+                    <h2>状态面板</h2>
+                    <button class="close-btn" id="close-status">×</button>
+                </div>
+                <div class="status-content">
+                    <div class="soul-section">
+                        <h3>灵魂值</h3>
+                        <div class="soul-value" id="soul-count">0</div>
+                    </div>
+                    <div class="inventory-section">
+                        <h3>持有道具</h3>
+                        <div class="items-grid" id="items-container"></div>
+                    </div>
+                </div>
+                <div class="status-footer">
+                    <button id="resume-game" class="menu-btn">继续游戏</button>
+                    <button id="return-main" class="menu-btn">返回主菜单</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <div id="resource" style="display: none;"></div>
+    <!-- 游戏入口脚本 -->
     <script type="module" src="/dist/main.js"></script>
 </body>
+
 </html>
