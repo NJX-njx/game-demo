@@ -1,48 +1,61 @@
 import { attributeManager as AM } from "../../Manager/AttributeManager";
 import { eventBus as bus } from "../../Manager/EventBus";
+
 let itemInstanceCounter = 0;
 
 export class Item {
     constructor(config) {
         this.config = config;
         this.state = config.state ? { ...config.state } : {};
-        this._registeredHandlers = [];
 
         // 每个实例唯一 id
         this._instanceId = `${config.id}_${itemInstanceCounter++}`;
 
+        // 拷贝标签
+        this.tags = [...(config.tags || [])];
+
         // 添加属性效果
-        if (config.effects)
-            for (const key in config.effects)
+        if (config.effects) {
+            for (const key in config.effects) {
                 AM.addAttr(key, config.effects[key], this._instanceId);
+            }
+        }
 
         // 注册事件钩子
-        if (config.hooks)
+        if (config.hooks) {
             for (const hook of config.hooks(this)) {
                 const hookOptions = {
                     ...hook,
-                    handler: hook.handler.bind(this)
+                    handler: hook.handler.bind(this),
+                    source: this._instanceId
                 };
-                const unregister = bus.on(hookOptions);
-                this._registeredHandlers.push(unregister);
+                bus.on(hookOptions);
             }
+        }
 
         if (typeof config.onAcquire === "function") {
             config.onAcquire(this);
         }
+    }
 
-        // // 广播一个获得事件（可选）
-        // bus.emit("ITEM_ACQUIRE", this);
+    /** 添加标签 */
+    addTag(tag) {
+        if (!this.tags.includes(tag)) this.tags.push(tag);
+    }
+
+    /** 移除标签 */
+    removeTag(tag) {
+        this.tags = this.tags.filter(t => t !== tag);
+    }
+
+    /** 检查标签 */
+    hasTag(tag) {
+        return this.tags.includes(tag);
     }
 
     /** 移除道具，解绑属性和事件 */
     dispose() {
-        // 移除属性效果
         if (this.config.effects) AM.removeAllAttrBySource(this._instanceId);
-        // 注销事件回调
-        for (const unregister of this._registeredHandlers) unregister();
-        this._registeredHandlers = [];
-        // // 统一广播移除事件（可选）
-        // bus.emit("ITEM_REMOVE", this);
+        bus.offBySource(this._instanceId);
     }
 }

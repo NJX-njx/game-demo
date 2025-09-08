@@ -7,9 +7,10 @@ export const AttributeTypes = {
         SPD: "PLAYER_SPD",
         HEAL: "PLAYER_HEAL",
         DMG: "PLAYER_DMG",
+        LOS: "PLAYER_LOS",//受到的生命流失效果
+        TAKE_DMG: "PLAYER_TAKE_DAMAGE",//受到的伤害
         AttackStartupTime: "PLAYER_AttackStartupTime",
         AttackRecoveryTime: "PLAYER_AttackRecoveryTime",
-        HP_CONTINUES_DEC: "PLAYER_HP_CONTINUES_DEC",
         MeteeStartupTime: "PLAYER_MeteeStartupTime",
         MeteeRecoveryTime: "PLAYER_MeteeRecoveryTime",
         RangedStartupTime: "PLAYER_RangedStartupTime",

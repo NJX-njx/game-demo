@@ -1,12 +1,13 @@
 import { Entity } from "./Entity";
 import { Vector } from "../Utils/Vector";
 import { Hitbox } from "../Utils/Hitbox";
-import { Cooldown } from "../Utils/Cooldown";
 import { MeleeAttack } from "../System/Attack/MeleeAttack";
 import { game } from "../Game";
 import { textureManager } from "../Manager/TextureManager";
 import { player } from "./Player";
 import { mapManager } from "../Manager/MapManager";
+import { eventBus as bus, EventTypes as Events } from "../Manager/EventBus";
+import { attributeManager as AM, AttributeTypes as Attrs } from "../Manager/AttributeManager";
 class Enemy_Animation {
     static Framerate = {
         "run": 6,
@@ -66,12 +67,13 @@ export class Enemy extends Entity {
 
         this.baseState = {
             hp_max: 100,                //血量上限
-            attack_baseDamage: 10,      //基础伤害
-            attack_baseMeleeStartupTime: 50,    //攻击前摇
-            attack_baseMeleeRecoveryTime: 900,   //攻击后摇
-            attack_baseRangedStartupTime: 150,    //攻击前摇
-            attack_baseRangedRecoveryTime: 700,   //攻击后摇
-            items: []
+            attack: {
+                atk: 10,                //基础攻击
+                MeleeStartupTime: 50,    //攻击前摇
+                MeleeRecoveryTime: 900,   //攻击后摇
+                RangedStartupTime: 150,    //攻击前摇
+                RangedRecoveryTime: 700,   //攻击后摇
+            }
         }
         this.state = {
             hp: this.baseState.hp_max,  //当前血量
@@ -101,13 +103,11 @@ export class Enemy extends Entity {
         }
         // 受击
         this.hurtBox = this.hitbox;
-        this.invulnerableCooldown = new Cooldown(100);//受击间隔
         this._unbind_list = [];
     }
 
     update(deltaTime) {
-        // 受击无敌冷却
-        this.invulnerableCooldown.tick(deltaTime);
+        this.updateState();
         // 计算与玩家的距离
         const horizontalDist = Math.abs(this.hitbox.getCenter().x - player.hitbox.getCenter().x);
         const verticalDist = this.hitbox.getCenter().y - player.hitbox.getCenter().y;
@@ -434,13 +434,36 @@ export class Enemy extends Entity {
         // 可以在这里添加等待动画或其他行为
     }
 
+    // 更新状态
+    updateState() {
+        const hp = AM.getAttrSum(Attrs.enemy.HP);
+        const atk = AM.getAttrSum(Attrs.enemy.ATK);
+        const dmg = AM.getAttrSum(Attrs.enemy.DMG);
+        const dmg_dec = AM.getAttrSum(Attrs.enemy.DMG_DEC);
+        const meleeST = AM.getAttrSum(Attrs.enemy.MeteeStartupTime);
+        const meleeRT = AM.getAttrSum(Attrs.enemy.MeteeRecoveryTime);
+        const rangedST = AM.getAttrSum(Attrs.enemy.RangedStartupTime);
+        const rangedRT = AM.getAttrSum(Attrs.enemy.RangedRecoveryTime);
+        this.state.hp_max = this.baseState.hp_max * (1 + hp);
+        this.state.hp = Math.min(this.state.hp, this.state.hp_max);
+        this.state.attack.atk = this.baseState.attack.atk * (1 + atk);
+        this.state.attack.startupTime.melee = this.baseState.attack.MeleeStartupTime + meleeST;
+        this.state.attack.startupTime.ranged = this.baseState.attack.RangedStartupTime + rangedST;
+        this.state.attack.recoveryTime.melee = this.baseState.attack.MeleeRecoveryTime + meleeRT;
+        this.state.attack.recoveryTime.ranged = this.baseState.attack.RangedRecoveryTime + rangedRT;
+        let finalDmg = this.state.attack.atk * (1 + dmg);
+        finalDmg = Math.max(finalDmg - dmg_dec, 0.1 * finalDmg);
+        this.state.attack.damage.melee = finalDmg;
+        this.state.attack.damage.ranged = finalDmg;
+
+    }
+
     // 受击判定
-    takeDamage(dmg) {
-        if (!this.invulnerableCooldown.ready()) return;
+    takeDamage(dmg, attackType) {
         this.state.hp -= dmg;
-        this.invulnerableCooldown.start();
         if (this.state.hp <= 0) {
             // 死亡逻辑
+            bus.emit(Events.enemy.die, { attackType: attackType });
             // 解绑所有事件
             this._unbind_list.forEach((unbind) => unbind());
             this._unbind_list = [];

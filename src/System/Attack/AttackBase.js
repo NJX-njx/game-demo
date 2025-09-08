@@ -1,4 +1,6 @@
 import { soundManager } from "../../Manager/SoundManager";
+import { eventBus as bus } from "../../Manager/EventBus";
+
 export class AttackBase {
     constructor(owner, type) {
         this.owner = owner;
@@ -50,6 +52,26 @@ export class AttackBase {
     enterRecovery() {
         this.state = "recovery";
         this.timer = this.recoveryTime;
+    }
+
+    /**
+     * 统一伤害处理逻辑：触发事件 → 应用伤害
+     */
+    applyDamage(target, damage) {
+        if (target.beforeTakeDamage && !target.beforeTakeDamage())
+            return;
+
+        let finalDamage = damage;
+
+        if (this.owner.dealDamageEvent) {
+            finalDamage = bus.emitReduce(
+                this.owner.dealDamageEvent,
+                { baseDamage: finalDamage },
+                (_, next) => next
+            ).baseDamage;
+        }
+
+        target.takeDamage(finalDamage, this.type);
     }
 
     onHit(owner, damage) { }
