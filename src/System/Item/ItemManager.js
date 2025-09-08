@@ -1,5 +1,5 @@
 import { Item } from "./Item";
-import { ItemTypes } from "./ItemConfigs";
+import { ItemTypes, ItemTags, ItemConfigs as Items } from "./ItemConfigs";
 import { eventBus as bus, EventTypes as Events } from "../../Manager/EventBus";
 class ItemManager {
     constructor() {
@@ -24,11 +24,23 @@ class ItemManager {
         ];
 
         this.selectedIndex = 0; // 当前选中格子
+        this.acquiredHistory = new Set(); // 记录全局唯一道具是否已经获取过
 
     }
 
     /** 获取道具，返回道具实例或 null */
     tryAcquire(config) {
+        // 如果是全局唯一且已获取过，直接返回 null
+        if (config.tags?.includes(ItemTags.UNIQUE_GLOBAL) && this.acquiredHistory.has(config.id)) {
+            return null;
+        }
+
+        // 如果是同时唯一（UNIQUE_SINGLE），检查当前背包中是否已有同类道具
+        if (config.tags?.includes(ItemTags.UNIQUE_SINGLE)) {
+            const hasSingle = this.slots.some(slot => slot.item?.config.id === config.id);
+            if (hasSingle) return null;
+        }
+
         // 找第一个符合条件的空格子
         const slotIndex = this.slots.findIndex(slot => {
             if (slot.item) return false;
@@ -39,7 +51,14 @@ class ItemManager {
 
         if (slotIndex === -1) return null;
 
+        console.log(config)
+
         const item = new Item(config);
+
+        // 记录全局唯一道具
+        if (config.tags?.includes(ItemTags.UNIQUE_GLOBAL)) {
+            this.acquiredHistory.add(config.id);
+        }
 
         this.slots[slotIndex].item = item;
         item._slotIndex = slotIndex;
@@ -94,6 +113,44 @@ class ItemManager {
         targetSlot.item = itemInstance;
         itemInstance._slotIndex = targetIndex;
         return true;
+    }
+
+    /**
+     * 获取一个随机的道具配置
+     * @param {number} level 道具等级
+     * @param {Object} options 可选项
+     *   - exclude: 排除的道具id数组
+     *   - type: 限制类型 (NORMAL / ENDING)
+     */
+    getRandomConfig(level, options = {}) {
+        const { exclude = [], type = ItemTypes.NORMAL } = options;
+
+        const pool = Object.values(Items).filter(cfg => {
+            if (cfg.level !== level) return false;
+            if (type && cfg.type !== type) return false;
+            if (exclude.includes(cfg.id)) return false;
+
+            // 不随机掉落的跳过
+            if (cfg.tags?.includes(ItemTags.NO_RANDOM)) return false;
+
+            // 已获取的全局唯一跳过
+            if (cfg.tags?.includes(ItemTags.UNIQUE_GLOBAL) && this.acquiredHistory.has(cfg.id)) {
+                return false;
+            }
+
+            // 当前背包中已有的 UNIQUE_SINGLE 跳过
+            if (cfg.tags?.includes(ItemTags.UNIQUE_SINGLE)) {
+                const hasSingle = this.slots.some(slot => slot.item?.config.id === cfg.id);
+                if (hasSingle) return false;
+            }
+
+            return true;
+        });
+
+        if (pool.length === 0) return null;
+
+        const config = pool[Math.floor(Math.random() * pool.length)];
+        return config;
     }
 }
 

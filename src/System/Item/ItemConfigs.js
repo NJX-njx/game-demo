@@ -239,7 +239,7 @@ export const ItemConfigs = {
         id: "珍惜",
         level: 1,
         type: ItemTypes.NORMAL,
-        tags: [ItemTags.NO_EXCHANGE, ItemTags.UNIQUE_GLOBAL, ItemTags.SPECIAL_EXCHANGE],
+        tags: [ItemTags.NO_EXCHANGE, ItemTags.UNIQUE_GLOBAL, ItemTags.SPECIAL_EXCHANGE, ItemTags.NO_RANDOM],
         effects: {},
         hooks: (item) => [
             {   // 在进入下一个商店前，不可交换
