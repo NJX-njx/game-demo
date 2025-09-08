@@ -72,32 +72,33 @@ class Player extends Entity {
         this.jumping.type = "player";
         this.baseState = {
             hp_max: 100,                //血量上限
-            attack_baseDamage: 10,      //基础伤害
-            attack_baseMeleeStartupTime: 50,    //攻击前摇
-            attack_baseMeleeRecoveryTime: 900,   //攻击后摇
-            attack_baseRangedStartupTime: 150,    //攻击前摇
-            attack_baseRangedRecoveryTime: 700,   //攻击后摇
+            attack: {
+                atk: 10,                //基础攻击
+                MeleeStartupTime: 50,    //攻击前摇
+                MeleeRecoveryTime: 900,   //攻击后摇
+                RangedStartupTime: 150,    //攻击前摇
+                RangedRecoveryTime: 700,   //攻击后摇
+            },
             dash_cooldownTime: 600,     //冲刺冷却
             dash_maxCount: 1,           //冲刺段数
-            items: []
         }
         this.state = {
             hp: this.baseState.hp_max,  //当前血量
             hp_max: this.baseState.hp_max,
             attack: {
+                atk: this.baseState.attack.atk,
                 damage: {
-                    melee: this.baseState.attack_baseDamage,
-                    ranged: this.baseState.attack_baseDamage
+                    melee: this.baseState.attack.atk,
+                    ranged: this.baseState.attack.atk
                 },
                 startupTime: {
-                    melee: this.baseState.attack_baseMeleeStartupTime,
-                    ranged: this.baseState.attack_baseRangedStartupTime
+                    melee: this.baseState.attack.MeleeStartupTime,
+                    ranged: this.baseState.attack.RangedStartupTime
                 },
                 recoveryTime: {
-                    melee: this.baseState.attack_baseMeleeRecoveryTime,
-                    ranged: this.baseState.attack_baseRangedStartupTime
+                    melee: this.baseState.attack.MeleeRecoveryTime,
+                    ranged: this.baseState.attack.RangedRecoveryTime
                 }
-
             },
         }
         this.attack = {
@@ -112,7 +113,6 @@ class Player extends Entity {
         this.initDash();
         // 受击
         this.hurtBox = this.hitbox;
-        this.invulnerableCooldown = new Cooldown(100);//受击间隔
         this.controllerX = () => {
             if (this.blockMove) return 0;
             let moveLeft = inputManager.isKeysDown(["A", "Left"]);
@@ -132,12 +132,12 @@ class Player extends Entity {
                 this.jumping.jumpBuffer.start();
             return inputManager.isHeld("Space");
         }
+        this.dealDamageEvent = Events.player.dealDamage;
     }
 
     update(deltaTime) {
-        bus.emit(Events.player.hpPercent, this.state.hp / this.state.hp_max)
-        // 受击无敌冷却
-        this.invulnerableCooldown.tick(deltaTime);
+        this.updateState();
+        bus.emit(Events.player.hpPercent, this.state.hp / this.state.hp_max);
 
         // 攻击
         if (inputManager.isKeyDown('J')) this.attack.melee.trigger();
@@ -184,6 +184,26 @@ class Player extends Entity {
         let side = this.rigidMove(deltaTime);
         if (side & 1) this.velocity.x = 0, this.dash.isDashing = 0;
         if (side & 2) this.velocity.y = this.jumping.jumpVelocity = 0;
+    }
+
+    // 更新状态
+    updateState() {
+        const hp = AM.getAttrSum(Attrs.player.HP);
+        const atk = AM.getAttrSum(Attrs.player.ATK);
+        const dmg = AM.getAttrSum(Attrs.player.DMG);
+        const meleeST = AM.getAttrSum(Attrs.player.MeteeStartupTime);
+        const meleeRT = AM.getAttrSum(Attrs.player.MeteeRecoveryTime);
+        const rangedST = AM.getAttrSum(Attrs.player.RangedStartupTime);
+        const rangedRT = AM.getAttrSum(Attrs.player.RangedRecoveryTime);
+        this.state.hp_max = this.baseState.hp_max * (1 + hp);
+        this.state.hp = Math.min(this.state.hp, this.state.hp_max);
+        this.state.attack.atk = this.baseState.attack.atk * (1 + atk);
+        this.state.attack.damage.melee = this.state.attack.atk * (1 + dmg);
+        this.state.attack.damage.ranged = this.state.attack.atk * (1 + dmg);
+        this.state.attack.startupTime.melee = this.baseState.attack.MeleeStartupTime + meleeST;
+        this.state.attack.startupTime.ranged = this.baseState.attack.RangedStartupTime + rangedST;
+        this.state.attack.recoveryTime.melee = this.baseState.attack.MeleeRecoveryTime + meleeRT;
+        this.state.attack.recoveryTime.ranged = this.baseState.attack.RangedRecoveryTime + rangedRT;
     }
 
     // 冲刺初始化
@@ -250,15 +270,23 @@ class Player extends Entity {
         };
     }
 
+    // 返回当前是否可受击
+    beforeTakeDamage(dmg) {
+        if (this.dash.isDashing === 1) return false;
+        return true;
+    }
+
     // 受击判定
-    takeDamage(dmg) {
-        if (!this.invulnerableCooldown.ready()) return;
-        this.state.hp -= dmg;
-        this.invulnerableCooldown.start();
-        console.log(this.state.hp);
+    takeDamage(dmg, attackType) {
+        let finalDmg = bus.emitReduce(
+            Events.player.takeDamage,
+            { baseDamage: dmg },
+            (_, next) => next
+        ).baseDamage;
+        this.state.hp -= finalDmg;
         if (this.state.hp <= 0) {
             // -----判定阻止死亡-----
-            if (bus.emitReduce(Events.player.fatelDmg, true, (_, next) => next)) {
+            if (!bus.emitInterruptible(Events.player.fatelDmg)) {
                 bus.emit(Events.player.die);
                 alert("你死了");
             }
@@ -276,9 +304,9 @@ class Player extends Entity {
         // -----计算事件影响治疗量-----
         modifiedAmount = bus.emitReduce(
             Events.player.heal,
-            modifiedAmount,
+            { baseHeal: modifiedAmount },
             (_, next) => next
-        );
+        ).baseHeal;
         // -----实际回血-----
         const finalAmount = Math.max(0, modifiedAmount);
         this.state.hp = Math.min(this.state.hp_max, this.state.hp + finalAmount);

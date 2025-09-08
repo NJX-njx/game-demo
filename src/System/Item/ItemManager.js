@@ -29,7 +29,6 @@ class ItemManager {
 
     /** 获取道具，返回道具实例或 null */
     tryAcquire(config) {
-        console.log(config);
         // 找第一个符合条件的空格子
         const slotIndex = this.slots.findIndex(slot => {
             if (slot.item) return false;

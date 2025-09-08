@@ -1,14 +1,15 @@
 import { Entity } from "../../Entities/Entity";
 import { Vector } from "../../Utils/Vector";
 import { projectilesManager } from "./ProjectilesManager";
+
 export class Projectile extends Entity {
-    constructor(position, velocity, damage, targetSelector, size = new Vector(10, 10)) {
+    constructor(position, velocity, damage, from, size = new Vector(10, 10)) {
         super(position, size, velocity);
         this.type = "projectile";
         this.damage = damage;
         this.alive = true;
         this.hurtBox = this.hitbox;
-        this.targetSelector = targetSelector;
+        this.from = from;
         projectilesManager.add(this);
     }
 
@@ -24,9 +25,9 @@ export class Projectile extends Entity {
         }
 
         // 命中检测
-        this.targetSelector().forEach(target => {
+        this.from.targetSelector().forEach(target => {
             if (this.hurtBox.checkHit(target.hurtBox)) {
-                target.takeDamage(this.damage);
+                this.from.applyDamage(target, this.damage);
                 this.alive = false;
             }
         });

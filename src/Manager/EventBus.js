@@ -5,6 +5,9 @@ export const EventTypes = {
             start: "GAME_BATTLE_START",
             end: "GAME_BATTLE_END"
         },
+        enter: {
+            shop: "GAME_ENTER_SHOP"
+        },
         finish: "GAME_FINISH"
     },
     item: {
@@ -15,21 +18,21 @@ export const EventTypes = {
         die: "PLAYER_DIE",
         hpPercent: "PLAYER_HP_PERCENT",
         heal: "PLAYER_HEAL",
+        dealDamage: "PLAYER_DEAL_DAMAGE", // 造成伤害
+        takeDamage: "PLAYER_TAKE_DAMAGE", // 受到伤害
         fatelDmg: "PLAYER_FATEL_DAMAGE" // 受到致命伤
     },
-    enemy: {},
+    enemy: {
+        die: "ENEMY_DIE"
+    },
     boss: {}
 };
 
 export const ItemEvents = {
     GAIN: "Item_Gain",                          // 获得道具时触发
     REMOVE: "Item_onRemove",                      // 移除道具时触发
-    ON_BATTLE_START: "onBattleStart",           // 战斗开始时触发
-    ON_BATTLE_END: "onBattleEnd",               // 战斗结束时触发
     ON_CLEAR_STAGE: "onClearStage",             // 通关关卡时触发
     PLAYER_TAKE_DAMAGE: "Item_PlayerTakeDamage",             // 受到伤害时触发
-    ON_DEAL_DAMAGE: "onDealDamage",             // 造成伤害时触发
-    ON_ENEMY_KILLED: "onEnemyKilled",           // 击败敌人时触发
     ON_ENTER_SHOP: "onEnterShop",               // 进入商店时触发
     ON_NEXT_FLOOR: "onNextFloor",               // 进入下一层时触发
     ON_ACTIVE_USE: "onActiveUse",               // 主动使用道具或技能时触发
@@ -85,9 +88,10 @@ class EventBus {
      * @param {number} [options.priority] - 优先级（默认 0）
      * @param {number} [options.maxCalls] - 最大触发次数（默认 Infinity）
      * @param {Function} [options.onDispose] - 注销时回调
+     * @param {string} [options.source] - 来源
      * @returns {Function} - 注销函数
      */
-    on({ event, handler, priority = 0, maxCalls = Infinity, onDispose = null }) {
+    on({ event, handler, priority = 0, maxCalls = Infinity, onDispose = null, source = null }) {
         this._checkEvent(event);
         if (!this.listeners.has(event)) this.listeners.set(event, []);
 
@@ -97,7 +101,8 @@ class EventBus {
             priority,
             maxCalls,
             callCount: 0,
-            onDispose
+            onDispose,
+            source
         };
 
         const index = arr.findIndex(h => priority > h.priority);
@@ -126,6 +131,25 @@ class EventBus {
     }
 
     /**
+     * 移除指定事件中某个来源的所有回调
+     * @param {string} event - 事件名称
+     * @param {string} source - 要移除的来源
+     */
+    offBySource(event, source) {
+        this._checkEvent(event);
+        const arr = this.listeners.get(event);
+        if (!arr) return;
+        this.listeners.set(event, arr.filter(h => {
+            if (h.source && h.source === source) {
+                if (h.onDispose) h.onDispose();
+                return false;
+            }
+            return true;
+        })
+        );
+    }
+
+    /**
      * 触发事件
      * @param {string} event - 事件名称
      * @param {*} payload - 事件数据
@@ -147,6 +171,37 @@ class EventBus {
                 this.off(event, listener.handler);
             }
         }
+    }
+
+    /**
+     * 触发可中断事件
+     * - 某个监听器返回 true → 中断传播，立即返回 true
+     * - 所有监听器都没返回 true → 返回 false
+     * @returns {boolean} 是否被中断
+     */
+    emitInterruptible(event, payload) {
+        this._checkEvent(event);
+        const arr = this.listeners.get(event);
+        if (!arr) return false;
+
+        for (const listener of [...arr]) {
+            let stop = false;
+            try {
+                stop = listener.handler(payload) === true;
+            } catch (e) {
+                console.error(`[EventBus] ${event} handler error`, e);
+            }
+
+            listener.callCount++;
+            if (listener.callCount >= listener.maxCalls) {
+                this.off(event, listener.handler);
+            }
+
+            if (stop) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
