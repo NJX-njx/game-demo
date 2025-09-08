@@ -64,6 +64,7 @@ export class Enemy extends Entity {
         super(position, size, velocity);
         this.Size = size;
         this.type = "enemy" + type;
+        this.enemytype = type;
 
         this.baseState = {
             hp_max: 100,                //血量上限
@@ -475,7 +476,7 @@ export class Enemy extends Entity {
 
     draw(ctx) {
         ctx.drawImage(
-            this.animation.getFrame(),
+            textureManager.getTexture("enemy", this.enemytype),
             this.hitbox.position.x,
             this.hitbox.position.y,
             this.Size.x,

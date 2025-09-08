@@ -9,7 +9,7 @@ import { player } from "./Entities/Player";
 import { Enemy } from "./Entities/Enemy";
 import { Vector } from "./Utils/Vector";
 import { itemManager } from "./System/Item/ItemManager";
-import { ItemConfigs } from "./System/Item/ItemConfigs";
+import { ItemConfigs as Items } from "./System/Item/ItemConfigs";
 class Game {
     constructor() {
         if (Game.instance)
@@ -18,9 +18,13 @@ class Game {
         // 获取画布
         this.canvas = document.getElementById('canvas');
         // 禁用右键菜单和拖拽（禁不掉浏览器的右键手势）
-        canvas.addEventListener('contextmenu', e => e.preventDefault());
-        canvas.addEventListener('dragstart', e => e.preventDefault());
+        this.canvas.addEventListener('contextmenu', e => e.preventDefault());
+        this.canvas.addEventListener('dragstart', e => e.preventDefault());
         this.ctx = this.canvas.getContext('2d');
+        this.leftCanvas = document.getElementById('left-ui');
+        this.rightCanvas = document.getElementById('right-ui');
+        this.leftCtx = this.leftCanvas.getContext('2d');
+        this.rightCtx = this.rightCanvas.getContext('2d');
 
         this.isStop = false;
         this.isPaused = false;
@@ -42,17 +46,18 @@ class Game {
     async init() {
         await textureManager.load();
         await soundManager.load();
-        await mapManager.loadRoom(0, 1);
+        await mapManager.loadRoom(0, 4);
 
         // 初始化玩家
         const spawn = mapManager.getPlayerSpawn();
         player.setPosition(new Vector(spawn.x, spawn.y));
 
-        // bus.on({
-        //     event: EventTypes.game.tick,
-        //     handler: ({ deltaTime }) => itemManager.update(deltaTime),
-        //     priority: 1
-        // });
+        bus.on({
+            event: EventTypes.game.tick,
+            handler: ({ deltaTime }) => itemManager.update(deltaTime),
+            priority: 1
+        });
+
         bus.on({
             event: EventTypes.game.tick,
             handler: ({ deltaTime }) => attributeManager.update(deltaTime),
@@ -82,7 +87,13 @@ class Game {
                 projectilesManager.draw(ctx); // 绘制子弹
                 this.enemies.forEach(enemy => enemy.draw(ctx)); //绘制敌人
                 player.draw(ctx); //绘制玩家
-            }, priority: -1
+                const l_ctx = this.leftCtx;
+                l_ctx.clearRect(0, 0, this.leftCanvas.width, this.leftCanvas.height);
+                const r_ctx = this.rightCtx;
+                r_ctx.clearRect(0, 0, this.rightCanvas.width, this.rightCanvas.height);
+                itemManager.draw(r_ctx);
+            },
+            priority: -1
         });
 
         bus.on({
@@ -98,6 +109,7 @@ class Game {
                 this.enemies.push(new Enemy(e.type, new Vector(e.x, e.y)));
             }
         }
+        itemManager.tryAcquire(Items.xq休憩);
     }
 
     start(prev = 0) {

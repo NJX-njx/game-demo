@@ -1,6 +1,7 @@
 import { Item } from "./Item";
 import { ItemTypes, ItemTags, ItemConfigs as Items } from "./ItemConfigs";
 import { eventBus as bus, EventTypes as Events } from "../../Manager/EventBus";
+import { inputManager } from "../../Manager/InputManager";
 class ItemManager {
     constructor() {
         if (ItemManager.instance) return ItemManager.instance;
@@ -93,8 +94,13 @@ class ItemManager {
         this.selectedIndex = (this.selectedIndex - 1 + this.slots.length) % this.slots.length;
     }
 
-    /** 获取当前选中的道具 */
-    getSelected() {
+    /** 获取当前选中的格子（包含空格子信息） */
+    getSelectedSlot() {
+        return this.slots[this.selectedIndex] || null;
+    }
+
+    /** 获取当前选中的道具（可能为 null） */
+    getSelectedItem() {
         return this.slots[this.selectedIndex]?.item || null;
     }
 
@@ -151,6 +157,55 @@ class ItemManager {
 
         const config = pool[Math.floor(Math.random() * pool.length)];
         return config;
+    }
+
+    update(_) {
+        if (inputManager.isFirstDown("N")) {
+            itemManager.selectNext();
+        }
+        if (inputManager.isFirstDown("M")) {
+            itemManager.selectPrev();
+        }
+        if (inputManager.isFirstDown("I")) {
+            bus.emit(Events.item.use, { usedItem: this.getSelectedItem() })
+        }
+    }
+
+    /**
+      * 绘制道具栏
+      * @param {CanvasRenderingContext2D} ctx 绘图上下文（右侧 UI canvas）
+      */
+    draw(ctx) {
+        const allSlots = this.slots;
+        const padding = 5;
+        const canvasWidth = ctx.canvas.width;
+        const canvasHeight = ctx.canvas.height;
+        const slotSize = Math.min(60, canvasWidth - 2 * padding);
+
+        const selectedSlot = this.getSelectedSlot(); // 获取选中格子对象
+
+        allSlots.forEach((slot, index) => {
+            const x = padding;
+            const y = padding + index * (slotSize + padding);
+
+            if (y + slotSize > canvasHeight) return;
+
+            // 背景
+            ctx.fillStyle = "rgba(50,50,50,0.7)";
+            ctx.fillRect(x, y, slotSize, slotSize);
+
+            // 边框
+            ctx.strokeStyle = slot === selectedSlot ? "yellow" : "white";
+            ctx.lineWidth = slot === selectedSlot ? 2 : 1;
+            ctx.strokeRect(x, y, slotSize, slotSize);
+
+            // 道具 id 或空格子
+            ctx.fillStyle = slot.item ? "white" : "rgba(200,200,200,0.3)";
+            ctx.font = `${Math.min(slotSize / 3, 14)}px sans-serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(slot.item ? slot.item.config.id : "空", x + slotSize / 2, y + slotSize / 2);
+        });
     }
 }
 

@@ -272,7 +272,7 @@ class Player extends Entity {
 
     // 返回当前是否可受击
     beforeTakeDamage(dmg) {
-        if (this.dash.isDashing === 1) return false;
+        if (this.dash.isDashing === true) return false;
         return true;
     }
 

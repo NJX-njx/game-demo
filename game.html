@@ -4,20 +4,21 @@
 <head>
     <meta charset="UTF-8">
     <title>Purana: Abyss Return</title>
-    <link rel="stylesheet" href="/assets/style/base.css">
+    <link rel="icon" type="image/png" href="/favicon.ico" sizes="any">
+    <link rel="stylesheet" href="/assets/style/game.css">
 </head>
 
 <body>
     <div id="game">
         <div id="game-container">
+            <canvas id="left-ui" width="80" height="720"></canvas>
             <canvas id="canvas" width="1280" height="720"></canvas>
+            <canvas id="right-ui" width="80" height="720"></canvas>
         </div>
     </div>
 
-    <div id="resource" style="display: none;"></div>
-
     <!-- Vite 入口 -->
-    <script type="module" src="/dist/main.js"></script>
+    <script type="module" src="dist/main.js"></script>
 </body>
 
 </html>

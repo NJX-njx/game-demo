@@ -43,7 +43,7 @@ export const ItemConfigs = {
                 handler: (hpPercent) => {
                     if (hpPercent < 0.25 && item.state.healTimer.ready()) {
                         item.state.healTimer.start();
-                        player.takeHeal(player.state.hp_max * 0.01);
+                        player.takeHeal(player.state.hp_max * 0.01, item._instanceId);
                     }
                 }
             },
@@ -272,7 +272,8 @@ export const ItemConfigs = {
                 event: Events.item.use,
                 handler: ({ usedItem }) => {
                     if (usedItem === item) {
-                        player.takeHeal(player.state.hp_max * 0.4);
+                        player.takeHeal(player.state.hp_max * 0.4, item._instanceId);
+                        itemManager.remove(item);
                     }
                 }
             }
