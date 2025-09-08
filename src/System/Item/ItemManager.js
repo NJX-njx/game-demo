@@ -31,6 +31,14 @@ class ItemManager {
 
     /** 获取道具，返回道具实例或 null */
     tryAcquire(config) {
+        // 自动添加 UNIQUE_SINGLE 标签
+        if (!config.tags) config.tags = [];
+        if (!config.tags.includes(ItemTags.UNIQUE_GLOBAL) && !config.tags.includes(ItemTags.MULTIPLE)) {
+            if (!config.tags.includes(ItemTags.UNIQUE_SINGLE)) {
+                config.tags.push(ItemTags.UNIQUE_SINGLE);
+            }
+        }
+
         // 如果是全局唯一且已获取过，直接返回 null
         if (config.tags?.includes(ItemTags.UNIQUE_GLOBAL) && this.acquiredHistory.has(config.id)) {
             return null;
