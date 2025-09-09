@@ -1,7 +1,7 @@
 import { inputManager } from "./Manager/InputManager";
 import { textureManager } from "./Manager/TextureManager";
 import { soundManager } from "./Manager/SoundManager";
-import { eventBus as bus, EventTypes } from "./Manager/EventBus";
+import { eventBus as bus, EventTypes as Events} from "./Manager/EventBus";
 import { mapManager } from "./Manager/MapManager";
 import { projectilesManager } from "./System/Attack/ProjectilesManager";
 import { attributeManager } from "./Manager/AttributeManager";
@@ -46,40 +46,39 @@ class Game {
     async init() {
         await textureManager.load();
         await soundManager.load();
-        await mapManager.loadRoom(0, 4);
+        await mapManager.loadRoom(0, 3);
 
         // 初始化玩家
         const spawn = mapManager.getPlayerSpawn();
         player.setPosition(new Vector(spawn.x, spawn.y));
 
         bus.on({
-            event: EventTypes.game.tick,
+            event: Events.game.tick,
             handler: ({ deltaTime }) => itemManager.update(deltaTime),
             priority: 1
         });
-
         bus.on({
-            event: EventTypes.game.tick,
+            event: Events.game.tick,
             handler: ({ deltaTime }) => attributeManager.update(deltaTime),
             priority: 0.7
         });
         bus.on({
-            event: EventTypes.game.tick,
+            event: Events.game.tick,
             handler: ({ deltaTime }) => player.update(deltaTime),
             priority: 0.5
         });
         bus.on({
-            event: EventTypes.game.tick,
+            event: Events.game.tick,
             handler: ({ deltaTime }) => this.enemies.forEach(enemy => enemy.update(deltaTime)),
             priority: 0.3
         });
         bus.on({
-            event: EventTypes.game.tick,
+            event: Events.game.tick,
             handler: ({ deltaTime }) => projectilesManager.update(deltaTime),
             priority: 0.1
         });
         bus.on({
-            event: EventTypes.game.tick,
+            event: Events.game.tick,
             handler: () => {
                 const ctx = this.ctx;
                 ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -97,7 +96,7 @@ class Game {
         });
 
         bus.on({
-            event: EventTypes.player.die,
+            event: Events.player.die,
             handler: () => this.stop()
         });
 
@@ -109,7 +108,11 @@ class Game {
                 this.enemies.push(new Enemy(e.type, new Vector(e.x, e.y)));
             }
         }
+        //TODO:测试用
         itemManager.tryAcquire(Items.xq休憩);
+        itemManager.tryAcquire(Items.yy友谊);
+        itemManager.tryAcquire(Items.ls朗诵);
+        window.itemManager = itemManager;
     }
 
     start(prev = 0) {
@@ -120,7 +123,9 @@ class Game {
         const deltaTime = currentTime - this.lastTime;
         if (deltaTime >= this.targetFrameTime) {
             inputManager.update();
-            if (!this.isPaused && !this.isStop) bus.emit(EventTypes.game.tick, { deltaTime: deltaTime });
+            if (game.enemies.length == 0)
+                bus.emit(Events.game.battle.end);
+            if (!this.isPaused && !this.isStop) bus.emit(Events.game.tick, { deltaTime: deltaTime });
         }
         this.lastTime = currentTime - (deltaTime % this.targetFrameTime);
         requestAnimationFrame(this.loop);

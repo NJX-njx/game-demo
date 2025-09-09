@@ -131,22 +131,26 @@ class EventBus {
     }
 
     /**
-     * 移除指定事件中某个来源的所有回调
-     * @param {string} event - 事件名称
+     * 移除特定来源的所有事件
      * @param {string} source - 要移除的来源
      */
-    offBySource(event, source) {
-        this._checkEvent(event);
-        const arr = this.listeners.get(event);
-        if (!arr) return;
-        this.listeners.set(event, arr.filter(h => {
-            if (h.source && h.source === source) {
-                if (h.onDispose) h.onDispose();
-                return false;
+    offBySource(source) {
+        for (const [event, arr] of this.listeners.entries()) {
+            const newArr = arr.filter(h => {
+                if (h.source && h.source === source) {
+                    if (h.onDispose) h.onDispose();
+                    return false;
+                }
+                return true;
+            });
+
+            if (newArr.length > 0) {
+                this.listeners.set(event, newArr);
+            } else {
+                // 如果该事件已无回调，直接删掉
+                this.listeners.delete(event);
             }
-            return true;
-        })
-        );
+        }
     }
 
     /**

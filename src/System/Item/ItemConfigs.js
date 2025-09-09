@@ -251,7 +251,8 @@ export const ItemConfigs = {
         ],
         onAcquire(item) {
             // TODO: 获得15灵魂碎片
-        }
+        },
+        onExchange(item) { }
     },
     ls朗诵: {
         id: "朗诵",
@@ -259,7 +260,12 @@ export const ItemConfigs = {
         type: ItemTypes.NORMAL,
         tags: [ItemTags.NO_RANDOM],
         onAcquire(item) {
-            // TODO: 额外获得2个背包格
+            itemManager.addSlots(2, { maxLevel: 1, type: ItemTypes.NORMAL }, item._instanceId);
+        },
+        canRemove: (item) => {
+            // 只有当扩展格子全空时才允许移除
+            const extraSlots = itemManager.slots.filter(s => s._sourceItem === item._instanceId);
+            return extraSlots.every(s => s.item == null);
         }
     },
     xq休憩: {

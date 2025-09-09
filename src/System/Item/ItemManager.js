@@ -77,10 +77,20 @@ class ItemManager {
     /** 移除道具实例 */
     remove(itemInstance) {
         const index = this.slots.findIndex(slot => slot.item === itemInstance);
-        if (index === -1) return;
+        if (index === -1) return false;
 
+        // 检查能否移除
+        if (!itemInstance.canRemove()) {
+            console.warn("该道具暂时不能移除");
+            return false;
+        }
+
+        // 执行销毁逻辑
         itemInstance.dispose();
         this.slots[index].item = null;
+
+        // 清理扩展格子
+        this.slots = this.slots.filter(slot => slot._source !== itemInstance._instanceId);
     }
 
     /** 获取某个格子的道具 */
@@ -128,6 +138,36 @@ class ItemManager {
         itemInstance._slotIndex = targetIndex;
         return true;
     }
+
+    /**
+     * 增加新的道具格
+     * @param {number} count 要增加的数量
+     * @param {Object} options 格子配置（默认 NORMAL / maxLevel=1）
+     */
+    addSlots(count, options = {}) {
+        const { maxLevel = 1, type = ItemTypes.NORMAL } = options;
+        for (let i = 0; i < count; i++) {
+            this.slots.push({ maxLevel, type, item: null });
+        }
+    }
+    /**
+     * 增加新的道具格
+     * @param {number} count 要增加的数量
+     * @param {Object} options 格子配置（默认 NORMAL / maxLevel=1）
+     * @param {string} source 来源道具（移除时清理格子用）
+     */
+    addSlots(count, options = {}, source = null) {
+        const { maxLevel = 1, type = ItemTypes.NORMAL } = options;
+
+        const newSlots = [];
+        for (let i = 0; i < count; i++) {
+            const slot = { maxLevel, type, item: null, _source: source };
+            this.slots.push(slot);
+            newSlots.push(slot);
+        }
+        return newSlots;
+    }
+
 
     /**
      * 获取一个随机的道具配置
