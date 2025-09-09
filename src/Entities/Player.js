@@ -195,7 +195,7 @@ class Player extends Entity {
         const meleeRT = AM.getAttrSum(Attrs.player.MeteeRecoveryTime);
         const rangedST = AM.getAttrSum(Attrs.player.RangedStartupTime);
         const rangedRT = AM.getAttrSum(Attrs.player.RangedRecoveryTime);
-        const dash_charge = AM.getAllAttr(Attrs.player.DASH_CHARGE);
+        const dash_charge = AM.getAttrSum(Attrs.player.DASH_CHARGE);
         this.state.hp_max = this.baseState.hp_max * (1 + hp);
         this.state.hp = Math.min(this.state.hp, this.state.hp_max);
         this.state.attack.atk = this.baseState.attack.atk * (1 + atk);

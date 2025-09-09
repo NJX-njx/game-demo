@@ -91,6 +91,8 @@ class ItemManager {
 
         // 清理扩展格子
         this.slots = this.slots.filter(slot => slot._source !== itemInstance._instanceId);
+
+        return true;
     }
 
     /** 获取某个格子的道具 */
