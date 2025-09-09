@@ -43,7 +43,7 @@ export const ItemConfigs = {
                 handler: (hpPercent) => {
                     if (hpPercent < 0.25 && item.state.healTimer.ready()) {
                         item.state.healTimer.start();
-                        player.takeHeal(player.state.hp_max * 0.01);
+                        player.takeHeal(player.state.hp_max * 0.01, item._instanceId);
                     }
                 }
             },
@@ -239,7 +239,7 @@ export const ItemConfigs = {
         id: "珍惜",
         level: 1,
         type: ItemTypes.NORMAL,
-        tags: [ItemTags.NO_EXCHANGE, ItemTags.UNIQUE_GLOBAL, ItemTags.SPECIAL_EXCHANGE],
+        tags: [ItemTags.NO_EXCHANGE, ItemTags.UNIQUE_GLOBAL, ItemTags.SPECIAL_EXCHANGE, ItemTags.NO_RANDOM],
         effects: {},
         hooks: (item) => [
             {   // 在进入下一个商店前，不可交换
@@ -251,7 +251,8 @@ export const ItemConfigs = {
         ],
         onAcquire(item) {
             // TODO: 获得15灵魂碎片
-        }
+        },
+        onExchange(item) { }
     },
     ls朗诵: {
         id: "朗诵",
@@ -259,7 +260,12 @@ export const ItemConfigs = {
         type: ItemTypes.NORMAL,
         tags: [ItemTags.NO_RANDOM],
         onAcquire(item) {
-            // TODO: 额外获得2个背包格
+            itemManager.addSlots(2, { maxLevel: 1, type: ItemTypes.NORMAL }, item._instanceId);
+        },
+        canRemove: (item) => {
+            // 只有当扩展格子全空时才允许移除
+            const extraSlots = itemManager.slots.filter(s => s._sourceItem === item._instanceId);
+            return extraSlots.every(s => s.item == null);
         }
     },
     xq休憩: {
@@ -272,7 +278,8 @@ export const ItemConfigs = {
                 event: Events.item.use,
                 handler: ({ usedItem }) => {
                     if (usedItem === item) {
-                        player.takeHeal(player.state.hp_max * 0.4);
+                        player.takeHeal(player.state.hp_max * 0.4, item._instanceId);
+                        itemManager.remove(item);
                     }
                 }
             }

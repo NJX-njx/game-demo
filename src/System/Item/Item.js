@@ -53,9 +53,30 @@ export class Item {
         return this.tags.includes(tag);
     }
 
+    /**
+     * 是否允许移除
+     * 默认返回 true，可以在 config.canRemove 覆盖
+     */
+    canRemove() {
+        if (typeof this.config.canRemove === "function") {
+            return this.config.canRemove(this);
+        }
+        return true;
+    }
+
+    /**
+     * 移除时调用
+     */
+    onRemove() {
+        if (typeof this.config.onRemove === "function") {
+            this.config.onRemove(this);
+        }
+    }
+
     /** 移除道具，解绑属性和事件 */
     dispose() {
         if (this.config.effects) AM.removeAllAttrBySource(this._instanceId);
         bus.offBySource(this._instanceId);
+        this.onRemove();
     }
 }

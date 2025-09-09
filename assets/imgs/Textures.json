@@ -3,7 +3,8 @@
         "0": "assets/imgs/像素小人/character.png"
     },
     "enemy": {
-        "0": "assets/imgs/敌对生物/creep1.png"
+        "1": "assets/imgs/敌对生物/creep1.png",
+        "2": "assets/imgs/敌对生物/creep2.png"
     },
     "backgrounds": {
         "brick_R": "assets/imgs/map/地块元素/砖块深红.png",
