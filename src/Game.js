@@ -1,7 +1,7 @@
 import { inputManager } from "./Manager/InputManager";
 import { textureManager } from "./Manager/TextureManager";
 import { soundManager } from "./Manager/SoundManager";
-import { eventBus as bus, EventTypes as Events} from "./Manager/EventBus";
+import { eventBus as bus, EventTypes as Events } from "./Manager/EventBus";
 import { mapManager } from "./Manager/MapManager";
 import { projectilesManager } from "./System/Attack/ProjectilesManager";
 import { attributeManager } from "./Manager/AttributeManager";
@@ -27,7 +27,7 @@ class Game {
         this.rightCtx = this.rightCanvas.getContext('2d');
 
         this.isStop = false;
-        this.isPaused = false;
+        this.isPaused = true;
 
         this.lastTime = 0;
         const maxGameFrameRate = 60;
@@ -77,23 +77,6 @@ class Game {
             handler: ({ deltaTime }) => projectilesManager.update(deltaTime),
             priority: 0.1
         });
-        bus.on({
-            event: Events.game.tick,
-            handler: () => {
-                const ctx = this.ctx;
-                ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                mapManager.draw(ctx); // 绘制地图
-                projectilesManager.draw(ctx); // 绘制子弹
-                this.enemies.forEach(enemy => enemy.draw(ctx)); //绘制敌人
-                player.draw(ctx); //绘制玩家
-                const l_ctx = this.leftCtx;
-                l_ctx.clearRect(0, 0, this.leftCanvas.width, this.leftCanvas.height);
-                const r_ctx = this.rightCtx;
-                r_ctx.clearRect(0, 0, this.rightCanvas.width, this.rightCanvas.height);
-                itemManager.draw(r_ctx);
-            },
-            priority: -1
-        });
 
         bus.on({
             event: Events.player.die,
@@ -115,6 +98,20 @@ class Game {
         window.itemManager = itemManager;
     }
 
+    draw() {
+        const ctx = this.ctx;
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        mapManager.draw(ctx); // 绘制地图
+        projectilesManager.draw(ctx); // 绘制子弹
+        this.enemies.forEach(enemy => enemy.draw(ctx)); //绘制敌人
+        player.draw(ctx); //绘制玩家
+        const l_ctx = this.leftCtx;
+        l_ctx.clearRect(0, 0, this.leftCanvas.width, this.leftCanvas.height);
+        const r_ctx = this.rightCtx;
+        r_ctx.clearRect(0, 0, this.rightCanvas.width, this.rightCanvas.height);
+        itemManager.draw(r_ctx);
+    }
+
     start(prev = 0) {
         this.loop(0);
     }
@@ -126,6 +123,7 @@ class Game {
             if (game.enemies.length == 0)
                 bus.emit(Events.game.battle.end);
             if (!this.isPaused && !this.isStop) bus.emit(Events.game.tick, { deltaTime: deltaTime });
+            this.draw();
         }
         this.lastTime = currentTime - (deltaTime % this.targetFrameTime);
         requestAnimationFrame(this.loop);
@@ -133,10 +131,14 @@ class Game {
 
     pause() {
         this.isPaused = true;
+        const menu = document.getElementById('pause-menu');
+        if (menu) menu.style.display = 'flex';
     }
 
     continue() {
         this.isPaused = false;
+        const menu = document.getElementById('pause-menu');
+        if (menu) menu.style.display = 'none';
     }
 
     stop() {

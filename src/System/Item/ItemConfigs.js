@@ -264,7 +264,7 @@ export const ItemConfigs = {
         },
         canRemove: (item) => {
             // 只有当扩展格子全空时才允许移除
-            const extraSlots = itemManager.slots.filter(s => s._sourceItem === item._instanceId);
+            const extraSlots = itemManager.slots.filter(s => s._source === item._instanceId);
             return extraSlots.every(s => s.item == null);
         }
     },

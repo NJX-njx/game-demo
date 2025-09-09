@@ -28,18 +28,19 @@ class MouseManager {
 
         this.clickable = false;
 
-        this.container.addEventListener('click', () => this.capture());
+        this.container.addEventListener('click', async () => this.capture());
         this.container.addEventListener('mousemove', (e) => this.move(e));
         this.container.addEventListener('mousedown', (e) => this.mouseDown(e));
         this.container.addEventListener('mouseup', (e) => this.mouseUp(e));
 
         document.addEventListener('pointerlockchange', () => this.uncapture());
         document.addEventListener('visibilitychange', () => this.blur());
-        document.addEventListener("click", () => game.continue());
+        // document.addEventListener("click", () => game.continue());
+        document.getElementById('resume-btn').addEventListener('click', () => { this.capture; game.continue(); });
     }
 
     async capture() {
-        if (!this.isCapture) {
+        if (!this.isCapture && !game.isPaused) {
             await this.container.requestPointerLock({
                 unadjustedMovement: false,
             });
