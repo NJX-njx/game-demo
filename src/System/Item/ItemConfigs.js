@@ -211,7 +211,7 @@ export const ItemConfigs = {
         type: ItemTypes.ENDING,
         tags: [ItemTags.NO_DROP, ItemTags.NO_EXCHANGE, ItemTags.NO_RANDOM],
         effects: {
-            // TODO: 突进充能速度加快20%/冷却缩减15% —— 需要定义新的属性，如 DASH_CHARGE, DASH_COOLDOWN
+            [Attrs.player.DASH_CHARGE]: 0.15
         }
     },
     hq好奇: { // TODO:交换时必定获得“珍惜”

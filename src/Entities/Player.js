@@ -195,6 +195,7 @@ class Player extends Entity {
         const meleeRT = AM.getAttrSum(Attrs.player.MeteeRecoveryTime);
         const rangedST = AM.getAttrSum(Attrs.player.RangedStartupTime);
         const rangedRT = AM.getAttrSum(Attrs.player.RangedRecoveryTime);
+        const dash_charge = AM.getAllAttr(Attrs.player.DASH_CHARGE);
         this.state.hp_max = this.baseState.hp_max * (1 + hp);
         this.state.hp = Math.min(this.state.hp, this.state.hp_max);
         this.state.attack.atk = this.baseState.attack.atk * (1 + atk);
@@ -204,6 +205,8 @@ class Player extends Entity {
         this.state.attack.startupTime.ranged = this.baseState.attack.RangedStartupTime + rangedST;
         this.state.attack.recoveryTime.melee = this.baseState.attack.MeleeRecoveryTime + meleeRT;
         this.state.attack.recoveryTime.ranged = this.baseState.attack.RangedRecoveryTime + rangedRT;
+        this.dash.dashCooldownTime = this.baseState.dash_cooldownTime * (1 - dash_charge);
+        this.dash.dashCooldown.set(this.dash.dashCooldownTime);
     }
 
     // 冲刺初始化

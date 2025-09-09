@@ -9,6 +9,7 @@ export const AttributeTypes = {
         DMG: "PLAYER_DMG",
         LOS: "PLAYER_LOS",//受到的生命流失效果
         TAKE_DMG: "PLAYER_TAKE_DAMAGE",//受到的伤害
+        DASH_CHARGE: "PLAYER_DASH_CHARGE",//冲刺充能加速
         AttackStartupTime: "PLAYER_AttackStartupTime",
         AttackRecoveryTime: "PLAYER_AttackRecoveryTime",
         MeteeStartupTime: "PLAYER_MeteeStartupTime",
