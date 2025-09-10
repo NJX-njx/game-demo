@@ -38,10 +38,21 @@ class MapManager {
      * @param {number|string} room 房间编号或名称
      */
     async loadRoom(layer, room) {
-        const url = `assets/stages/layer${layer}/room${room}.json`;
+        // 兼容大小写不一致的关卡文件名：roomX.json / RoomX.json
+        const urlLower = `assets/stages/layer${layer}/room${room}.json`;
+        const urlUpper = `assets/stages/layer${layer}/Room${room}.json`;
         try {
-            const data = await dataManager.loadJSON(url);
+            let data = null;
+            try {
+                data = await dataManager.loadJSON(urlLower);
+            } catch (eLower) {
+                // 再尝试大写文件名
+                data = await dataManager.loadJSON(urlUpper);
+            }
             this.rawMapData = JSON.parse(JSON.stringify(data)); // 深拷贝一份原始地图数据
+            // 记录当前层与房间，供存档使用
+            this.currentLayer = typeof layer === 'string' ? parseInt(layer, 10) : layer;
+            this.currentRoom = typeof room === 'string' ? parseInt(room, 10) : room;
             this.playerSpawn = data.playerSpawn ? { ...data.playerSpawn } : null;
             this.enemySpawns = Array.isArray(data.enemySpawns) ? data.enemySpawns.map(e => ({ ...e })) : [];
             this.backgrounds = (data.backgrounds || []).map(obj => ({ ...obj }));

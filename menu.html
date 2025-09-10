@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>成就</title>
+    <title>菜单</title>
     <!-- 仅保留自定义CSS，移除所有外部库 -->
     <link rel="icon" type="image/png" href="/favicon.ico" sizes="any">
     <link rel="stylesheet" href="assets/style/menu.css">
@@ -21,11 +21,46 @@
             <button id="start-game" class="btn start-btn">
                 开始游戏
             </button>
+            <button id="show-saves" class="btn save-btn">
+                读取存档
+            </button>
             <button id="show-achievements" class="btn achievement-btn">
                 查看成就
             </button>
         </div>
     </main>
+
+    <!-- 3. 存档展示面板（默认隐藏） -->
+    <div id="save-panel" class="panel-overlay">
+        <!-- 背景遮罩 -->
+        <div class="panel-backdrop" id="save-backdrop"></div>
+        
+        <!-- 面板内容区 -->
+        <div class="panel-content">
+            <!-- 面板标题栏 -->
+            <div class="panel-header">
+                <h2>📁 存档列表</h2>
+                <button id="close-save-panel" class="close-btn">×</button>
+            </div>
+            
+            <!-- 存档列表容器（JS动态填充） -->
+            <div id="save-list" class="save-list">
+                <div class="save-slot">
+                    <div class="save-preview"></div>
+                    <div class="save-info">
+                        <div class="save-time">2025-09-10 15:30</div>
+                        <div class="save-location">第1层 - 房间3</div>
+                    </div>
+                    <button class="load-save-btn">加载</button>
+                </div>
+            </div>
+            
+            <!-- 面板底部提示 -->
+            <div class="panel-footer">
+                按 <kbd>ESC</kbd> 键或点击空白处关闭
+            </div>
+        </div>
+    </div>
 
     <!-- 3. 成就展示面板（默认隐藏） -->
     <div id="achievement-panel" class="panel-overlay">
@@ -69,8 +104,8 @@
         </div> 
     </div>
 
-    <!-- 外部JS引入 -->
-    <script src="scripts/menu.js"></script>
+    <!-- 外部JS引入（先加载成就系统，再加载菜单脚本） -->
     <script src="scripts/Manager/AchievementManager.js"></script>
+    <script src="scripts/menu.js"></script>
 </body>
 </html>

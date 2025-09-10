@@ -11,6 +11,46 @@ import { Vector } from "./Utils/Vector";
 import { itemManager } from "./System/Item/ItemManager";
 import { ItemConfigs as Items } from "./System/Item/ItemConfigs";
 class Game {
+    static saveCurrentGame(slotId = 1) {
+        const saveData = {
+            player: player.constructor.getSaveData(),
+            layer: mapManager.currentLayer,
+            room: mapManager.currentRoom,
+            timestamp: new Date().toISOString()
+        };
+        // 读取或初始化 present_data
+        let currentPlayer = null;
+        try { currentPlayer = JSON.parse(localStorage.getItem("present_data")); } catch(_) { currentPlayer = null; }
+        if (!currentPlayer || typeof currentPlayer !== 'object') {
+            currentPlayer = { saveSlots: [] };
+        }
+        currentPlayer.saveSlots = currentPlayer.saveSlots || [];
+        currentPlayer.saveSlots[slotId - 1] = saveData;
+        localStorage.setItem("present_data", JSON.stringify(currentPlayer));
+        return saveData;
+    }
+
+    static async loadGame(slotId = 1) {
+        let currentPlayer = null;
+        try { currentPlayer = JSON.parse(localStorage.getItem("present_data")); } catch(_) { currentPlayer = null; }
+        if(!currentPlayer?.saveSlots?.[slotId - 1]) return false;
+
+        const saveData = currentPlayer.saveSlots[slotId - 1];
+        // 先加载地图，再恢复玩家位置/状态（注意将位置还原为 Vector）
+        await mapManager.loadRoom(saveData.layer, saveData.room);
+        try {
+            if (saveData.player?.position) {
+                const pos = saveData.player.position;
+                player.setPosition(new Vector(pos.x, pos.y));
+            }
+            if (saveData.player?.state) {
+                player.state = saveData.player.state;
+            }
+        } catch (_) {
+            // 容错：若旧版本数据结构不一致，则只使用地图加载结果
+        }
+        return true;
+    }
     constructor() {
         if (Game.instance)
             return Game.instance;
@@ -44,13 +84,53 @@ class Game {
     }
 
     async init() {
+        // 确保DOM完全加载后再绑定事件
+        await new Promise(resolve => {
+            if (document.readyState === 'complete') {
+                resolve();
+            } else {
+                window.addEventListener('load', resolve);
+            }
+        });
+
+        // 初始化退出按钮
+        const exitBtn = document.getElementById('exit-btn');
+        if (exitBtn) {
+            // 先移除可能存在的旧监听器
+            exitBtn.replaceWith(exitBtn.cloneNode(true));
+            const newExitBtn = document.getElementById('exit-btn');
+            
+            newExitBtn.addEventListener('click', (e) => {
+                // 不阻止默认跳转，让超链接自行导航
+                console.log('Exit button clicked - event:', e);
+                try { if (document.pointerLockElement) document.exitPointerLock(); } catch (_) {}
+                this.stop();
+            });
+            
+            // 测试按钮是否可点击
+            newExitBtn.style.pointerEvents = 'auto';
+            console.log('Exit button initialized:', newExitBtn);
+        } else {
+            console.error('Exit button not found!');
+        }
         await textureManager.load();
         await soundManager.load();
-        await mapManager.loadRoom(0, 3);
 
-        // 初始化玩家
-        const spawn = mapManager.getPlayerSpawn();
-        player.setPosition(new Vector(spawn.x, spawn.y));
+        // 读取选中槽位并尝试加载存档
+        const selectedSlotRaw = localStorage.getItem('selected_slot');
+        const selectedSlot = Math.max(1, parseInt(selectedSlotRaw || '1', 10) || 1);
+        this.currentSlotId = selectedSlot;
+        let loaded = false;
+        try { loaded = await Game.loadGame(selectedSlot); } catch (_) { loaded = false; }
+        if (!loaded) {
+            await mapManager.loadRoom(0, 3);
+        }
+
+        // 初始化玩家：只有在未从存档加载时才使用默认出生点
+        if (!loaded) {
+            const spawn = mapManager.getPlayerSpawn();
+            player.setPosition(new Vector(spawn.x, spawn.y));
+        }
 
         bus.on({
             event: Events.game.tick,
@@ -128,7 +208,8 @@ class Game {
             if (!this.isPaused && !this.isStop) bus.emit(Events.game.tick, { deltaTime: deltaTime });
         }
         this.lastTime = currentTime - (deltaTime % this.targetFrameTime);
-        requestAnimationFrame(this.loop);
+        // 记录 rafId，便于 stop 时取消
+        this.rafId = requestAnimationFrame(this.loop);
     }
 
     pause() {
@@ -141,6 +222,10 @@ class Game {
 
     stop() {
         this.isStop = true;
+        try { if (this.rafId) cancelAnimationFrame(this.rafId); } catch (_) {}
+        try { if (document.pointerLockElement) document.exitPointerLock(); } catch (_) {}
+        const slotToSave = this.currentSlotId && this.currentSlotId > 0 ? this.currentSlotId : 1;
+        Game.saveCurrentGame(slotToSave); // 游戏退出时自动保存到当前槽位
     }
 }
 

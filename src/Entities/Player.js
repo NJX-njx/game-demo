@@ -62,6 +62,21 @@ class Player_Animation {
 }
 
 class Player extends Entity {
+    static getSaveData() {
+        return {
+            position: this.instance.hitbox.position,
+            state: this.instance.state,
+            inventory: [], // 待实现物品系统
+            timestamp: new Date().toISOString()
+        };
+    }
+
+    static loadSaveData(data) {
+        if(!this.instance) return;
+        this.instance.hitbox.position = data.position;
+        this.instance.state = data.state;
+        // 待实现物品系统加载
+    }
     constructor(size = new Vector(50, 50)) {
         if (Player.instance)
             return Player.instance;
