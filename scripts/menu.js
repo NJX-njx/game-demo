@@ -177,7 +177,7 @@ function initCreditsSystem() {
             const slide = document.createElement('div');
             slide.className = `credits-slide ${index === 0 ? 'active' : ''}`;
             slide.innerHTML = `
-                <a href="${member.link}" class="member-avatar-link" target="_blank">
+                <a href="${member.link}" class="member-avatar-link" target="_self">
                     <div class="member-avatar" style="background-image: url('${member.avatar}')"></div>
                 </a>
                 <div class="member-info">
