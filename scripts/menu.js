@@ -30,22 +30,23 @@ const creditsData = [
         role: "主程序员",
         bio: "负责游戏核心逻辑和系统架构设计，主导存档与成就模块开发",
         avatar: "assets/avatars/zhangsan.png",
-        link: "pages/zhangsan.html"
+        link: "/pages/zhangsan.html"
+    },
+        {
+        name: "王五",
+        role: "策划总监",
+        bio: "设计游戏关卡流程与成就体系，把控游戏整体玩法体验",
+        avatar: "assets/avatars/wangwu.png",
+        link: "/pages/wangwu.html"
     },
     {
         name: "李四",
         role: "美术设计师",
         bio: "负责游戏背景、UI界面及角色立绘设计，定义游戏视觉风格",
         avatar: "assets/avatars/lisi.png",
-        link: "pages/lisi.html"
-    },
-    {
-        name: "王五",
-        role: "策划总监",
-        bio: "设计游戏关卡流程与成就体系，把控游戏整体玩法体验",
-        avatar: "assets/avatars/wangwu.png",
-        link: "pages/wangwu.html"
+        link: "/pages/lisi.html"
     }
+
 ];
 
 // ==============================================
