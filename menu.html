@@ -1,22 +1,26 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>菜单</title>
-    <!-- 仅保留自定义CSS，移除所有外部库 -->
     <link rel="icon" type="image/png" href="/favicon.ico" sizes="any">
     <link rel="stylesheet" href="assets/style/menu.css">
 </head>
+
 <body>
-    <!-- 1. 主界面背景层（保留背景图片） -->
+    <!-- 左上角制作人员按钮 -->
+    <button id="show-credits-btn" class="credits-btn">🎮</button>
+
+    <!-- 1. 主界面背景层 -->
     <div class="main-bg">
         <div class="bg-overlay"></div>
     </div>
 
-    <!-- 2. 主内容区（按钮放在中下方） -->
+    <!-- 2. 主内容区 -->
     <main class="main-content">
-        <!-- 功能按钮组（中下方定位核心） -->
+        <!-- 功能按钮组 -->
         <div class="button-group">
             <button id="start-game" class="btn start-btn">
                 开始游戏
@@ -30,20 +34,14 @@
         </div>
     </main>
 
-    <!-- 3. 存档展示面板（默认隐藏） -->
+    <!-- 3. 存档展示面板 -->
     <div id="save-panel" class="panel-overlay">
-        <!-- 背景遮罩 -->
         <div class="panel-backdrop" id="save-backdrop"></div>
-        
-        <!-- 面板内容区 -->
         <div class="panel-content">
-            <!-- 面板标题栏 -->
             <div class="panel-header">
                 <h2>📁 存档列表</h2>
                 <button id="close-save-panel" class="close-btn">×</button>
             </div>
-            
-            <!-- 存档列表容器（JS动态填充） -->
             <div id="save-list" class="save-list">
                 <div class="save-slot">
                     <div class="save-preview"></div>
@@ -54,45 +52,33 @@
                     <button class="load-save-btn">加载</button>
                 </div>
             </div>
-            
-            <!-- 面板底部提示 -->
             <div class="panel-footer">
                 按 <kbd>ESC</kbd> 键或点击空白处关闭
             </div>
         </div>
     </div>
 
-    <!-- 3. 成就展示面板（默认隐藏） -->
+    <!-- 4. 成就展示面板 -->
     <div id="achievement-panel" class="panel-overlay">
-        <!-- 背景遮罩 -->
         <div class="panel-backdrop" id="panel-backdrop"></div>
-        
-        <!-- 面板内容区 -->
         <div class="panel-content">
-            <!-- 面板标题栏 -->
             <div class="panel-header">
                 <h2>🏆 成就列表</h2>
                 <button id="close-panel" class="close-btn">×</button>
             </div>
-            
-            <!-- 成就过滤按钮 -->
             <div class="filter-container">
                 <button class="filter-btn active" data-filter="all">全部</button>
                 <button class="filter-btn" data-filter="completed">已解锁</button>
                 <button class="filter-btn" data-filter="incomplete">未解锁</button>
             </div>
-            
-            <!-- 成就列表容器（JS动态填充） -->
             <div id="achievement-list" class="achievement-list"></div>
-            
-            <!-- 面板底部提示 -->
             <div class="panel-footer">
                 按 <kbd>P</kbd> 键或点击空白处关闭
             </div>
         </div>
     </div>
 
-    <!-- 4. 成就解锁提示框（默认隐藏） -->
+    <!-- 5. 成就解锁提示框 -->
     <div id="achievement-toast" class="toast">
         <div class="toast-inner">
             <div class="toast-icon">🏆</div>
@@ -101,10 +87,25 @@
                 <div class="toast-title" id="toast-title"></div>
                 <div class="toast-desc" id="toast-desc"></div>
             </div>
-        </div> 
+        </div>
     </div>
 
-    <!-- 外部JS引入（先加载成就系统，再加载菜单脚本） -->
+    <!-- 6. 制作人员展示面板 -->
+    <div id="credits-panel" class="panel-overlay">
+        <div class="panel-backdrop" id="credits-backdrop"></div>
+        <div class="panel-content">
+            <div class="panel-header">
+                <h2>🎮 制作人员</h2>
+                <button id="close-credits-panel" class="close-btn">×</button>
+            </div>
+            <div class="credits-carousel" id="credits-carousel"></div>
+            <div class="carousel-dots" id="carousel-dots"></div>
+            <div class="panel-footer">
+                按 <kbd>ESC</kbd> 键或点击空白处关闭
+            </div>
+        </div>
+    </div>
+
     <script src="scripts/Manager/AchievementManager.js"></script>
     <script src="scripts/menu.js"></script>
 </body>
