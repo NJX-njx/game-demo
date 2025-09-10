@@ -1,41 +1,66 @@
 import { attributeManager as AM } from "../../Manager/AttributeManager";
 import { eventBus as bus } from "../../Manager/EventBus";
+import { ItemTags } from "./ItemConfigs";
+import { itemManager } from "./ItemManager";
 
 let itemInstanceCounter = 0;
+export const itemGenerateHistory = new Set();
 
 export class Item {
     constructor(config) {
         this.config = config;
         this.state = config.state ? { ...config.state } : {};
-
-        // 每个实例唯一 id
-        this._instanceId = `${config.id}_${itemInstanceCounter++}`;
-
-        // 拷贝标签
+        this.id = `${config.name}_${itemInstanceCounter++}`;
+        this.name = config.name;
         this.tags = [...(config.tags || [])];
+        this.type = config.type;
+        this.level = config.level;
+        itemGenerateHistory.add(config.name);
+        this._slot = null;   // 当前所在格子
+        this._init = false;
+        this._active = false; // 是否生效
+    }
 
-        // 添加属性效果
-        if (config.effects) {
-            for (const key in config.effects) {
-                AM.addAttr(key, config.effects[key], this._instanceId);
+    /** 激活道具效果 */
+    activate() {
+        if (this._active) return;
+        this._active = true;
+
+        // 属性
+        if (this.config.effects) {
+            for (const key in this.config.effects) {
+                AM.addAttr(key, this.config.effects[key], this.id);
             }
         }
 
-        // 注册事件钩子
-        if (config.hooks) {
-            for (const hook of config.hooks(this)) {
-                const hookOptions = {
-                    ...hook,
-                    handler: hook.handler.bind(this),
-                    source: this._instanceId
-                };
+        // 事件钩子
+        if (this.config.hooks) {
+            for (const hook of this.config.hooks(this)) {
+                const hookOptions = { ...hook, handler: hook.handler.bind(this), source: this.id };
                 bus.on(hookOptions);
             }
         }
 
-        if (typeof config.onAcquire === "function") {
-            config.onAcquire(this);
+        if (typeof this.config.onActivate === "function") {
+            this.config.onActivate(this);
         }
+
+        if (typeof this.config.onAcquire === "function" && !this._init) {
+            this.config.onAcquire(this);
+            this._init = true;
+        }
+    }
+
+    /** 取消激活效果 */
+    deactivate() {
+        if (!this._active) return;
+        this._active = false;
+
+        AM.removeAllAttrBySource(this.id);
+        bus.offBySource(this.id);
+
+        if (this.hasTag(ItemTags.ADD_SLOTS))
+            itemManager.removeSlotsBySource(this.id);
     }
 
     /** 添加标签 */
@@ -53,30 +78,16 @@ export class Item {
         return this.tags.includes(tag);
     }
 
-    /**
-     * 是否允许移除
-     * 默认返回 true，可以在 config.canRemove 覆盖
-     */
+    /** 检查能否移除 */
     canRemove() {
-        if (typeof this.config.canRemove === "function") {
-            return this.config.canRemove(this);
-        }
+        if (this.hasTag(ItemTags.NO_DROP)) return false;
+        if (typeof this.config.canRemove === "function") return this.config.canRemove(this);
         return true;
     }
 
-    /**
-     * 移除时调用
-     */
-    onRemove() {
-        if (typeof this.config.onRemove === "function") {
-            this.config.onRemove(this);
-        }
-    }
-
-    /** 移除道具，解绑属性和事件 */
+    /** 移除道具时调用 */
     dispose() {
-        if (this.config.effects) AM.removeAllAttrBySource(this._instanceId);
-        bus.offBySource(this._instanceId);
-        this.onRemove();
+        this.deactivate();
+        if (typeof this.config.onRemove === "function") this.config.onRemove(this);
     }
 }

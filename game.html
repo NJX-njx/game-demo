@@ -10,21 +10,14 @@
 
 <body>
     <div id="game">
-        <canvas id="left-ui" width="80" height="720"></canvas>
-        <div id="game-container">
-            <canvas id="canvas" width="1280" height="720"></canvas>
-
-            <!-- 暂停菜单 -->
-            <div id="pause-menu">
-                <h1>游戏已暂停</h1>
-                <button id="resume-btn">继续游戏</button>
-            </div>
-        </div>
-        <canvas id="right-ui" width="80" height="720"></canvas>
+        <!-- 游戏画布 -->
+        <canvas id="game-canvas" width="1280" height="720"></canvas>
+        <!-- 整体 UI canvas -->
+        <canvas id="ui-canvas" width="1440" height="720"></canvas>
     </div>
 
     <!-- Vite 入口 -->
-    <script type="module" src="dist/main.js"></script>
+    <script type="module" src="src/main.js"></script>
 </body>
 
 </html>

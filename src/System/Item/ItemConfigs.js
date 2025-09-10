@@ -9,9 +9,10 @@ export const ItemTags = {
     NO_DROP: "noDrop",          //不可丢弃
     NO_RANDOM: "noRandom",      //不随机掉落
     SPECIAL_EXCHANGE: "specialExchange", //特殊交换
+    ADD_SLOTS: "addSlots", //添加格子
 
     UNIQUE_GLOBAL: "uniqueGlobal",  // 全局唯一，本局只能获得一个
-    UNIQUE_SINGLE: "uniqueSingle",  // 同时只能持有一个（默认情况，可以省略）
+    UNIQUE_SINGLE: "uniqueSingle",  // 同时只能持有一个
     MULTIPLE: "multiple"          // 可同时获得多个
 }
 
@@ -22,10 +23,10 @@ export const ItemTypes = {
 
 export const ItemConfigs = {
     yy友谊: {
-        id: "友谊",
+        name: "友谊",
         level: 1,
         type: ItemTypes.NORMAL,
-        tags: [ItemTags.NO_EXCHANGE, ItemTags.NO_DROP, ItemTags.NO_RANDOM],
+        tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_EXCHANGE, ItemTags.NO_DROP, ItemTags.NO_RANDOM],
         effects: {
             [Attrs.player.HP]: +0.25,
             [Attrs.player.DMG]: +0.25,
@@ -43,7 +44,7 @@ export const ItemConfigs = {
                 handler: (hpPercent) => {
                     if (hpPercent < 0.25 && item.state.healTimer.ready()) {
                         item.state.healTimer.start();
-                        player.takeHeal(player.state.hp_max * 0.01, item._instanceId);
+                        player.takeHeal(player.state.hp_max * 0.01, item.id);
                     }
                 }
             },
@@ -81,10 +82,10 @@ export const ItemConfigs = {
         }
     },
     bc悲怆: {
-        id: "悲怆",
+        name: "悲怆",
         level: 1,
         type: ItemTypes.NORMAL,
-        tags: [ItemTags.NO_EXCHANGE, ItemTags.NO_DROP, ItemTags.NO_RANDOM],
+        tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_EXCHANGE, ItemTags.NO_DROP, ItemTags.NO_RANDOM],
         effects: {
             [Attrs.player.HP]: -0.6
         },
@@ -118,10 +119,10 @@ export const ItemConfigs = {
         }
     },
     sn思念: {
-        id: "思念",
+        name: "思念",
         level: 1,
         type: ItemTypes.NORMAL,
-        tags: [ItemTags.NO_RANDOM],
+        tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_RANDOM],
         effects: {
             [Attrs.player.HP]: 0.2
         },
@@ -138,7 +139,7 @@ export const ItemConfigs = {
                                 event: Events.player.takeDamage,
                                 handler: (payload) => { return { ...payload, baseDamage: payload * 0.7 } },
                                 maxCalls: 1,
-                                source: item._instanceId
+                                source: item.id
                             });
                             break;
                         case 2:
@@ -153,10 +154,10 @@ export const ItemConfigs = {
         }
     },
     ds胆识: { //TODO: 交换时必定获得“决心”
-        id: "胆识",
+        name: "胆识",
         level: 0,
         type: ItemTypes.ENDING,
-        tags: [ItemTags.NO_DROP, ItemTags.NO_RANDOM, ItemTags.SPECIAL_EXCHANGE],
+        tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_DROP, ItemTags.NO_RANDOM, ItemTags.SPECIAL_EXCHANGE],
         effects: {
             [Attrs.enemy.DMG_DEC]: -15,
             [Attrs.boss.HP]: 0.45
@@ -171,10 +172,10 @@ export const ItemConfigs = {
         ]
     },
     js决心: {
-        id: "决心",
+        name: "决心",
         level: 0,
         type: ItemTypes.ENDING,
-        tags: [ItemTags.NO_DROP, ItemTags.NO_EXCHANGE, ItemTags.NO_RANDOM],
+        tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_DROP, ItemTags.NO_EXCHANGE, ItemTags.NO_RANDOM],
         effects: {
             [Attrs.enemy.DMG_DEC]: -10,
             [Attrs.player.ATK]: 0.35,
@@ -196,29 +197,29 @@ export const ItemConfigs = {
         }
     },
     yy犹疑: {//TODO:交换时必定获得“观望”
-        id: "犹疑",
+        name: "犹疑",
         level: 0,
         type: ItemTypes.ENDING,
-        tags: [ItemTags.NO_DROP, ItemTags.NO_RANDOM, ItemTags.SPECIAL_EXCHANGE],
+        tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_DROP, ItemTags.NO_RANDOM, ItemTags.SPECIAL_EXCHANGE],
         effects: {
             [Attrs.player.SPD]: -0.4,
             [Attrs.player.ATK]: -0.2
         }
     },
     gw观望: {
-        id: "观望",
+        name: "观望",
         level: 0,
         type: ItemTypes.ENDING,
-        tags: [ItemTags.NO_DROP, ItemTags.NO_EXCHANGE, ItemTags.NO_RANDOM],
+        tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_DROP, ItemTags.NO_EXCHANGE, ItemTags.NO_RANDOM],
         effects: {
             [Attrs.player.DASH_CHARGE]: 0.15
         }
     },
     hq好奇: { // TODO:交换时必定获得“珍惜”
-        id: "好奇",
+        name: "好奇",
         level: 1,
         type: ItemTypes.NORMAL,
-        tags: [ItemTags.NO_DROP, ItemTags.NO_EXCHANGE, ItemTags.UNIQUE_GLOBAL, ItemTags.SPECIAL_EXCHANGE],
+        tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_DROP, ItemTags.NO_EXCHANGE, ItemTags.SPECIAL_EXCHANGE],
         effects: {
             [Attrs.player.TAKE_DMG]: 0.3
         },
@@ -236,10 +237,10 @@ export const ItemConfigs = {
         }
     },
     zx珍惜: {// TODO: 交换时必定获得“朗诵”
-        id: "珍惜",
+        name: "珍惜",
         level: 1,
         type: ItemTypes.NORMAL,
-        tags: [ItemTags.NO_EXCHANGE, ItemTags.UNIQUE_GLOBAL, ItemTags.SPECIAL_EXCHANGE, ItemTags.NO_RANDOM],
+        tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_EXCHANGE, ItemTags.SPECIAL_EXCHANGE, ItemTags.NO_RANDOM],
         effects: {},
         hooks: (item) => [
             {   // 在进入下一个商店前，不可交换
@@ -255,21 +256,21 @@ export const ItemConfigs = {
         onExchange(item) { }
     },
     ls朗诵: {
-        id: "朗诵",
+        name: "朗诵",
         level: 1,
         type: ItemTypes.NORMAL,
-        tags: [ItemTags.NO_RANDOM],
+        tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_RANDOM, ItemTags.ADD_SLOTS],
         onAcquire(item) {
-            itemManager.addSlots(2, { maxLevel: 1, type: ItemTypes.NORMAL }, item._instanceId);
+            itemManager.addSlots(2, { maxLevel: 3, type: ItemTypes.NORMAL }, item.id);
         },
         canRemove: (item) => {
             // 只有当扩展格子全空时才允许移除
-            const extraSlots = itemManager.slots.filter(s => s._source === item._instanceId);
-            return extraSlots.every(s => s.item == null);
+            const extraSlots = itemManager.slots.filter(s => s._source === item.id);
+            return extraSlots.every(s => s.item == null || s.item === item);
         }
     },
     xq休憩: {
-        id: "休憩",
+        name: "休憩",
         level: 1,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.MULTIPLE],
@@ -278,7 +279,7 @@ export const ItemConfigs = {
                 event: Events.item.use,
                 handler: ({ usedItem }) => {
                     if (usedItem === item) {
-                        player.takeHeal(player.state.hp_max * 0.4, item._instanceId);
+                        player.takeHeal(player.state.hp_max * 0.4, item.id);
                         itemManager.remove(item);
                     }
                 }
@@ -286,15 +287,16 @@ export const ItemConfigs = {
         ]
     },
     jy惊讶: {// TODO:下次进入商店时：恶魔处额外展示2个物品
-        id: "惊讶",
+        name: "惊讶",
         level: 1,
         type: ItemTypes.NORMAL,
+        tags: [ItemTags.UNIQUE_SINGLE],
     },
     dg祷告: {// TODO:交换时必定获得“虔诚”
-        id: "祷告",
+        name: "祷告",
         level: 1,
         type: ItemTypes.NORMAL,
-        tags: [ItemTags.SPECIAL_EXCHANGE],
+        tags: [ItemTags.UNIQUE_SINGLE, ItemTags.SPECIAL_EXCHANGE],
         effects: {
             [Attrs.player.LOS]: -0.3
         },

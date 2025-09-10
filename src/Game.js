@@ -1,4 +1,4 @@
-import { inputManager } from "./Manager/InputManager";
+import { inputManager } from "./System/Input/InputManager";
 import { textureManager } from "./Manager/TextureManager";
 import { soundManager } from "./Manager/SoundManager";
 import { eventBus as bus, EventTypes as Events } from "./Manager/EventBus";
@@ -10,24 +10,23 @@ import { Enemy } from "./Entities/Enemy";
 import { Vector } from "./Utils/Vector";
 import { itemManager } from "./System/Item/ItemManager";
 import { ItemConfigs as Items } from "./System/Item/ItemConfigs";
+import { uiManager } from "./System/UI/UIManager";
 class Game {
     constructor() {
         if (Game.instance)
             return Game.instance;
         Game.instance = this;
         // 获取画布
-        this.canvas = document.getElementById('canvas');
+        this.canvas_game = document.getElementById('game-canvas');
+        this.canvas_ui = document.getElementById('ui-canvas');
         // 禁用右键菜单和拖拽（禁不掉浏览器的右键手势）
-        this.canvas.addEventListener('contextmenu', e => e.preventDefault());
-        this.canvas.addEventListener('dragstart', e => e.preventDefault());
-        this.ctx = this.canvas.getContext('2d');
-        this.leftCanvas = document.getElementById('left-ui');
-        this.rightCanvas = document.getElementById('right-ui');
-        this.leftCtx = this.leftCanvas.getContext('2d');
-        this.rightCtx = this.rightCanvas.getContext('2d');
+        this.canvas_ui.addEventListener('contextmenu', e => e.preventDefault());
+        this.canvas_ui.addEventListener('dragstart', e => e.preventDefault());
+        this.ctx_game = this.canvas_game.getContext('2d');
+        this.ctx_ui = this.canvas_ui.getContext('2d');
 
         this.isStop = false;
-        this.isPaused = true;
+        this.isPaused = false;
 
         this.lastTime = 0;
         const maxGameFrameRate = 60;
@@ -99,17 +98,17 @@ class Game {
     }
 
     draw() {
-        const ctx = this.ctx;
-        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        mapManager.draw(ctx); // 绘制地图
-        projectilesManager.draw(ctx); // 绘制子弹
-        this.enemies.forEach(enemy => enemy.draw(ctx)); //绘制敌人
-        player.draw(ctx); //绘制玩家
-        const l_ctx = this.leftCtx;
-        l_ctx.clearRect(0, 0, this.leftCanvas.width, this.leftCanvas.height);
-        const r_ctx = this.rightCtx;
-        r_ctx.clearRect(0, 0, this.rightCanvas.width, this.rightCanvas.height);
-        itemManager.draw(r_ctx);
+        const ctx_game = this.ctx_game;
+        ctx_game.clearRect(0, 0, this.canvas_game.width, this.canvas_game.height);
+        const ctx_ui = this.ctx_ui;
+        ctx_ui.clearRect(0, 0, this.canvas_ui.width, this.canvas_ui.height);
+
+        mapManager.draw(ctx_game); // 绘制地图
+        projectilesManager.draw(ctx_game); // 绘制子弹
+        this.enemies.forEach(enemy => enemy.draw(ctx_game)); //绘制敌人
+        player.draw(ctx_game); //绘制玩家
+
+        uiManager.draw(ctx_ui);
     }
 
     start(prev = 0) {
@@ -120,9 +119,16 @@ class Game {
         const deltaTime = currentTime - this.lastTime;
         if (deltaTime >= this.targetFrameTime) {
             inputManager.update();
+
+            if (inputManager.isFirstDown("Esc")) {
+                this.switchPause();
+            }
+
             if (game.enemies.length == 0)
                 bus.emit(Events.game.battle.end);
+
             if (!this.isPaused && !this.isStop) bus.emit(Events.game.tick, { deltaTime: deltaTime });
+
             this.draw();
         }
         this.lastTime = currentTime - (deltaTime % this.targetFrameTime);
@@ -131,14 +137,19 @@ class Game {
 
     pause() {
         this.isPaused = true;
-        const menu = document.getElementById('pause-menu');
-        if (menu) menu.style.display = 'flex';
+        uiManager.switchScreen("pauseMenu");
     }
 
-    continue() {
+    resume() {
         this.isPaused = false;
-        const menu = document.getElementById('pause-menu');
-        if (menu) menu.style.display = 'none';
+        uiManager.switchScreen();
+    }
+
+    switchPause() {
+        if (this.isPaused)
+            this.resume();
+        else
+            this.pause();
     }
 
     stop() {

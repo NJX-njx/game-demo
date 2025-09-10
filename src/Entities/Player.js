@@ -6,7 +6,7 @@ import { Cooldown } from "../Utils/Cooldown";
 import { game } from "../Game";
 import { textureManager } from "../Manager/TextureManager";
 import { soundManager } from "../Manager/SoundManager";
-import { inputManager } from "../Manager/InputManager";
+import { inputManager } from "../System/Input/InputManager";
 import { eventBus as bus, EventTypes as Events } from "../Manager/EventBus";
 import { attributeManager as AM, AttributeTypes as Attrs } from "../Manager/AttributeManager";
 class Player_Animation {
