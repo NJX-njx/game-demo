@@ -72,8 +72,6 @@ class ItemManager {
         const slotIndex = this.slots.findIndex(slot => { return !slot.item && slot.canAccept(config); });
         if (slotIndex === -1) return null;
 
-        console.log(config)
-
         const item = new Item(config);
         item.activate();
 

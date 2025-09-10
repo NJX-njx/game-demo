@@ -28,7 +28,6 @@ export class ItemBarScreen extends UIScreen {
                 return new ItemSlotElement(slot, startX, startY + i * (this.slotSize + this.padding), this.slotSize);
             });
             this.elements.push(this.trashSlot);
-            console.log(this.elements)
         }
 
         super.draw(ctx);
