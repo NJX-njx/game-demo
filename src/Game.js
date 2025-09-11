@@ -205,35 +205,55 @@ class Game {
         window.itemManager = itemManager;
     }
 
-    // 修正后的竖版血条绘制方法（从上往下扣血）
+    // 调整后的竖版血条绘制方法（含下移+垂直对齐文字显示）
     drawVerticalHpBar(ctx) {
         const config = {
-            x: 35,          // 水平位置（左侧UI居中）
-            y: 50,          // 血条顶部Y坐标
-            width: 10,      // 血条宽度
-            totalHeight: 600, // 总高度（从y=50到y=650）
-            bgColor: '#ff3333', // 背景色（空血）
-            fgColor: '#33ff33', // 前景色（当前血量）
-            borderColor: '#000000' // 边框
+            x: 35,          // 调整水平位置，给文字留出空间
+            y: 200,         // 血条顶部Y坐标（进一步下移，给文字留出空间）
+            width: 30,      // 血条宽度
+            totalHeight: 500, // 血条总高度（略微缩短，避免超出画布）
+            bgColor: '#ff3333',
+            fgColor: '#33ff33',
+            borderColor: '#000000',
+            textColor: '#ffffff',
+            fontSize: '14px Arial',
+            textRightAlign: 50, // 文字右对齐的基准线X坐标
         };
 
-        // 1. 绘制背景（红色，完整高度）
+        // 获取玩家数据
+        const playerHp = Math.round(player.state.hp);
+        const playerHpMax = Math.round(player.state.hp_max);
+        const playerAtk = Math.round(player.state.attack.atk);
+
+        // 绘制文字（右对齐，垂直排列）
+        ctx.font = config.fontSize;
+        ctx.fillStyle = config.textColor;
+        ctx.textAlign = 'center'; // 文字右对齐，实现垂直对齐效果
+
+        // 血量标签
+        ctx.fillText('血量：', config.textRightAlign, 60);
+        // 血量数值（在标签正下方，距离15px）
+        ctx.fillText(`${playerHp}/${playerHpMax}`, config.textRightAlign, 80);
+
+        // 攻击力标签（在血量数值下方，距离30px）
+        ctx.fillText('攻击力：', config.textRightAlign, 110);
+        // 攻击力数值（在标签正下方，距离15px）
+        ctx.fillText(`${playerAtk}`, config.textRightAlign, 130);
+
+        // 绘制血条
         ctx.fillStyle = config.bgColor;
         ctx.fillRect(config.x, config.y, config.width, config.totalHeight);
 
-        // 2. 绘制边框
         ctx.strokeStyle = config.borderColor;
         ctx.lineWidth = 1;
         ctx.strokeRect(config.x, config.y, config.width, config.totalHeight);
 
-        // 3. 绘制当前血量（绿色，从上往下缩短）
         const currentHeight = config.totalHeight * this.currentHpPercent;
-        // 关键修正：前景条的Y坐标 = 背景顶部 + (总高度 - 当前高度)
-        // 这样血量减少时，绿色部分从顶部开始缩短
         const fgY = config.y + (config.totalHeight - currentHeight);
         ctx.fillStyle = config.fgColor;
         ctx.fillRect(config.x, fgY, config.width, currentHeight);
     }
+
 
 
     start(prev = 0) {

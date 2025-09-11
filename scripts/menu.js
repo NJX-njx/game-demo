@@ -26,27 +26,47 @@ class Auth {
 // ==============================================
 const creditsData = [
     {
-        name: "张三",
-        role: "主程序员",
-        bio: "负责游戏核心逻辑和系统架构设计，主导存档与成就模块开发",
-        avatar: "assets/avatars/zhangsan.png",
-        link: "/pages/zhangsan.html"
+        name: "王厚与",
+        role: "游戏策划",
+        bio: "",
+        avatar: "assets/avatars/wanghouyu.png",
+        link: "../pages/wanghouyu.html"
     },
         {
-        name: "王五",
-        role: "策划总监",
-        bio: "设计游戏关卡流程与成就体系，把控游戏整体玩法体验",
-        avatar: "assets/avatars/wangwu.png",
-        link: "/pages/wangwu.html"
+        name: "倪家兴",
+        role: "主程序员",
+        bio: "写代码，活着写代码......",
+        avatar: "assets/avatars/nijiaxing.png",
+        link: "../pages/nijiaxing.html"
     },
     {
-        name: "李四",
-        role: "美术设计师",
-        bio: "负责游戏背景、UI界面及角色立绘设计，定义游戏视觉风格",
-        avatar: "assets/avatars/lisi.png",
-        link: "/pages/lisi.html"
-    }
-
+        name: "宋昊润",
+        role: "主程序员",
+        bio: "",
+        avatar: "assets/avatars/songhaorun.png",
+        link: "../pages/songhaorun.html"
+    },
+        {
+        name: "龙云",
+        role: "美术总监",
+        bio: "",
+        avatar: "assets/avatars/longyun.png",
+        link: "../pages/longyun.html"
+    },
+        {
+        name: "肖一达",
+        role: "音乐总监",
+        bio: "本游戏所有音乐音效均未使用AI",
+        avatar: "assets/avatars/xiaoyida.png",
+        link: "../pages/xiaoyida.html"
+    },
+        {
+        name: "杨雨宸",
+        role: "主程序员",
+        bio: "喜欢我的石山代码吗=w=",
+        avatar: "assets/avatars/yangyuchen.png",
+        link: "../pages/yangyuchen.html"
+    },
 ];
 
 // ==============================================

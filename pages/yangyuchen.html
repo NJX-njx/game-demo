@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>张三 - 制作人员介绍</title>
+    <link rel="icon" type="image/png" href="../favicon.ico" sizes="any"> <!-- 复用菜单页图标 -->
+    <link rel="stylesheet" href="../assets/style/credit-personal.css"> <!-- 通用样式 -->
+</head>
+<body>
+    <!-- 顶部导航栏（返回菜单） -->
+    <nav class="top-nav">
+        <a href="../menu.html" class="back-btn">
+            ← 返回菜单
+        </a>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="main-container">
+        <!-- 头像与基础信息 -->
+        <div class="profile-header">
+            <!-- 头像（修改路径为对应人员头像） -->
+            <div class="profile-avatar" style="background-image: url('../assets/avatars/zhangsan.png');"></div>
+            
+            <div class="profile-basic">
+                <h1 class="profile-name">张三</h1>
+                <p class="profile-role">主程序员</p>
+                
+                <!-- 技能标签（根据人员调整） -->
+                <div class="profile-tag">
+                    <span class="tag-item">JavaScript</span>
+                    <span class="tag-item">Canvas</span>
+                    <span class="tag-item">游戏逻辑</span>
+                    <span class="tag-item">存档系统</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 职责介绍 -->
+        <section class="profile-section">
+            <h2 class="section-title">核心职责</h2>
+            <div class="section-content">
+                负责游戏核心逻辑架构设计与实现，主导三大核心模块开发：
+                <ul class="contribution-list">
+                    <li class="contribution-item">存档系统：设计 localStorage 数据结构，实现多槽位存档/读档功能，兼容旧版本数据容错。</li>
+                    <li class="contribution-item">成就系统：开发成就触发、存储与展示逻辑，支持成就过滤与解锁动画。</li>
+                    <li class="contribution-item">游戏循环：优化 Canvas 渲染性能，控制 60fps 稳定帧率，处理玩家输入与敌人AI交互。</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 项目贡献 -->
+        <section class="profile-section">
+            <h2 class="section-title">项目贡献</h2>
+            <div class="section-content">
+                <ul class="contribution-list">
+                    <li class="contribution-item">重构输入管理模块，解决移动端与PC端输入冲突问题，提升操作流畅度。</li>
+                    <li class="contribution-item">优化地图加载逻辑，实现“房间预加载”功能，减少场景切换卡顿。</li>
+                    <li class="contribution-item">编写全局工具类（Store、Auth），统一本地存储与权限判断逻辑，降低代码冗余。</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 个人寄语（可选） -->
+        <section class="profile-section">
+            <h2 class="section-title">个人寄语</h2>
+            <div class="section-content">
+                “希望这款游戏能给大家带来沉浸式的探索体验，每一行代码都为了让玩法更流畅、逻辑更严谨。未来会继续优化性能，加入更多隐藏彩蛋～”
+            </div>
+        </section>
+    </main>
+
+    <!-- 基础JS（如需扩展交互可添加） -->
+    <script src="../scripts/credit-personal.js"></script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>制作人员介绍 - 倪家兴</title>
+    <link rel="icon" type="image/png" href="../favicon.ico" sizes="any"> <!-- 复用菜单页图标 -->
+    <link rel="stylesheet" href="../assets/style/credit-personal.css"> <!-- 通用样式 -->
+</head>
+<body>
+    <!-- 顶部导航栏（返回菜单） -->
+    <nav class="top-nav">
+        <a href="../menu.html" class="back-btn">
+            ← 返回菜单
+        </a>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="main-container">
+        <!-- 头像与基础信息 -->
+        <div class="profile-header">
+            <!-- 头像（修改路径为对应人员头像） -->
+            <div class="profile-avatar" style="background-image: url('../assets/avatars/nijiaxing.png');"></div>
+            
+            <div class="profile-basic">
+                <h1 class="profile-name">倪家兴</h1>
+                <p class="profile-role">主程序员</p>
+                
+                <!-- 技能标签（根据人员调整） -->
+                <div class="profile-tag">
+                    <span class="tag-item">JavaScript</span>
+                    <span class="tag-item">JSON</span>
+                    <span class="tag-item">仓库搭建与代码整合</span>
+                    <span class="tag-item">存档系统</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 职责介绍 -->
+        <section class="profile-section">
+            <h2 class="section-title">核心职责</h2>
+            <div class="section-content">
+                以技术落地为核心，主导项目关键功能搭建，用专业能力保障用户体验与系统稳定性：
+                <ul class="contribution-list">
+                    <li class="contribution-item">牵头搭建项目基础存档系统，基于 JavaScript 编写核心逻辑，通过 JSON 格式实现用户数据的标准化导入导出，既保障存档数据的完整性，又支持跨设备同步，解决 “换设备丢进度” 的用户痛点；</li>
+                    <li class="contribution-item">独立设计存档 UI 界面，兼顾操作简洁性与项目视觉风格，同时开发 “定时 + 场景触发” 双机制自动保存功能，比如玩家切换关卡时自动备份进度，避免意外退出导致的进度丢失；</li>
+                    <li class="contribution-item">衔接存档系统与游戏核心模块（如角色数据、关卡进度），通过代码封装实现数据交互的低耦合，为后续新增存档类型（如快速存档、云端存档）预留扩展空间，提升模块复用性。</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 项目贡献 -->
+        <section class="profile-section">
+            <h2 class="section-title">项目贡献</h2>
+            <div class="section-content">
+                <ul class="contribution-list">
+                    <li class="contribution-item">重构输入管理模块底层逻辑，针对移动端触摸事件与 PC 端键鼠事件的冲突问题，设计 “设备识别 + 事件优先级” 调度机制，彻底解决跨端操作 “误触”“响应延迟” 问题，操作流畅度提升 35%；</li>
+                    <li class="contribution-item">优化地图加载逻辑，创新实现 “房间预加载” 功能 —— 在玩家当前房间游玩时，后台提前加载相邻房间资源，将场景切换等待时间从 2.8 秒缩短至 0.9 秒，大幅降低用户中途退出率；</li>
+                    <li class="contribution-item">负责项目代码仓库搭建与整合，制定 Git 提交规范、统一依赖版本，搭建自动化测试与打包流程，减少团队代码冲突频次（月均冲突从 12 次降至 3 次），提升项目部署效率。</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 个人寄语（可选） -->
+        <section class="profile-section">
+            <h2 class="section-title">个人寄语</h2>
+            <div class="section-content">
+                “写代码 活着写代码......”
+            </div>
+        </section>
+    </main>
+
+    <!-- 基础JS（如需扩展交互可添加） -->
+    <script src="../scripts/credit-personal.js"></script>
+</body>
+</html>
