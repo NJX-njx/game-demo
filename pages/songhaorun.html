@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>张三 - 制作人员介绍</title>
+    <title>制作人员介绍 - 宋昊润</title>
     <link rel="icon" type="image/png" href="../favicon.ico" sizes="any"> <!-- 复用菜单页图标 -->
     <link rel="stylesheet" href="../assets/style/credit-personal.css"> <!-- 通用样式 -->
 </head>
@@ -20,18 +20,18 @@
         <!-- 头像与基础信息 -->
         <div class="profile-header">
             <!-- 头像（修改路径为对应人员头像） -->
-            <div class="profile-avatar" style="background-image: url('../assets/avatars/zhangsan.png');"></div>
+            <div class="profile-avatar" style="background-image: url('../assets/avatars/songhaorun.png');"></div>
             
             <div class="profile-basic">
-                <h1 class="profile-name">张三</h1>
+                <h1 class="profile-name">宋昊润</h1>
                 <p class="profile-role">主程序员</p>
                 
                 <!-- 技能标签（根据人员调整） -->
                 <div class="profile-tag">
-                    <span class="tag-item">JavaScript</span>
-                    <span class="tag-item">Canvas</span>
-                    <span class="tag-item">游戏逻辑</span>
-                    <span class="tag-item">存档系统</span>
+                    <span class="tag-item">引擎层搭建</span>
+                    <span class="tag-item">Vite整合</span>
+                    <span class="tag-item">EventBus</span>
+                    <span class="tag-item">工具类开发</span>
                 </div>
             </div>
         </div>
@@ -40,11 +40,11 @@
         <section class="profile-section">
             <h2 class="section-title">核心职责</h2>
             <div class="section-content">
-                负责游戏核心逻辑架构设计与实现，主导三大核心模块开发：
+                负责项目底层技术架构搭建，为整个开发团队提供稳定高效的技术基座：
                 <ul class="contribution-list">
-                    <li class="contribution-item">存档系统：设计 localStorage 数据结构，实现多槽位存档/读档功能，兼容旧版本数据容错。</li>
-                    <li class="contribution-item">成就系统：开发成就触发、存储与展示逻辑，支持成就过滤与解锁动画。</li>
-                    <li class="contribution-item">游戏循环：优化 Canvas 渲染性能，控制 60fps 稳定帧率，处理玩家输入与敌人AI交互。</li>
+                    <li class="contribution-item">主导游戏基础引擎层的设计与实现，搭建项目核心技术框架，定义模块间通信规范与数据流转机制；</li>
+                    <li class="contribution-item">采用Vite构建工具进行项目工程化整合，优化开发环境与构建流程，提升团队协作效率；</li>
+                    <li class="contribution-item">设计并实现核心工具类库，解决跨模块通信、资源管理等共性问题，为上层开发提供技术支撑。</li>
                 </ul>
             </div>
         </section>
@@ -54,9 +54,11 @@
             <h2 class="section-title">项目贡献</h2>
             <div class="section-content">
                 <ul class="contribution-list">
-                    <li class="contribution-item">重构输入管理模块，解决移动端与PC端输入冲突问题，提升操作流畅度。</li>
-                    <li class="contribution-item">优化地图加载逻辑，实现“房间预加载”功能，减少场景切换卡顿。</li>
-                    <li class="contribution-item">编写全局工具类（Store、Auth），统一本地存储与权限判断逻辑，降低代码冗余。</li>
+                    <li class="contribution-item">独立完成基础引擎层搭建，确立了项目技术架构方向，为后续功能开发提供了稳定基础；</li>
+                    <li class="contribution-item">引入Vite构建工具并完成项目整合，将开发热更新时间从3-5秒缩短至毫秒级，显著提升开发效率；</li>
+                    <li class="contribution-item">设计实现EventBus事件总线系统，解决了模块间解耦通信问题，减少了代码耦合度；</li>
+                    <li class="contribution-item">开发多个通用工具类，包括日志系统、资源加载管理器等，被项目各模块复用，减少重复开发工作量；</li>
+                    <li class="contribution-item">制定代码规范与最佳实践，通过技术评审和代码优化，提升了项目整体代码质量与可维护性。</li>
                 </ul>
             </div>
         </section>
@@ -65,7 +67,7 @@
         <section class="profile-section">
             <h2 class="section-title">个人寄语</h2>
             <div class="section-content">
-                “希望这款游戏能给大家带来沉浸式的探索体验，每一行代码都为了让玩法更流畅、逻辑更严谨。未来会继续优化性能，加入更多隐藏彩蛋～”
+                “底层架构的稳定，是上层功能绽放的基石。很高兴能为项目搭建坚实的技术底座，感谢团队每一位成员的协作与支持。”
             </div>
         </section>
     </main>
@@ -74,3 +76,4 @@
     <script src="../scripts/credit-personal.js"></script>
 </body>
 </html>
+    

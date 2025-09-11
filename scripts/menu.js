@@ -28,7 +28,7 @@ const creditsData = [
     {
         name: "王厚与",
         role: "游戏策划",
-        bio: "",
+        bio: "代码呢？救一下啊！",
         avatar: "assets/avatars/wanghouyu.png",
         link: "../pages/wanghouyu.html"
     },
@@ -42,14 +42,14 @@ const creditsData = [
     {
         name: "宋昊润",
         role: "主程序员",
-        bio: "",
+        bio: "我图片直接用微信头像就行",
         avatar: "assets/avatars/songhaorun.png",
         link: "../pages/songhaorun.html"
     },
         {
         name: "龙云",
         role: "美术总监",
-        bio: "",
+        bio: "美工干不完真的干不完（QAQ）",
         avatar: "assets/avatars/longyun.png",
         link: "../pages/longyun.html"
     },

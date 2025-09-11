@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>张三 - 制作人员介绍</title>
+    <title>制作人员介绍 - 杨雨宸</title>
     <link rel="icon" type="image/png" href="../favicon.ico" sizes="any"> <!-- 复用菜单页图标 -->
     <link rel="stylesheet" href="../assets/style/credit-personal.css"> <!-- 通用样式 -->
 </head>
@@ -20,18 +20,19 @@
         <!-- 头像与基础信息 -->
         <div class="profile-header">
             <!-- 头像（修改路径为对应人员头像） -->
-            <div class="profile-avatar" style="background-image: url('../assets/avatars/zhangsan.png');"></div>
+            <div class="profile-avatar" style="background-image: url('../assets/avatars/yangyuchen.png');"></div>
             
             <div class="profile-basic">
-                <h1 class="profile-name">张三</h1>
-                <p class="profile-role">主程序员</p>
+                <h1 class="profile-name">杨雨宸</h1>
+                <p class="profile-role">核心开发工程师</p>
                 
                 <!-- 技能标签（根据人员调整） -->
                 <div class="profile-tag">
-                    <span class="tag-item">JavaScript</span>
-                    <span class="tag-item">Canvas</span>
-                    <span class="tag-item">游戏逻辑</span>
-                    <span class="tag-item">存档系统</span>
+                    <span class="tag-item">运动逻辑</span>
+                    <span class="tag-item">画布开发</span>
+                    <span class="tag-item">冷却系统</span>
+                    <span class="tag-item">管理器设计</span>
+                    <span class="tag-item">UI开发</span>
                 </div>
             </div>
         </div>
@@ -40,11 +41,13 @@
         <section class="profile-section">
             <h2 class="section-title">核心职责</h2>
             <div class="section-content">
-                负责游戏核心逻辑架构设计与实现，主导三大核心模块开发：
+                负责项目基础功能搭建与核心系统迭代，兼顾底层逻辑与上层交互的技术实现：
                 <ul class="contribution-list">
-                    <li class="contribution-item">存档系统：设计 localStorage 数据结构，实现多槽位存档/读档功能，兼容旧版本数据容错。</li>
-                    <li class="contribution-item">成就系统：开发成就触发、存储与展示逻辑，支持成就过滤与解锁动画。</li>
-                    <li class="contribution-item">游戏循环：优化 Canvas 渲染性能，控制 60fps 稳定帧率，处理玩家输入与敌人AI交互。</li>
+                    <li class="contribution-item">搭建游戏基础运动系统，设计角色与物体的初始运动逻辑，定义物理交互规则与参数；</li>
+                    <li class="contribution-item">开发画布渲染框架，实现场景元素的分层绘制与刷新机制，保障画面流畅度；</li>
+                    <li class="contribution-item">设计并实现基础冷却逻辑系统，覆盖技能、道具等核心玩法的冷却计时与状态管理；</li>
+                    <li class="contribution-item">负责多个Manager（管理器）模块的迭代优化，协调各系统间的数据交互与状态同步；</li>
+                    <li class="contribution-item">参与UI界面开发，实现核心交互组件与页面逻辑，提升用户操作体验。</li>
                 </ul>
             </div>
         </section>
@@ -54,9 +57,11 @@
             <h2 class="section-title">项目贡献</h2>
             <div class="section-content">
                 <ul class="contribution-list">
-                    <li class="contribution-item">重构输入管理模块，解决移动端与PC端输入冲突问题，提升操作流畅度。</li>
-                    <li class="contribution-item">优化地图加载逻辑，实现“房间预加载”功能，减少场景切换卡顿。</li>
-                    <li class="contribution-item">编写全局工具类（Store、Auth），统一本地存储与权限判断逻辑，降低代码冗余。</li>
+                    <li class="contribution-item">独立完成基础运动框架搭建，解决角色移动、碰撞检测等核心问题，为后续玩法开发奠定基础；</li>
+                    <li class="contribution-item">设计的画布系统支持多层级渲染与动态加载，使场景元素渲染效率提升；</li>
+                    <li class="contribution-item">开发的冷却逻辑模块被技能系统、道具系统等核心模块复用，减少重复代码量；</li>
+                    <li class="contribution-item">优化多个Manager模块的架构设计，将系统耦合度降低，提升代码可维护性；</li>
+                    <li class="contribution-item">参与开发核心UI界面，实现响应式布局与流畅交互，解决关键操作体验问题。</li>
                 </ul>
             </div>
         </section>
@@ -65,7 +70,7 @@
         <section class="profile-section">
             <h2 class="section-title">个人寄语</h2>
             <div class="section-content">
-                “希望这款游戏能给大家带来沉浸式的探索体验，每一行代码都为了让玩法更流畅、逻辑更严谨。未来会继续优化性能，加入更多隐藏彩蛋～”
+                “喜欢我的石山代码嘛=w=”
             </div>
         </section>
     </main>
@@ -74,3 +79,4 @@
     <script src="../scripts/credit-personal.js"></script>
 </body>
 </html>
+    
