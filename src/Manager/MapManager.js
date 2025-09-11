@@ -2,6 +2,8 @@ import { Hitbox } from "../Utils/Hitbox";
 import { Vector } from "../Utils/Vector";
 import { textureManager } from "./TextureManager";
 import { dataManager } from "./DataManager";
+import { eventBus as bus, EventTypes as Events } from "./EventBus";
+import { inputManager } from "../System/Input/InputManager";
 // Block类，继承自Hitbox
 class Block extends Hitbox {
     constructor(position, size, type) {
@@ -30,6 +32,7 @@ class MapManager {
         this.textures = [];
         this.interactions = [];
         this.mapHitBox = new Hitbox(new Vector(0, 0), new Vector(1280, 720));
+        this._triggeredInteractionIds = new Set();
     }
 
     /**
@@ -42,9 +45,13 @@ class MapManager {
         try {
             const data = await dataManager.loadJSON(url);
             this.rawMapData = JSON.parse(JSON.stringify(data)); // 深拷贝一份原始地图数据
+            // 记录当前层与房间，供存档使用
+            this.currentLayer = typeof layer === 'string' ? parseInt(layer, 10) : layer;
+            this.currentRoom = typeof room === 'string' ? parseInt(room, 10) : room;
             this.playerSpawn = data.playerSpawn ? { ...data.playerSpawn } : null;
             this.enemySpawns = Array.isArray(data.enemySpawns) ? data.enemySpawns.map(e => ({ ...e })) : [];
             this.backgrounds = (data.backgrounds || []).map(obj => ({ ...obj }));
+            // 生成方块碰撞盒
             this.blocks = (data.blocks || []).map(obj => new Block(obj.position, obj.size, obj.type));
             this.textures = (data.textures || []).map(obj => ({ ...obj }));
             // 生成交互点碰撞盒，自动触发的排前面
@@ -53,42 +60,54 @@ class MapManager {
                 ...allInteractions.filter(i => i.autoTrigger),
                 ...allInteractions.filter(i => !i.autoTrigger)
             ];
-            // 生成方块碰撞盒
-            this.blockHitboxes = this.blocks.map(b => new Hitbox(
-                new Vector(b.position.x, b.position.y),
-                new Vector(b.size.x, b.size.y)
-            ));
+            this._triggeredInteractionIds.clear();
         } catch (e) {
             console.error('MapManager.loadRoom error:', e);
         }
     }
 
-    /**
-     * 获取玩家出生点
-     */
-    getPlayerSpawn() {
-        return this.playerSpawn;
-    }
+    /** 获取玩家出生点 */
+    getPlayerSpawn() { return this.playerSpawn; }
+    /** 获取敌人生成信息 */
+    getEnemySpawns() { return this.enemySpawns || []; }
+    /** 获取所有方块的碰撞盒数组 */
+    getBlockHitboxes() { return this.blocks || []; }
+    /** 获取所有交互点的碰撞盒数组 */
+    getInteractionHitboxes() { return this.interactions || []; }
 
     /**
-     * 获取敌人生成信息
+     * 每帧更新：检测玩家与交互点重叠并触发
+     * - autoTrigger: 首次进入范围立即触发一次
+     * - 手动交互: 按下 E 键且重叠时触发
      */
-    getEnemySpawns() {
-        return this.enemySpawns || [];
-    }
+    update(deltaTime, player) {
+        try {
+            if (!player || !this.interactionHitboxes || this.interactionHitboxes.length === 0) return;
+            const playerHitbox = player.hitbox || player.getHitbox?.();
+            if (!playerHitbox) return;
 
-    /**
-     * 获取所有方块的碰撞盒数组
-     */
-    getBlockHitboxes() {
-        return this.blocks || [];
-    }
-
-    /**
-     * 获取所有交互点的碰撞盒数组
-     */
-    getInteractionHitboxes() {
-        return this.interactions || [];
+            // 遍历 interactions（保持与 hitboxes 排序一致：自动→手动）
+            for (let i = 0; i < this.interactions.length; i++) {
+                const inter = this.interactions[i];
+                const hb = this.interactionHitboxes[i];
+                if (!hb) continue;
+                const overlapping = playerHitbox.checkHit(hb);
+                const already = this._triggeredInteractionIds.has(inter.__id);
+                if (overlapping) {
+                    if (inter.autoTrigger && !already) {
+                        this._triggeredInteractionIds.add(inter.__id);
+                        bus.emit(Events.interaction.trigger, { type: inter.type, event: inter.event, data: inter });
+                        continue;
+                    }
+                    // 手动交互：E 键
+                    if (!inter.autoTrigger && inputManager.isKeyDown('KeyE')) {
+                        bus.emit(Events.interaction.trigger, { type: inter.type, event: inter.event, data: inter });
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('MapManager.update error:', err);
+        }
     }
 
     /**

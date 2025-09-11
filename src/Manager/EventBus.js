@@ -25,7 +25,10 @@ export const EventTypes = {
     enemy: {
         die: "ENEMY_DIE"
     },
-    boss: {}
+    boss: {},
+    interaction: {
+        trigger: "MAP_INTERACTION_TRIGGER"
+    }
 };
 
 export const ItemEvents = {

@@ -21,10 +21,11 @@ class PauseMenu extends UIScreen {
 
         this.addElement(new UIButton(cx - buttonWidth / 2, startY, buttonWidth, buttonHeight, "继续游戏", () => game.resume()));
         this.addElement(new UIButton(cx - buttonWidth / 2, startY + (buttonHeight + gap), buttonWidth, buttonHeight, "返回主菜单", () => {
+            game.save();
             window.location.href = "menu.html";
         }));
-        this.addElement(new UIButton(cx - buttonWidth / 2, startY + 2 * (buttonHeight + gap), buttonWidth, buttonHeight, "退出游戏", () => {
-            alert("退出逻辑");
+        this.addElement(new UIButton(cx - buttonWidth / 2, startY + 2 * (buttonHeight + gap), buttonWidth, buttonHeight, "存档", () => {
+            game.save();
         }));
     }
 
