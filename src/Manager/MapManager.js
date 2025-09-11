@@ -47,7 +47,7 @@ class MapManager {
             this.backgrounds = (data.backgrounds || []).map(obj => ({ ...obj }));
             this.blocks = (data.blocks || []).map(obj => new Block(obj.position, obj.size, obj.type));
             this.textures = (data.textures || []).map(obj => ({ ...obj }));
-            // 交互点：先自动触发后手动触发
+            // 生成交互点碰撞盒，自动触发的排前面
             const allInteractions = (data.interactions || []).map(obj => new Interaction(obj.position, obj.size, obj.type, obj.autoTrigger, obj));
             this.interactions = [
                 ...allInteractions.filter(i => i.autoTrigger),
@@ -58,19 +58,6 @@ class MapManager {
                 new Vector(b.position.x, b.position.y),
                 new Vector(b.size.x, b.size.y)
             ));
-            // 生成交互点碰撞盒，自动触发的排前面
-            const autoInteractions = this.interactions.filter(i => i.autoTrigger);
-            const manualInteractions = this.interactions.filter(i => !i.autoTrigger);
-            this.interactionHitboxes = [
-                ...autoInteractions.map(i => new Hitbox(
-                    new Vector(i.position.x, i.position.y),
-                    new Vector(i.size.x, i.size.y)
-                )),
-                ...manualInteractions.map(i => new Hitbox(
-                    new Vector(i.position.x, i.position.y),
-                    new Vector(i.size.x, i.size.y)
-                ))
-            ];
         } catch (e) {
             console.error('MapManager.loadRoom error:', e);
         }

@@ -1,6 +1,5 @@
 import { UIScreen } from "../base/UIScreen";
 import { UIButton } from "../Elements/UIButton";
-import { canvas_ui as canvas } from "../../../Utils/canvas";
 import { game } from "../../../Game";
 
 class PauseMenu extends UIScreen {
@@ -11,8 +10,8 @@ class PauseMenu extends UIScreen {
         this.menuWidth = 300;
         this.menuHeight = 300;
 
-        const cx = window.innerWidth / 2;
-        const cy = window.innerHeight / 2;
+        const cx = 1440 / 2;
+        const cy = 720 / 2;
 
         const buttonWidth = 200;
         const buttonHeight = 50;
@@ -34,7 +33,7 @@ class PauseMenu extends UIScreen {
 
         // 遮罩
         ctx.fillStyle = "rgba(30,41,59,0.8)";
-        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.fillRect(80, 0, 1280, ctx.canvas.height);
 
         // 标题
         ctx.fillStyle = "#f8fafc";
