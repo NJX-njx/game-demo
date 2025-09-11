@@ -42,7 +42,7 @@ const creditsData = [
     {
         name: "宋昊润",
         role: "主程序员",
-        bio: "我图片直接用微信头像就行",
+        bio: "感谢ChatGPT对本项目的大力支持",
         avatar: "assets/avatars/songhaorun.png",
         link: "../pages/songhaorun.html"
     },
