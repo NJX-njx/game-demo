@@ -9,6 +9,7 @@ import { soundManager } from "../Manager/SoundManager";
 import { inputManager } from "../System/Input/InputManager";
 import { eventBus as bus, EventTypes as Events } from "../Manager/EventBus";
 import { attributeManager as AM, AttributeTypes as Attrs } from "../Manager/AttributeManager";
+
 class Player_Animation {
     static Framerate = {
         "run": 6,
@@ -72,14 +73,14 @@ class Player extends Entity {
     }
 
     static loadSaveData(data) {
-        if(!this.instance) return;
+        if (!this.instance) return;
         this.instance.hitbox.position = data.position;
         this.instance.state = data.state;
         // 待实现物品系统加载
     }
+
     constructor(size = new Vector(50, 50)) {
-        if (Player.instance)
-            return Player.instance;
+        if (Player.instance) return Player.instance;
         super(new Vector(), size, new Vector());
         Player.instance = this
         this.size = size;
@@ -154,19 +155,22 @@ class Player extends Entity {
         this.updateState();
         bus.emit(Events.player.hpPercent, this.state.hp / this.state.hp_max);
 
-        // 攻击
+        // 攻击逻辑
         if (inputManager.isKeyDown('J')) this.attack.melee.trigger();
         if (inputManager.isKeyDown('L')) this.attack.ranged.trigger();
         this.attack.melee.update(deltaTime);
         this.attack.ranged.update(deltaTime);
-        // 冲刺
+
+        // 冲刺逻辑
         this.dash.update(deltaTime);
+
         // 移动与跳跃
         const deltaFrame = 60 * deltaTime / 1000;
         let move = 0;
         // 冲刺期间跳过普通横向速度赋值，冲刺结束后只在下一帧才允许普通移动逻辑覆盖
         this.updateXY(deltaFrame, this.controllerX(), this.controllerY());
 
+        // 动画状态更新
         if (this.jumping.jumpVelocity > 0) {
             this.animation.setStatus("jump", this.facing);
         } else if (!this.isOnGround()) {
@@ -175,9 +179,9 @@ class Player extends Entity {
         } else {
             if (move) {
                 this.animation.setStatus("run", this.facing);
-            }
-            else
+            } else {
                 this.animation.setStatus("stand", this.facing);
+            }
         }
         this.animation.update(deltaFrame);
     }
@@ -190,8 +194,6 @@ class Player extends Entity {
      */
     updateXY(deltaTime, cmd_X, cmd_Y) {
         if (!this.dash.isDashing) {
-            //此时的deltaTime当前环境下的1帧，在60帧环境下走了多少帧
-            //于是在moveRigid函数中，需要将velocity乘上deltaTime代表在当前环境下走过的路程
             this.updateY(deltaTime, cmd_Y);
             this.velocity.y = -this.jumping.jumpVelocity;
             this.velocity.x = this.updateX(deltaTime, cmd_X);
@@ -335,36 +337,15 @@ class Player extends Entity {
     }
 
     draw(ctx) {
-        //  绘制玩家
+        // 绘制玩家
         ctx.drawImage(
             this.animation.getFrame(),
             this.hitbox.position.x,
             this.hitbox.position.y,
             this.size.x,
             this.size.y);
-        // 绘制血条
-        const hpBarWidth = this.size.x;
-        const hpBarHeight = 6;
-        const hpBarX = this.hitbox.position.x;
-        const hpBarY = this.hitbox.position.y - 12;
-        ctx.save();
-        ctx.fillStyle = 'red';
-        ctx.fillRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
-        ctx.fillStyle = 'green';
-        const currentHpPercent = Math.max(this.state.hp, 0) / this.state.hp_max;
-        const currentHpWidth = hpBarWidth * currentHpPercent;
-        ctx.fillRect(hpBarX, hpBarY, currentHpWidth, hpBarHeight);
-        ctx.strokeStyle = 'black';
-        ctx.strokeRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
-        ctx.restore();
 
-        // if (this.onEvent)
-        //     ctx.drawImage(
-        //         textureManager.getTexture("onEvent", 0),
-        //         this.hitbox.position.x + this.size.x / 2 - halfSize,
-        //         this.hitbox.position.y - halfSize - basicSize,
-        //         basicSize, basicSize);
-        // this.drawBoxs(ctx);
+        // 绘制冲刺UI
         this.drawDashUI(ctx);
     }
 
@@ -380,9 +361,7 @@ class Player extends Entity {
         const offset = 0.5 * (this.facing >= 0 ? this.hitbox.size.x : -this.hitbox.size.x);
         const attackBoxPos = this.hitbox.position.addVector(new Vector(offset, this.hitbox.size.y * 0.2));
         const attackBoxSize = new Vector(this.hitbox.size.x * 0.8, this.hitbox.size.y * 0.5);
-
         ctx.strokeRect(attackBoxPos.x, attackBoxPos.y, attackBoxSize.x, attackBoxSize.y);
-
         ctx.restore();
     }
 
@@ -393,7 +372,7 @@ class Player extends Entity {
         const size = 8; // 每个方块的边长
         const gap = 4;  // 间隔
         const startX = this.hitbox.position.x + this.size.x / 2 - (max * (size + gap) - gap) / 2;
-        const y = this.hitbox.position.y - 24; // 血条上方一点
+        const y = this.hitbox.position.y - 12; // 头顶上方一点
 
         for (let i = 0; i < max; i++) {
             ctx.fillStyle = i < current ? "cyan" : "gray"; // 已有 → 蓝色，缺失 → 灰色

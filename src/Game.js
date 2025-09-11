@@ -13,9 +13,9 @@ import { ItemConfigs as Items } from "./System/Item/ItemConfigs";
 import { uiManager } from "./System/UI/UIManager";
 class Game {
     constructor() {
-        if (Game.instance)
-            return Game.instance;
+        if (Game.instance) return Game.instance;
         Game.instance = this;
+
         // 获取画布
         this.canvas_game = document.getElementById('game-canvas');
         this.canvas_ui = document.getElementById('ui-canvas');
@@ -24,6 +24,9 @@ class Game {
         this.canvas_ui.addEventListener('dragstart', e => e.preventDefault());
         this.ctx_game = this.canvas_game.getContext('2d');
         this.ctx_ui = this.canvas_ui.getContext('2d');
+
+        // 存储玩家血量百分比（0~1）
+        this.currentHpPercent = 1; // 初始满血
 
         this.isStop = false;
         this.isPaused = false;
@@ -62,6 +65,16 @@ class Game {
             player.setPosition(new Vector(spawn.x, spawn.y));
         }
 
+        // 监听玩家血量变化事件，更新currentHpPercent
+        bus.on({
+            event: Events.player.hpPercent,
+            handler: (hpPercent) => {
+                this.currentHpPercent = Math.max(0, Math.min(1, hpPercent));
+            },
+            priority: 0
+        });
+
+        // 游戏主循环事件
         // 先更新地图交互（优先级略高于玩家/敌人）
         bus.on({
             event: Events.game.tick,
@@ -127,6 +140,56 @@ class Game {
         player.draw(ctx_game); //绘制玩家
 
         uiManager.draw(ctx_ui);
+        this.drawVerticalHpBar(ctx_ui);
+    }
+
+    // 调整后的竖版血条绘制方法（含下移+垂直对齐文字显示）
+    drawVerticalHpBar(ctx) {
+        const config = {
+            x: 35,          // 调整水平位置，给文字留出空间
+            y: 200,         // 血条顶部Y坐标（进一步下移，给文字留出空间）
+            width: 30,      // 血条宽度
+            totalHeight: 500, // 血条总高度（略微缩短，避免超出画布）
+            bgColor: '#ff3333',
+            fgColor: '#33ff33',
+            borderColor: '#000000',
+            textColor: '#ffffff',
+            fontSize: '14px Arial',
+            textRightAlign: 50, // 文字右对齐的基准线X坐标
+        };
+
+        // 获取玩家数据
+        const playerHp = Math.round(player.state.hp);
+        const playerHpMax = Math.round(player.state.hp_max);
+        const playerAtk = Math.round(player.state.attack.atk);
+
+        // 绘制文字（右对齐，垂直排列）
+        ctx.font = config.fontSize;
+        ctx.fillStyle = config.textColor;
+        ctx.textAlign = 'center'; // 文字右对齐，实现垂直对齐效果
+
+        // 血量标签
+        ctx.fillText('血量：', config.textRightAlign, 60);
+        // 血量数值（在标签正下方，距离15px）
+        ctx.fillText(`${playerHp}/${playerHpMax}`, config.textRightAlign, 80);
+
+        // 攻击力标签（在血量数值下方，距离30px）
+        ctx.fillText('攻击力：', config.textRightAlign, 110);
+        // 攻击力数值（在标签正下方，距离15px）
+        ctx.fillText(`${playerAtk}`, config.textRightAlign, 130);
+
+        // 绘制血条
+        ctx.fillStyle = config.bgColor;
+        ctx.fillRect(config.x, config.y, config.width, config.totalHeight);
+
+        ctx.strokeStyle = config.borderColor;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(config.x, config.y, config.width, config.totalHeight);
+
+        const currentHeight = config.totalHeight * this.currentHpPercent;
+        const fgY = config.y + (config.totalHeight - currentHeight);
+        ctx.fillStyle = config.fgColor;
+        ctx.fillRect(config.x, fgY, config.width, currentHeight);
     }
 
     start(prev = 0) {

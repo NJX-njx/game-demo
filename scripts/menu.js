@@ -1,18 +1,15 @@
-// scripts/menu.js
-// 仅保留工具类 + 成就系统初始化入口
-
 // ==============================================
-// 1. 工具类（原代码保留，不修改）
+// 1. 工具类
 // ==============================================
 class Store {
     static get(key) {
         return localStorage.getItem(key);
     }
-    
+
     static set(key, value) {
         localStorage.setItem(key, value);
     }
-    
+
     static remove(key) {
         localStorage.removeItem(key);
     }
@@ -25,15 +22,64 @@ class Auth {
 }
 
 // ==============================================
-// 2. 页面初始化（调用成就系统和存档系统）
+// 2. 制作人员数据
+// ==============================================
+const creditsData = [
+    {
+        name: "王厚与",
+        role: "游戏策划",
+        bio: "代码呢？救一下啊！",
+        avatar: "assets/avatars/wanghouyu.png",
+        link: "pages/wanghouyu.html"
+    },
+    {
+        name: "倪家兴",
+        role: "主程序员",
+        bio: "写代码，活着写代码......",
+        avatar: "assets/avatars/nijiaxing.png",
+        link: "pages/nijiaxing.html"
+    },
+    {
+        name: "宋昊润",
+        role: "主程序员",
+        bio: "感谢ChatGPT对本项目的大力支持",
+        avatar: "assets/avatars/songhaorun.png",
+        link: "pages/songhaorun.html"
+    },
+    {
+        name: "龙云",
+        role: "美术总监",
+        bio: "美工干不完真的干不完（QAQ）",
+        avatar: "assets/avatars/longyun.png",
+        link: "pages/longyun.html"
+    },
+    {
+        name: "肖一达",
+        role: "音乐总监",
+        bio: "本游戏所有音乐音效均未使用AI",
+        avatar: "assets/avatars/xiaoyida.png",
+        link: "pages/xiaoyida.html"
+    },
+    {
+        name: "杨雨宸",
+        role: "主程序员",
+        bio: "喜欢我的石山代码吗=w=",
+        avatar: "assets/avatars/yangyuchen.png",
+        link: "pages/yangyuchen.html"
+    },
+];
+
+// ==============================================
+// 3. 页面初始化
 // ==============================================
 document.addEventListener('DOMContentLoaded', () => {
     console.log("[menu.js] 主菜单基础初始化完成");
 
     // 初始化存档系统
     initSaveSystem();
-    
-    // 调用成就系统初始化（依赖 AchievementSystem.js 暴露的全局函数）
+    // 初始化制作人员系统
+    initCreditsSystem();
+    // 初始化成就系统
     if (window.initAchievementSystem) {
         window.initAchievementSystem();
     } else {
@@ -42,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==============================================
-// 3. 存档系统实现
+// 4. 存档系统实现
 // ==============================================
 function initSaveSystem() {
     // 获取DOM元素
@@ -80,7 +126,7 @@ function closeSavePanel() {
 function renderSaveSlots() {
     const saveList = document.getElementById('save-list');
     const currentPlayer = JSON.parse(localStorage.getItem("present_data"));
-    
+
     if (!currentPlayer?.saveSlots) {
         saveList.innerHTML = '<div class="no-saves">暂无存档</div>';
         return;
@@ -89,7 +135,7 @@ function renderSaveSlots() {
     saveList.innerHTML = '';
     currentPlayer.saveSlots.forEach((save, index) => {
         if (!save) return;
-        
+
         const saveSlot = document.createElement('div');
         saveSlot.className = 'save-slot';
         saveSlot.innerHTML = `
@@ -100,18 +146,17 @@ function renderSaveSlots() {
             </div>
             <button class="load-save-btn" data-slot="${index}">加载</button>
         `;
-        
+
         saveSlot.querySelector('.load-save-btn').addEventListener('click', () => {
-            // 仅记录选中的槽位并跳转，由游戏页负责读取并加载
             localStorage.setItem('selected_slot', String(index + 1));
             window.location.href = 'game.html';
         });
-        
+
         saveList.appendChild(saveSlot);
     });
 }
 
-// 开始游戏按钮：如果未选择，优先进入最近一次使用的槽位，否则默认 1
+// 开始游戏按钮逻辑
 (() => {
     const startBtn = document.getElementById('start-game');
     startBtn?.addEventListener('click', () => {
@@ -121,3 +166,93 @@ function renderSaveSlots() {
         window.location.href = 'game.html';
     });
 })();
+
+// ==============================================
+// 5. 制作人员系统实现
+// ==============================================
+function initCreditsSystem() {
+    // 获取DOM元素
+    const showCreditsBtn = document.getElementById('show-credits-btn');
+    const creditsPanel = document.getElementById('credits-panel');
+    const closeCreditsPanelBtn = document.getElementById('close-credits-panel');
+    const creditsBackdrop = document.getElementById('credits-backdrop');
+    const creditsCarousel = document.getElementById('credits-carousel');
+    const carouselDots = document.getElementById('carousel-dots');
+
+    // 渲染轮播内容
+    function renderCreditsCarousel() {
+        if (creditsData.length === 0) {
+            creditsCarousel.innerHTML = '<div class="no-credits">暂无制作人员信息</div>';
+            carouselDots.innerHTML = '';
+            return;
+        }
+
+        // 清空原有内容
+        creditsCarousel.innerHTML = '';
+        carouselDots.innerHTML = '';
+
+        // 生成轮播幻灯片和导航点
+        creditsData.forEach((member, index) => {
+            // 生成幻灯片项
+            const slide = document.createElement('div');
+            slide.className = `credits-slide ${index === 0 ? 'active' : ''}`;
+            slide.innerHTML = `
+                <a href="${member.link}" class="member-avatar-link" target="_self">
+                    <div class="member-avatar" style="background-image: url('${member.avatar}')"></div>
+                </a>
+                <div class="member-info">
+                    <h3 class="member-name">${member.name}</h3>
+                    <p class="member-role">${member.role}</p>
+                    <p class="member-bio">${member.bio}</p>
+                </div>
+            `;
+            creditsCarousel.appendChild(slide);
+
+            // 生成导航点
+            const dot = document.createElement('button');
+            dot.className = `dot ${index === 0 ? 'active' : ''}`;
+            dot.dataset.index = index;
+            dot.addEventListener('click', () => switchToSlide(index));
+            carouselDots.appendChild(dot);
+        });
+    }
+
+    // 切换轮播幻灯片
+    function switchToSlide(targetIndex) {
+        const slides = document.querySelectorAll('.credits-slide');
+        const dots = document.querySelectorAll('.carousel-dots .dot');
+
+        slides.forEach((slide, index) => {
+            slide.classList.toggle('active', index === targetIndex);
+        });
+
+        dots.forEach((dot, index) => {
+            dot.classList.toggle('active', index === targetIndex);
+        });
+    }
+
+    // 显示制作人员面板
+    function showCreditsPanel() {
+        creditsPanel.style.opacity = '1';
+        creditsPanel.style.pointerEvents = 'auto';
+        renderCreditsCarousel();
+    }
+
+    // 关闭制作人员面板
+    function closeCreditsPanel() {
+        creditsPanel.style.opacity = '0';
+        creditsPanel.style.pointerEvents = 'none';
+    }
+
+    // 绑定事件
+    showCreditsBtn?.addEventListener('click', showCreditsPanel);
+    closeCreditsPanelBtn?.addEventListener('click', closeCreditsPanel);
+    creditsBackdrop?.addEventListener('click', closeCreditsPanel);
+
+    // ESC键关闭面板
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && creditsPanel.style.opacity === '1') {
+            closeCreditsPanel();
+        }
+    });
+}
