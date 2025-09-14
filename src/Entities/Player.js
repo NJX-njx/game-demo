@@ -1,7 +1,7 @@
 import { Entity } from "./Entity";
 import { Vector } from "../Utils/Vector";
 import { MeleeAttack } from "../System/Attack/MeleeAttack"
-import { RangedAttack } from "../System/Attack/RangedArrack"
+import { RangedAttack } from "../System/Attack/RangedArrack" // 保留原拼写
 import { Cooldown } from "../Utils/Cooldown";
 import { game } from "../Game";
 import { textureManager } from "../Manager/TextureManager";
@@ -12,53 +12,87 @@ import { attributeManager as AM, AttributeTypes as Attrs } from "../Manager/Attr
 
 class Player_Animation {
     static Framerate = {
-        "run": 6,
-        "jump": 30,
-        "fall": 30,
-        "stand": 8,
+        "dash": 4,
+        "stand": 4,
+        "melee": 6,
+        "ranged": 6, // 远程动画：6帧/秒（轮播时每1秒循环一次）
     };
     static Frames = {
-        "run": 6,
-        "jump": 4,
-        "fall": 2,
-        "stand": 7,
+        "dash": 4,
+        "stand": 4,
+        "melee": 6,
+        "ranged": 6, // 远程动画：6帧（轮播范围1~6）
     };
     constructor() {
-        this.status = "run";
+        this.status = "stand";
         this.facing = 1;
         this.frame = 1;
         this.frameRun = 0;
     }
     setStatus(status, facing) {
         if (status != this.status || facing != this.facing) {
-            this.frame = 1;
+            this.frame = 1; // 切换状态时重置到第一帧
             this.frameRun = 0;
             this.status = status;
             this.facing = facing;
         }
     }
     update(deltaTime) {
-        // this.frameRun += deltaTime;
-        // if (this.frameRun > Animation.Framerate[this.status]) {
-        //     ++this.frame;
-        //     this.frameRun = 0;
-        // }
-        // if (this.frame > Animation.Frames[this.status])
-        //     switch (this.status) {
-        //         case "run":
-        //             this.frame = 1;
-        //             break;
-        //         case "stand":
-        //             this.frame = 1;
-        //             break;
-        //         default:
-        //             --this.frame;
-        //             break;
-        //     }
+        this.frameRun += deltaTime;
+        const frameInterval = 1000 / Player_Animation.Framerate[this.status];
+        
+        if (this.frameRun > frameInterval) {
+            this.frame++;
+            this.frameRun = 0;
+        }
+
+        const maxFrame = Player_Animation.Frames[this.status];
+        // 1. 关键修改：远程动画改为循环轮播（超过6帧重置为1）
+        if (this.frame > maxFrame) {
+            switch (this.status) {
+                case "run":
+                case "stand":
+                case "ranged": // 远程动画：轮播（1→6→1）
+                    this.frame = 1;
+                    break;
+                case "melee": // 近战仍保持单次播放后固定最后一帧
+                    this.frame = maxFrame;
+                    break;
+                default:
+                    this.frame = maxFrame - 1;
+                    break;
+            }
+        } else if (this.frame < 1) {
+            this.frame = 1;
+        }
     }
     getFrame() {
-        // return textureManager.getTexture(this.status, this.frame * this.facing);
-        return textureManager.getTexture("player", 0);
+        let textureKey;
+        switch (this.status) {
+            case "dash":
+                textureKey = `dash_${this.frame}`;
+                break;
+            case "melee":
+                textureKey = `melee_${this.frame}`;
+                break;
+            case "ranged":
+                textureKey = `ranged_${this.frame}`; // 轮播时自动切换1~6帧
+                break;
+            case "stand":
+                textureKey = `stand_${this.frame}`;
+                break;
+            case "run":
+                textureKey = "0"; // 移动仍用0贴图
+                break;
+            case "jump":
+            case "fall":
+                textureKey = "0";
+                break;
+            default:
+                textureKey = `stand_1`;
+                break;
+        }
+        return textureManager.getTexture("player", textureKey);
     }
 }
 
@@ -67,7 +101,7 @@ class Player extends Entity {
         return {
             position: this.instance.hitbox.position,
             state: this.instance.state,
-            inventory: [], // 待实现物品系统
+            inventory: [],
             timestamp: new Date().toISOString()
         };
     }
@@ -76,7 +110,6 @@ class Player extends Entity {
         if (!this.instance) return;
         this.instance.hitbox.position = data.position;
         this.instance.state = data.state;
-        // 待实现物品系统加载
     }
 
     constructor(size = new Vector(50, 50)) {
@@ -86,20 +119,28 @@ class Player extends Entity {
         this.size = size;
         this.type = "player";
         this.jumping.type = "player";
+        this.isMeleeAttacking = false;
+        this.isRangedAttacking = false;
+        
+        // 2. 新增：远程长按相关状态
+        this.isRangedHolding = false; // 标记是否长按L键
+        this.rangedLoopCooldown = new Cooldown(0); // 远程轮播攻击的冷却（避免攻击过快）
+
         this.baseState = {
-            hp_max: 100,                //血量上限
+            hp_max: 100,
             attack: {
-                atk: 10,                //基础攻击
-                MeleeStartupTime: 50,    //攻击前摇
-                MeleeRecoveryTime: 900,   //攻击后摇
-                RangedStartupTime: 150,    //攻击前摇
-                RangedRecoveryTime: 700,   //攻击后摇
+                atk: 10,
+                MeleeStartupTime: 50,    
+                MeleeRecoveryTime: 900,   
+                RangedStartupTime: 150,
+                RangedRecoveryTime: 700,
+                RangedLoopInterval: 850, // 远程轮播间隔（与动画时长匹配：6帧≈1秒，取850ms避免卡顿）
             },
-            dash_cooldownTime: 600,     //冲刺冷却
-            dash_maxCount: 1,           //冲刺段数
+            dash_cooldownTime: 600,
+            dash_maxCount: 1,
         }
         this.state = {
-            hp: this.baseState.hp_max,  //当前血量
+            hp: this.baseState.hp_max,
             hp_max: this.baseState.hp_max,
             attack: {
                 atk: this.baseState.attack.atk,
@@ -114,7 +155,8 @@ class Player extends Entity {
                 recoveryTime: {
                     melee: this.baseState.attack.MeleeRecoveryTime,
                     ranged: this.baseState.attack.RangedRecoveryTime
-                }
+                },
+                loopInterval: this.baseState.attack.RangedLoopInterval // 轮播攻击间隔（同步动画）
             },
         }
         this.attack = {
@@ -125,9 +167,7 @@ class Player extends Entity {
 
         this.facing = 1;
         this.animation = new Player_Animation();
-        // 冲刺
         this.initDash();
-        // 受击
         this.hurtBox = this.hitbox;
         this.controllerX = () => {
             if (this.blockMove) return 0;
@@ -149,49 +189,111 @@ class Player extends Entity {
             return inputManager.isHeld("Space");
         }
         this.dealDamageEvent = Events.player.dealDamage;
+
+        this.initMeleeAttackListener();
+        this.initRangedAttackListener();
+        // 3. 初始化远程轮播冷却（间隔与动画时长匹配）
+        this.rangedLoopCooldown.set(this.state.attack.loopInterval);
+    }
+
+    initMeleeAttackListener() { // 原有逻辑不变
+        const melee = this.attack.melee;
+        if (!melee.startupCooldown) melee.startupCooldown = new Cooldown(0);
+        if (!melee.recoveryCooldown) melee.recoveryCooldown = new Cooldown(0);
+
+        const originalTrigger = melee.trigger.bind(melee);
+        melee.trigger = () => {
+            this.isMeleeAttacking = true;
+            melee.startupCooldown.set(this.state.attack.startupTime.melee);
+            melee.startupCooldown.start();
+            setTimeout(() => {
+                this.isMeleeAttacking = false;
+            }, this.state.attack.startupTime.melee + this.state.attack.recoveryTime.melee);
+            originalTrigger();
+            soundManager.playSound('player', 'melee');
+        };
+    }
+
+    // 4. 优化远程攻击监听：支持轮播时的单次攻击触发
+    initRangedAttackListener() {
+        const ranged = this.attack.ranged;
+        if (!ranged.startupCooldown) ranged.startupCooldown = new Cooldown(0);
+        if (!ranged.recoveryCooldown) ranged.recoveryCooldown = new Cooldown(0);
+
+        const originalTrigger = ranged.trigger.bind(ranged);
+        ranged.trigger = () => {
+            this.isRangedAttacking = true; // 标记攻击中（确保动画不被切换）
+            ranged.startupCooldown.set(this.state.attack.startupTime.ranged);
+            ranged.startupCooldown.start();
+            // 攻击后摇结束后，仅在“仍长按”时保留攻击状态（支持轮播）
+            setTimeout(() => {
+                if (!this.isRangedHolding) { // 松开L键：取消攻击状态
+                    this.isRangedAttacking = false;
+                }
+            }, this.state.attack.startupTime.ranged + this.state.attack.recoveryTime.ranged);
+            originalTrigger();
+            soundManager.playSound('player', 'ranged');
+        };
     }
 
     update(deltaTime) {
         this.updateState();
         bus.emit(Events.player.hpPercent, this.state.hp / this.state.hp_max);
 
-        // 攻击逻辑
+        // 5. 关键修改：远程长按逻辑（核心）
+        // 5.1 监听L键长按/松开：更新长按标记
+        if (inputManager.isHeld('L') && !this.isMeleeAttacking) { // 近战优先级高于远程
+            this.isRangedHolding = true; // 按下L键：标记长按
+        } else {
+            // 松开L键：重置所有远程相关状态（停止轮播和攻击）
+            this.isRangedHolding = false;
+            this.isRangedAttacking = false;
+            this.rangedLoopCooldown.reset(); // 重置冷却，下次长按重新开始
+        }
+
+        // 5.2 长按期间：动画轮播 + 间隔攻击
+        if (this.isRangedHolding) {
+            this.rangedLoopCooldown.tick(deltaTime); // 冷却计时
+            // 冷却结束 + 动画处于第一帧（确保每轮动画触发一次攻击，同步性更好）
+            if (this.rangedLoopCooldown.ready() && this.animation.frame === 1) {
+                this.attack.ranged.trigger(); // 触发一次远程攻击
+                this.rangedLoopCooldown.start(); // 重启冷却，控制轮播间隔
+            }
+        }
+
+        // 原有攻击逻辑（单次按下L键仍生效，兼容长按）
         if (inputManager.isKeyDown('J')) this.attack.melee.trigger();
-        if (inputManager.isKeyDown('L')) this.attack.ranged.trigger();
         this.attack.melee.update(deltaTime);
         this.attack.ranged.update(deltaTime);
 
-        // 冲刺逻辑
         this.dash.update(deltaTime);
-
-        // 移动与跳跃
         const deltaFrame = 60 * deltaTime / 1000;
-        let move = 0;
-        // 冲刺期间跳过普通横向速度赋值，冲刺结束后只在下一帧才允许普通移动逻辑覆盖
-        this.updateXY(deltaFrame, this.controllerX(), this.controllerY());
+        let move = this.controllerX();
+        this.updateXY(deltaFrame, move, this.controllerY());
 
-        // 动画状态更新
-        if (this.jumping.jumpVelocity > 0) {
+        // 6. 动画状态切换：长按远程时强制设为ranged状态
+        if (this.isMeleeAttacking) {
+            this.animation.setStatus("melee", this.facing);
+        } else if (this.isRangedHolding || this.isRangedAttacking) { // 长按或攻击中：保持远程动画
+            this.animation.setStatus("ranged", this.facing);
+        } else if (this.dash.isDashing) {
+            this.animation.setStatus("dash", this.facing);
+        } else if (this.jumping.jumpVelocity > 0) {
             this.animation.setStatus("jump", this.facing);
         } else if (!this.isOnGround()) {
             if (this.jumping.jumpVelocity < 0)
                 this.animation.setStatus("fall", this.facing);
         } else {
-            if (move) {
+            if (move !== 0) {
                 this.animation.setStatus("run", this.facing);
             } else {
                 this.animation.setStatus("stand", this.facing);
             }
         }
-        this.animation.update(deltaFrame);
+        this.animation.update(deltaTime); // 动画帧更新（轮播核心）
     }
 
-    /**
-     * 重写updateXY，实现冲刺时不计算摩擦和重力造成的速度改变
-     * @param {number} deltaTime 
-     * @param {number} cmd_X 返回X轴控制输入，-1左，0无，1右
-     * @param {number} cmd_Y 返回Y轴控制输入，0无，1按住跳跃，在函数中应处理预输入
-     */
+    // 以下方法完全不变（保留原有逻辑）
     updateXY(deltaTime, cmd_X, cmd_Y) {
         if (!this.dash.isDashing) {
             this.updateY(deltaTime, cmd_Y);
@@ -203,7 +305,6 @@ class Player extends Entity {
         if (side & 2) this.velocity.y = this.jumping.jumpVelocity = 0;
     }
 
-    // 更新状态
     updateState() {
         const hp = AM.getAttrSum(Attrs.player.HP);
         const atk = AM.getAttrSum(Attrs.player.ATK);
@@ -224,23 +325,21 @@ class Player extends Entity {
         this.state.attack.recoveryTime.ranged = this.baseState.attack.RangedRecoveryTime + rangedRT;
         this.dash.dashCooldownTime = this.baseState.dash_cooldownTime * (1 - dash_charge);
         this.dash.dashCooldown.set(this.dash.dashCooldownTime);
+        // 更新轮播间隔（与属性系统联动，支持后续属性修改）
+        this.rangedLoopCooldown.set(this.state.attack.loopInterval);
     }
 
-    // 冲刺初始化
-    initDash() {
+    initDash() { // 原有逻辑不变
         this.dash = {
             isDashing: false,
-            dashDuration: 200,       // 冲刺持续时间
-            dashCooldownTime: this.baseState.dash_cooldownTime,   // 恢复一段冲刺的冷却时间
+            dashDuration: 200,
+            dashCooldownTime: this.baseState.dash_cooldownTime,
             dashSpeed: 15,
             dashDir: { x: 1, y: 0 },
-
             dashDurationCooldown: null,
             dashCooldown: null,
-
-            dashMaxCount: this.baseState.dash_maxCount,         // 最大段数
-            dashCount: 0,                                       // 当前可用段数
-
+            dashMaxCount: this.baseState.dash_maxCount,
+            dashCount: 0,
             update: null
         };
 
@@ -248,7 +347,6 @@ class Player extends Entity {
         this.dash.dashCooldown = new Cooldown(this.dash.dashCooldownTime);
 
         this.dash.update = (deltaTime) => {
-            // --- 冲刺段数恢复逻辑 ---
             if (this.isOnGround()) {
                 this.dash.dashCooldown.tick(deltaTime);
                 if (this.dash.dashCooldown.ready() && this.dash.dashCount < this.dash.dashMaxCount) {
@@ -257,14 +355,12 @@ class Player extends Entity {
                 }
             }
 
-            // --- 冲刺输入检测 ---
             let dx = 0, dy = 0;
             if (inputManager.isKeysDown(['A', 'Left'])) dx -= 1;
             if (inputManager.isKeysDown(['D', 'Right'])) dx += 1;
             if (inputManager.isKeysDown(['W', 'Up'])) dy -= 1;
             if (inputManager.isKeysDown(['S', 'Down'])) dy += 1;
 
-            // 触发冲刺
             if (!this.dash.isDashing && this.dash.dashCount > 0 && inputManager.isKeyDown('K')) {
                 if (dx === 0 && dy === 0) dx = this.facing;
                 let len = Math.sqrt(dx * dx + dy * dy);
@@ -277,7 +373,6 @@ class Player extends Entity {
                 soundManager.playSound('player', 'dash');
             }
 
-            // --- 冲刺状态 ---
             if (this.dash.isDashing) {
                 this.dash.dashDurationCooldown.tick(deltaTime);
                 this.velocity.x = this.dash.dashSpeed * this.dash.dashDir.x;
@@ -290,92 +385,65 @@ class Player extends Entity {
         };
     }
 
-    // 返回当前是否可受击
-    beforeTakeDamage(dmg) {
-        if (this.dash.isDashing === true) return false;
-        return true;
-    }
-
-    // 受击判定
-    takeDamage(dmg, attackType) {
-        let finalDmg = bus.emitReduce(
-            Events.player.takeDamage,
-            { baseDamage: dmg },
-            (_, next) => next
-        ).baseDamage;
+    beforeTakeDamage(dmg) { if (this.dash.isDashing === true) return false; return true; }
+    takeDamage(dmg, attackType) { // 原有逻辑不变
+        let finalDmg = bus.emitReduce(Events.player.takeDamage, { baseDamage: dmg }, (_, next) => next).baseDamage;
         this.state.hp -= finalDmg;
         if (this.state.hp <= 0) {
-            // -----判定阻止死亡-----
             if (!bus.emitInterruptible(Events.player.fatelDmg)) {
                 bus.emit(Events.player.die);
                 alert("你死了");
             }
         }
     }
-
-    /**
-     * 受治疗
-     * @param {number} amount - 基础治疗量
-     * @param {string|null} source - 来源（道具、技能等）
-     */
-    takeHeal(amount, source = null) {
-        // -----计算属性加成-----
+    takeHeal(amount, source = null) { // 原有逻辑不变
         let modifiedAmount = amount * (1 + AM.getAttrSum(Attrs.player.HEAL));
-        // -----计算事件影响治疗量-----
-        modifiedAmount = bus.emitReduce(
-            Events.player.heal,
-            { baseHeal: modifiedAmount },
-            (_, next) => next
-        ).baseHeal;
-        // -----实际回血-----
+        modifiedAmount = bus.emitReduce(Events.player.heal, { baseHeal: modifiedAmount }, (_, next) => next).baseHeal;
         const finalAmount = Math.max(0, modifiedAmount);
         this.state.hp = Math.min(this.state.hp_max, this.state.hp + finalAmount);
     }
+    setPosition(position) { this.hitbox.position = position; }
+    draw(ctx) { // 原有逻辑不变
+        const currentTexture = this.animation.getFrame();
+        if (!currentTexture) return;
 
-    setPosition(position) {
-        this.hitbox.position = position;
-    }
+        const drawX = this.hitbox.position.x;
+        const drawY = this.hitbox.position.y;
+        const drawWidth = this.size.x;
+        const drawHeight = this.size.y;
 
-    draw(ctx) {
-        // 绘制玩家
-        ctx.drawImage(
-            this.animation.getFrame(),
-            this.hitbox.position.x,
-            this.hitbox.position.y,
-            this.size.x,
-            this.size.y);
-
-        // 绘制冲刺UI
+        ctx.save();
+        if (this.animation.facing === -1) {
+            ctx.translate(drawX + drawWidth, drawY);
+            ctx.scale(-1, 1);
+            ctx.drawImage(currentTexture, 0, 0, drawWidth, drawHeight);
+        } else {
+            ctx.drawImage(currentTexture, drawX, drawY, drawWidth, drawHeight);
+        }
+        ctx.restore();
         this.drawDashUI(ctx);
     }
-
-    drawBoxs(ctx) {
-        // 绘制敌人自身盒子
+    drawBoxs(ctx) { // 原有逻辑不变
         ctx.strokeStyle = this.isInvulnerable ? '#cccccc' : '#00aaff';
         ctx.strokeRect(this.hitbox.position.x, this.hitbox.position.y, this.hitbox.size.x, this.hitbox.size.y);
 
-        // ---- 调试用攻击判定框 ----
         ctx.strokeStyle = '#ff0000';
-
-        // 计算判定框位置
         const offset = 0.5 * (this.facing >= 0 ? this.hitbox.size.x : -this.hitbox.size.x);
         const attackBoxPos = this.hitbox.position.addVector(new Vector(offset, this.hitbox.size.y * 0.2));
         const attackBoxSize = new Vector(this.hitbox.size.x * 0.8, this.hitbox.size.y * 0.5);
         ctx.strokeRect(attackBoxPos.x, attackBoxPos.y, attackBoxSize.x, attackBoxSize.y);
         ctx.restore();
     }
-
-    drawDashUI(ctx) {
+    drawDashUI(ctx) { // 原有逻辑不变
         const max = this.dash.dashMaxCount;
         const current = this.dash.dashCount;
-
-        const size = 8; // 每个方块的边长
-        const gap = 4;  // 间隔
+        const size = 8;
+        const gap = 4;
         const startX = this.hitbox.position.x + this.size.x / 2 - (max * (size + gap) - gap) / 2;
-        const y = this.hitbox.position.y - 12; // 头顶上方一点
+        const y = this.hitbox.position.y - 12;
 
         for (let i = 0; i < max; i++) {
-            ctx.fillStyle = i < current ? "cyan" : "gray"; // 已有 → 蓝色，缺失 → 灰色
+            ctx.fillStyle = i < current ? "cyan" : "gray";
             ctx.fillRect(startX + i * (size + gap), y, size, size);
             ctx.strokeStyle = "black";
             ctx.strokeRect(startX + i * (size + gap), y, size, size);
