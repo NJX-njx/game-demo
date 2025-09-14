@@ -305,11 +305,8 @@ class Player extends Entity {
         ).baseDamage;
         this.state.hp -= finalDmg;
         if (this.state.hp <= 0) {
-            // -----判定阻止死亡-----
-            if (!bus.emitInterruptible(Events.player.fatelDmg)) {
-                bus.emit(Events.player.die);
-                alert("你死了");
-            }
+            bus.emit(Events.player.die);
+            alert("你死了");
         }
     }
 
