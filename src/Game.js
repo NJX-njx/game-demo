@@ -261,6 +261,7 @@ class Game {
 
     saveCurrentGame(slotId = 1) {
         const saveData = {
+            version: 1, // 存档版本号
             player: player.constructor.getSaveData(),
             enemies: this.enemies.map(enemy => ({
                 type: enemy.type,
@@ -276,6 +277,11 @@ class Game {
         };
         
         // 验证存档数据
+        if (!this.validateSaveData(saveData)) {
+            console.error('存档数据验证失败');
+            return null;
+        }
+        
         try {
             JSON.stringify(saveData); // 测试数据是否可序列化
         } catch (e) {
@@ -308,6 +314,104 @@ class Game {
         }
     }
 
+    /**
+     * 验证存档数据的完整性和有效性
+     * @param {Object} saveData 存档数据
+     * @returns {boolean} 验证是否通过
+     */
+    validateSaveData(saveData) {
+        // 检查必需字段
+        if (!saveData || typeof saveData !== 'object') {
+            console.warn('存档数据不是有效对象');
+            return false;
+        }
+        
+        // 检查版本号
+        if (typeof saveData.version !== 'number' || saveData.version < 1) {
+            console.warn('存档版本号无效:', saveData.version);
+            return false;
+        }
+        
+        // 检查玩家数据
+        if (!saveData.player || typeof saveData.player !== 'object') {
+            console.warn('存档缺少玩家数据');
+            return false;
+        }
+        
+        // 检查地图数据
+        if (typeof saveData.layer !== 'number' || typeof saveData.room !== 'number') {
+            console.warn('存档地图数据无效');
+            return false;
+        }
+        
+        // 检查敌人数据
+        if (!Array.isArray(saveData.enemies)) {
+            console.warn('存档敌人数据不是数组');
+            return false;
+        }
+        
+        return true;
+    }
+
+    /**
+     * 修复损坏的存档数据
+     * @param {Object} saveData 原始存档数据
+     * @returns {Object} 修复后的存档数据
+     */
+    repairSaveData(saveData) {
+        console.log('尝试修复存档数据...');
+        
+        // 确保版本号存在
+        if (typeof saveData.version !== 'number') {
+            saveData.version = 1;
+        }
+        
+        // 修复玩家数据
+        if (!saveData.player || typeof saveData.player !== 'object') {
+            console.log('修复玩家数据');
+            saveData.player = {
+                position: { x: 100, y: 100 },
+                state: {
+                    hp: 100,
+                    hp_max: 100,
+                    attack: { atk: 10 }
+                },
+                timestamp: new Date().toISOString()
+            };
+        }
+        
+        // 修复地图数据
+        if (typeof saveData.layer !== 'number') {
+            saveData.layer = 0;
+        }
+        if (typeof saveData.room !== 'number') {
+            saveData.room = 3;
+        }
+        
+        // 修复敌人数据
+        if (!Array.isArray(saveData.enemies)) {
+            saveData.enemies = [];
+        }
+        
+        // 修复地图状态
+        if (!saveData.mapState || typeof saveData.mapState !== 'object') {
+            saveData.mapState = {
+                triggeredInteractions: [],
+                completedEvents: [],
+                currentLayer: saveData.layer,
+                currentRoom: saveData.room
+            };
+        }
+        
+        // 修复已完成事件
+        if (!Array.isArray(saveData.completedEvents)) {
+            saveData.completedEvents = [];
+        }
+        
+        console.log('存档数据修复完成');
+        return saveData;
+    }
+
     async loadGame(slotId = 1) {
         console.log('开始加载存档，槽位:', slotId);
         let currentPlayer = null;
@@ -325,8 +429,38 @@ class Game {
             return false;
         }
 
-        const saveData = currentPlayer.saveSlots[slotId - 1];
+        let saveData = currentPlayer.saveSlots[slotId - 1];
         console.log('存档数据内容:', saveData);
+
+        // 检查存档版本并验证数据
+        if (!this.validateSaveData(saveData)) {
+            console.warn('存档数据验证失败，尝试修复...');
+            saveData = this.repairSaveData(saveData);
+            
+            if (!this.validateSaveData(saveData)) {
+                console.error('存档数据无法修复，加载失败');
+                return false;
+            }
+            
+            // 保存修复后的数据
+            currentPlayer.saveSlots[slotId - 1] = saveData;
+            try {
+                localStorage.setItem("present_data", JSON.stringify(currentPlayer));
+                console.log('修复后的存档数据已保存');
+            } catch (e) {
+                console.warn('保存修复后的存档数据失败:', e);
+            }
+        }
+
+        // 处理不同版本的存档
+        switch (saveData.version) {
+            case 1:
+                // 当前版本，直接处理
+                break;
+            default:
+                console.warn(`未知的存档版本: ${saveData.version}，尝试按版本1处理`);
+                break;
+        }
 
         // 先加载地图，再恢复玩家位置/状态
         console.log(`加载地图: layer${saveData.layer}/room${saveData.room}`);
