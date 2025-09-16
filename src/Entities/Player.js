@@ -9,6 +9,7 @@ import { soundManager } from "../Manager/SoundManager";
 import { inputManager } from "../System/Input/InputManager";
 import { eventBus as bus, EventTypes as Events } from "../Manager/EventBus";
 import { attributeManager as AM, AttributeTypes as Attrs } from "../Manager/AttributeManager";
+import { dialogManager } from "../Manager/DialogManager";
 
 class Player_Animation {
     static Framerate = {
@@ -40,7 +41,7 @@ class Player_Animation {
     update(deltaTime) {
         this.frameRun += deltaTime;
         const frameInterval = 1000 / Player_Animation.Framerate[this.status];
-        
+
         if (this.frameRun > frameInterval) {
             this.frame++;
             this.frameRun = 0;
@@ -121,7 +122,7 @@ class Player extends Entity {
         this.jumping.type = "player";
         this.isMeleeAttacking = false;
         this.isRangedAttacking = false;
-        
+
         // 2. 新增：远程长按相关状态
         this.isRangedHolding = false; // 标记是否长按L键
         this.rangedLoopCooldown = new Cooldown(0); // 远程轮播攻击的冷却（避免攻击过快）
@@ -130,8 +131,8 @@ class Player extends Entity {
             hp_max: 100,
             attack: {
                 atk: 10,
-                MeleeStartupTime: 50,    
-                MeleeRecoveryTime: 900,   
+                MeleeStartupTime: 50,
+                MeleeRecoveryTime: 900,
                 RangedStartupTime: 150,
                 RangedRecoveryTime: 700,
                 RangedLoopInterval: 850, // 远程轮播间隔（与动画时长匹配：6帧≈1秒，取850ms避免卡顿）
@@ -212,6 +213,23 @@ class Player extends Entity {
             originalTrigger();
             soundManager.playSound('player', 'melee');
         };
+
+        // 修复：正确注册对话事件监听
+        bus.on({
+            event: Events.dialog.start,
+            handler: () => {
+                this.blockMove = true;
+            },
+            priority: 0
+        });
+
+        bus.on({
+            event: Events.dialog.end,
+            handler: () => {
+                this.blockMove = false;
+            },
+            priority: 0
+        });
     }
 
     // 4. 优化远程攻击监听：支持轮播时的单次攻击触发
@@ -241,8 +259,8 @@ class Player extends Entity {
         bus.emit(Events.player.hpPercent, this.state.hp / this.state.hp_max);
 
         // 5. 关键修改：远程长按逻辑（核心）
-        // 5.1 监听L键长按/松开：更新长按标记
-        if (inputManager.isHeld('L') && !this.isMeleeAttacking) { // 近战优先级高于远程
+        // 5.1 监听L键长按/松开：更新长按标记，添加对话状态判断
+        if (inputManager.isHeld('L') && !this.isMeleeAttacking && !dialogManager.isActive) { // 近战优先级高于远程，对话时禁用
             this.isRangedHolding = true; // 按下L键：标记长按
         } else {
             // 松开L键：重置所有远程相关状态（停止轮播和攻击）
@@ -261,8 +279,10 @@ class Player extends Entity {
             }
         }
 
-        // 原有攻击逻辑（单次按下L键仍生效，兼容长按）
-        if (inputManager.isKeyDown('J')) this.attack.melee.trigger();
+        // 原有攻击逻辑（单次按下L键仍生效，兼容长按），添加对话状态判断
+        if (!dialogManager.isActive && inputManager.isKeyDown('J')) {
+            this.attack.melee.trigger();
+        }
         this.attack.melee.update(deltaTime);
         this.attack.ranged.update(deltaTime);
 
@@ -293,7 +313,6 @@ class Player extends Entity {
         this.animation.update(deltaTime); // 动画帧更新（轮播核心）
     }
 
-    // 以下方法完全不变（保留原有逻辑）
     updateXY(deltaTime, cmd_X, cmd_Y) {
         if (!this.dash.isDashing) {
             this.updateY(deltaTime, cmd_Y);

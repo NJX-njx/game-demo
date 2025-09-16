@@ -11,6 +11,8 @@ import { Vector } from "./Utils/Vector";
 import { itemManager } from "./System/Item/ItemManager";
 import { ItemConfigs as Items } from "./System/Item/ItemConfigs";
 import { uiManager } from "./System/UI/UIManager";
+import { dialogManager } from "./Manager/DialogManager";
+
 class Game {
     constructor() {
         if (Game.instance) return Game.instance;
@@ -121,7 +123,7 @@ class Game {
                 this.enemies.push(new Enemy(e.type, new Vector(e.x, e.y)));
             }
         }
-        //TODO:测试用
+        // 测试用
         itemManager.tryAcquire(Items.xq休憩);
         itemManager.tryAcquire(Items.yy友谊);
         itemManager.tryAcquire(Items.ls朗诵);
@@ -141,6 +143,9 @@ class Game {
 
         uiManager.draw(ctx_ui);
         this.drawVerticalHpBar(ctx_ui);
+        
+        // 绘制对话框
+        dialogManager.draw(ctx_ui);
     }
 
     // 调整后的竖版血条绘制方法（含下移+垂直对齐文字显示）
@@ -202,13 +207,19 @@ class Game {
             inputManager.update();
 
             if (inputManager.isFirstDown("Esc")) {
-                this.switchPause();
+                // 对话时不允许暂停游戏
+                if (!dialogManager.isActive) {
+                    this.switchPause();
+                }
             }
 
             if (game.enemies.length == 0)
                 bus.emit(Events.game.battle.end);
 
-            if (!this.isPaused && !this.isStop) bus.emit(Events.game.tick, { deltaTime: deltaTime });
+            // 对话活跃时，即使游戏暂停也触发tick（仅让DialogManager响应）
+            if ((!this.isPaused && !this.isStop) || dialogManager.isActive) {
+                bus.emit(Events.game.tick, { deltaTime: deltaTime });
+            }
 
             this.draw();
         }

@@ -4,6 +4,7 @@ import { textureManager } from "./TextureManager";
 import { dataManager } from "./DataManager";
 import { eventBus as bus, EventTypes as Events } from "./EventBus";
 import { inputManager } from "../System/Input/InputManager";
+
 // Block类，继承自Hitbox
 class Block extends Hitbox {
     constructor(position, size, type) {
@@ -19,6 +20,8 @@ class Interaction extends Hitbox {
         this.type = type;
         this.autoTrigger = !!autoTrigger;
         Object.assign(this, extra);
+        // 新增：为每个交互点添加唯一ID
+        this.__id = `${Date.now()}-${Math.floor(Math.random() * 10000)}`;
     }
 }
 
@@ -51,11 +54,17 @@ class MapManager {
             this.playerSpawn = data.playerSpawn ? { ...data.playerSpawn } : null;
             this.enemySpawns = Array.isArray(data.enemySpawns) ? data.enemySpawns.map(e => ({ ...e })) : [];
             this.backgrounds = (data.backgrounds || []).map(obj => ({ ...obj }));
-            // 生成方块碰撞盒
+
             this.blocks = (data.blocks || []).map(obj => new Block(obj.position, obj.size, obj.type));
             this.textures = (data.textures || []).map(obj => ({ ...obj }));
             // 生成交互点碰撞盒，自动触发的排前面
-            const allInteractions = (data.interactions || []).map(obj => new Interaction(obj.position, obj.size, obj.type, obj.autoTrigger, obj));
+            const allInteractions = (data.interactions || []).map(obj => {
+                // 添加对话数据支持
+                if (obj.type === 'dialog') {
+                    obj.dialogs = obj.dialogs || [];
+                }
+                return new Interaction(obj.position, obj.size, obj.type, obj.autoTrigger, obj);
+            });
             this.interactions = [
                 ...allInteractions.filter(i => i.autoTrigger),
                 ...allInteractions.filter(i => !i.autoTrigger)
@@ -93,6 +102,7 @@ class MapManager {
                 if (!hb) continue;
                 const overlapping = playerHitbox.checkHit(hb);
                 const already = this._triggeredInteractionIds.has(inter.__id);
+                
                 if (overlapping) {
                     if (inter.autoTrigger && !already) {
                         this._triggeredInteractionIds.add(inter.__id);
@@ -127,10 +137,6 @@ class MapManager {
         for (const tex of this.textures) {
             this.drawItem(ctx, tex, 'texture');
         }
-        // 可选：绘制交互点提示
-        // for (const inter of this.interactions) {
-        //     this.drawInteraction(ctx, inter);
-        // }
     }
 
     /**
@@ -160,14 +166,6 @@ class MapManager {
         }
         ctx.restore();
     }
-
-    // 可扩展：绘制交互点
-    // drawInteraction(ctx, inter) {
-    //     ctx.save();
-    //     ctx.strokeStyle = '#ff0000';
-    //     ctx.strokeRect(inter.position.x, inter.position.y, inter.size.x, inter.size.y);
-    //     ctx.restore();
-    // }
 }
 
 export const mapManager = new MapManager();
