@@ -1,168 +1,224 @@
 import { inputManager } from "../System/Input/InputManager";
 import { eventBus, EventTypes } from "../Manager/EventBus";
-import { mapManager } from "../Manager/MapManager";
 
 class DialogManager {
     constructor() {
-        this.isActive = false;
-        this.currentDialog = null;
-        this.currentLine = 0;
-        this.currentChar = 0;
-        this.displayText = "";
-        this.charDelay = 30; // 每个字符显示延迟(ms)
-        this.accumulator = 0;
-        this.isFastForwarding = false;
-        
-        // 对话框样式
-        this.boxWidth = 800;
-        this.boxHeight = 150;
-        this.boxX = (1280 - this.boxWidth) / 2;
-        this.boxY = 720 - this.boxHeight - 20;
-        this.textX = this.boxX + 30;
-        this.textY = this.boxY + 30;
-        this.textWidth = this.boxWidth - 60;
-        this.font = "20px Arial";
-        this.textColor = "white";
-        this.boxColor = "rgba(0, 0, 0, 0.7)";
-        this.borderColor = "rgba(255, 215, 0, 0.8)";
-        this.borderWidth = 3;
-        
-        // 修复：正确注册事件监听
+        this.createDialogDOM(); // 创建DOM结构
+        this.buffer = [];       // 对话内容缓冲区
+        this.printing = false;  // 是否正在打印
+        this.triggeredEvents = new Set(); // 已触发的自动事件
+        this.CTRL_KEYS = ['LCtrl', 'RCtrl']; // 加速/继续键
+
+        // 订阅交互事件
         eventBus.on({
             event: EventTypes.interaction.trigger,
             handler: this.handleInteraction.bind(this),
             priority: 0
         });
-        
-        // 监听游戏tick事件以更新对话状态
-        eventBus.on({
-            event: EventTypes.game.tick,
-            handler: ({ deltaTime }) => this.update(deltaTime),
-            priority: 0.9
-        });
     }
-    
-    // 处理交互事件
+
+    /** 创建对话框DOM结构 */
+    createDialogDOM() {
+        // 对话框容器
+        const dialog = document.createElement('div');
+        dialog.className = 'dialogue-container';
+        dialog.id = 'dialogue-container';
+        dialog.style.cssText = `
+            display: none;
+            position: fixed;
+            left: 50%;
+            bottom: 50px;
+            transform: translateX(-50%);
+            width: 700px;
+            height: 200px;
+            background-color: black;
+            border: 2px solid white;
+            border-radius: 4px;
+            padding: 25px;
+            box-sizing: border-box;
+            color: white;
+            font-family: Arial, sans-serif;
+            z-index: 100; /* 确保在游戏画面上层 */
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        `;
+
+        // 角色名区域
+        const charName = document.createElement('div');
+        charName.className = 'character-name';
+        charName.id = 'character-name';
+        charName.style.cssText = `
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 8px;
+        `;
+
+        // 文本容器（包含逐字文本和提示）
+        const textContainer = document.createElement('div');
+        textContainer.className = 'text-container';
+        textContainer.id = 'text-container';
+        textContainer.style.cssText = `
+            height: calc(100% - 26px); /* 预留名字高度 */
+            overflow: hidden;
+            position: relative;
+        `;
+
+        // 逐字文本区域
+        const textContent = document.createElement('p');
+        textContent.className = 'text-content';
+        textContent.id = 'text-content';
+        textContent.style.cssText = `
+            font-size: 16px;
+            line-height: 22px;
+            margin: 0;
+        `;
+
+        // 提示文字（按Ctrl继续）
+        const promptText = document.createElement('div');
+        promptText.className = 'prompt-text';
+        promptText.id = 'prompt-text';
+        promptText.style.cssText = `
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            display: none;
+        `;
+        promptText.textContent = '按 Ctrl 继续';
+
+        // 组装DOM
+        textContainer.appendChild(textContent);
+        textContainer.appendChild(promptText);
+        dialog.appendChild(charName);
+        dialog.appendChild(textContainer);
+
+        // 插入到游戏容器（假设游戏根节点为#game）
+        const gameContainer = document.getElementById('game') || document.body;
+        gameContainer.appendChild(dialog);
+
+        // 保存DOM引用
+        this.dialog = dialog;
+        this.charName = charName;
+        this.textContent = textContent;
+        this.promptText = promptText;
+    }
+
+    /** 处理交互事件，启动对话 */
     handleInteraction(event) {
-        if (event.type === 'dialog') {
+        const isDialogType = ["plot", "teach"].includes(event.type);
+        if (isDialogType && event.data?.dialogs?.length) {
+            // 自动触发防重复
+            if (event.data.autoTrigger && event.data.event) {
+                if (this.triggeredEvents.has(event.data.event)) return;
+                this.triggeredEvents.add(event.data.event);
+            }
             this.startDialog(event.data.dialogs);
         }
     }
-    
-    // 开始对话
+
+    /** 启动对话流程 */
     startDialog(dialogs) {
-        if (dialogs && dialogs.length > 0) {
-            this.isActive = true;
-            this.currentDialog = dialogs;
-            this.currentLine = 0;
-            this.currentChar = 0;
-            this.displayText = "";
-            this.accumulator = 0;
-            this.isFastForwarding = false;
-            
-            // 暂停玩家移动
-            eventBus.emit(EventTypes.dialog.start);
+        if (dialogs && dialogs.length > 0 && !this.printing) {
+            this.buffer = dialogs;
+            this.printing = true;
+            this.open().then(() => this._printDialogLines());
         }
     }
-    
-    // 更新对话状态
-    update(deltaTime) {
-        if (!this.isActive || !this.currentDialog) return;
-        
-        // 检测Ctrl键快进
-        this.isFastForwarding = inputManager.isKeysDown(['ControlLeft', 'ControlRight']);
-        
-        const currentLine = this.currentDialog[this.currentLine];
-        if (!currentLine) {
-            this.endDialog();
-            return;
-        }
-        const lineContent = typeof currentLine === 'string' ? currentLine : currentLine.text || '';
-        
-        // 如果快进或者已经显示完当前行
-        if (this.isFastForwarding || this.currentChar >= lineContent.length) {
-            // 如果按下确认键（如空格或回车），进入下一行
-            if (inputManager.isFirstDown('Space') || inputManager.isFirstDown('Enter')) {
-                this.nextLine();
+
+    /** 打开对话框（淡入动画） */
+    open() {
+        return new Promise(resolve => {
+            this.charName.innerHTML = '';
+            this.textContent.innerHTML = '';
+            this.promptText.style.display = 'none';
+
+            this.dialog.style.display = 'block';
+            setTimeout(() => {
+                this.dialog.style.opacity = '1';
+                setTimeout(resolve, 300); // 等待动画完成
+            }, 10);
+        });
+    }
+
+    /** 关闭对话框（淡出动画） */
+    close() {
+        return new Promise(resolve => {
+            this.dialog.style.opacity = '0';
+            setTimeout(() => {
+                this.dialog.style.display = 'none';
+                this.printing = false;
+                resolve();
+            }, 300); // 匹配动画时长
+        });
+    }
+
+    /** 逐行打印对话内容 */
+    async _printDialogLines() {
+        for (let lineIdx = 0; lineIdx < this.buffer.length; lineIdx++) {
+            if (!this.printing) return;
+
+            const lineData = this.buffer[lineIdx];
+            const text = typeof lineData === 'string' ? lineData : lineData.text || '';
+            const speaker = typeof lineData === 'object' ? lineData.speaker : '';
+
+            // 处理说话人名字（支持特殊样式拆分）
+            if (speaker) {
+                let displayName = speaker;
+                this.charName.innerHTML = displayName;
+            } else {
+                this.charName.innerHTML = '';
             }
-            return;
+
+            this.textContent.innerHTML = '';
+            this.promptText.style.display = 'none';
+
+            // 逐字打印（打字机效果）
+            let fullText = '';
+            for (const char of text) {
+                if (!this.printing) return;
+
+                fullText += char;
+                const charSpan = document.createElement('span');
+                charSpan.textContent = char;
+                this.textContent.appendChild(charSpan);
+
+                // Ctrl按住时加速打印
+                if (inputManager.isKeysDown(this.CTRL_KEYS)) {
+                    await new Promise(r => setTimeout(r, 10));
+                    continue;
+                }
+
+                await new Promise(r => setTimeout(r, 50)); // 普通打字延迟
+            }
+
+            // 显示“按Ctrl继续”提示，等待输入
+            this.promptText.style.display = 'block';
+            await new Promise(resolve => {
+                const checkInput = () => {
+                    if (
+                        inputManager.isKeysDown(this.CTRL_KEYS)
+                    ) {
+                        resolve();
+                    } else {
+                        requestAnimationFrame(checkInput);
+                    }
+                };
+                checkInput();
+            });
+            this.promptText.style.display = 'none';
         }
-        
-        // 逐字显示
-        this.accumulator += deltaTime;
-        if (this.accumulator >= this.charDelay) {
-            this.accumulator = 0;
-            this.currentChar++;
-            this.displayText = lineContent.substring(0, this.currentChar);
-        }
-    }
-    
-    // 进入下一行对话
-    nextLine() {
-        this.currentLine++;
-        this.currentChar = 0;
-        this.displayText = "";
-        
-        // 对话结束
-        if (this.currentLine >= this.currentDialog.length) {
-            this.endDialog();
-        }
-    }
-    
-    // 结束对话
-    endDialog() {
-        this.isActive = false;
-        this.currentDialog = null;
-        
-        // 恢复玩家移动
+
+        // 所有行打印完毕，关闭对话框
+        await this.close();
         eventBus.emit(EventTypes.dialog.end);
     }
-    
-    // 绘制对话框
-    draw(ctx) {
-        if (!this.isActive || !this.currentDialog) return;
-        
-        // 绘制对话框背景
-        ctx.fillStyle = this.boxColor;
-        ctx.fillRect(this.boxX, this.boxY, this.boxWidth, this.boxHeight);
-        
-        // 绘制边框
-        ctx.strokeStyle = this.borderColor;
-        ctx.lineWidth = this.borderWidth;
-        ctx.strokeRect(this.boxX, this.boxY, this.boxWidth, this.boxHeight);
-        
-        // 绘制文本
-        ctx.fillStyle = this.textColor;
-        ctx.font = this.font;
-        ctx.textBaseline = "top";
-        
-        // 自动换行
-        const words = this.displayText.split(' ');
-        let line = '';
-        let lineCount = 0;
-        const maxWidth = this.textWidth;
-        const lineHeight = 25;
-        
-        for (let i = 0; i < words.length; i++) {
-            const testLine = line + words[i] + ' ';
-            const metrics = ctx.measureText(testLine);
-            
-            if (metrics.width > maxWidth && i > 0) {
-                ctx.fillText(line, this.textX, this.textY + lineCount * lineHeight);
-                line = words[i] + ' ';
-                lineCount++;
-            } else {
-                line = testLine;
-            }
-        }
-        ctx.fillText(line, this.textX, this.textY + lineCount * lineHeight);
-        
-        // 绘制提示信息
-        if (this.currentChar >= this.currentDialog[this.currentLine].length) {
-            ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-            ctx.font = "16px Arial";
-            ctx.fillText("按空格键继续...", this.boxX + this.boxWidth - 150, this.boxY + this.boxHeight - 30);
-        }
+
+    /** 清空对话（强制关闭） */
+    clear() {
+        this.buffer = [];
+        this.printing = false;
+        this.close();
     }
 }
 

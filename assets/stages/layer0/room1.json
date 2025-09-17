@@ -1,5 +1,8 @@
 {
-    "playerSpawn": { "x": 1080, "y": 620 },
+    "playerSpawn": {
+        "x": 1080,
+        "y": 620
+    },
     "backgrounds": [
         {
             "position": {
@@ -17974,7 +17977,17 @@
             },
             "type": "plot",
             "autoTrigger": true,
-            "event": "plot1-2"
+            "event": "plot1-2",
+            "dialogs": [
+                {
+                    "speaker": "旁白",
+                    "text": "这里是剧情转折点..."
+                },
+                {
+                    "speaker": "主角",
+                    "text": "我需要继续前进，找到真相"
+                }
+            ]
         },
         {
             "position": {
@@ -17987,7 +18000,17 @@
             },
             "type": "plot",
             "autoTrigger": true,
-            "event": "plot1-1"
+            "event": "plot1-1",
+            "dialogs": [
+                {
+                    "speaker": "神秘人",
+                    "text": "你终于来了，我等你很久了"
+                },
+                {
+                    "speaker": "主角",
+                    "text": "你是谁？为什么知道我会来？"
+                }
+            ]
         },
         {
             "position": {
@@ -17998,9 +18021,19 @@
                 "x": 20,
                 "y": 280
             },
-            "type": "plot",
+            "type": "teach",
             "autoTrigger": true,
-            "event": "teach1-1"
+            "event": "teach1-1",
+            "dialogs": [
+                {
+                    "speaker": "导师",
+                    "text": "现在我来教你基本操作"
+                },
+                {
+                    "speaker": "导师",
+                    "text": "按空格键可以跳跃，按E键可以互动"
+                }
+            ]
         },
         {
             "position": {
@@ -18013,7 +18046,17 @@
             },
             "type": "teach",
             "autoTrigger": true,
-            "event": "teach1-2"
+            "event": "teach1-2",
+            "dialogs": [
+                {
+                    "speaker": "导师",
+                    "text": "很好，现在来试试攻击动作"
+                },
+                {
+                    "speaker": "主角",
+                    "text": "明白了，让我试试！"
+                }
+            ]
         },
         {
             "position": {
@@ -18024,9 +18067,19 @@
                 "x": 20,
                 "y": 280
             },
-            "type": "teach",
+            "type": "plot",
             "autoTrigger": true,
-            "event": "plot1-3"
+            "event": "plot1-3",
+            "dialogs": [
+                {
+                    "speaker": "导师",
+                    "text": "前方的道路充满危险，务必小心"
+                },
+                {
+                    "speaker": "主角",
+                    "text": "我会记住你的教导，放心吧！"
+                }
+            ]
         }
     ]
 }

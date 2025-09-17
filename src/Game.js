@@ -143,9 +143,6 @@ class Game {
 
         uiManager.draw(ctx_ui);
         this.drawVerticalHpBar(ctx_ui);
-        
-        // 绘制对话框
-        dialogManager.draw(ctx_ui);
     }
 
     // 调整后的竖版血条绘制方法（含下移+垂直对齐文字显示）

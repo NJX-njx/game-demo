@@ -8,19 +8,26 @@ import { inputManager } from "../System/Input/InputManager";
 // Block类，继承自Hitbox
 class Block extends Hitbox {
     constructor(position, size, type) {
-        super(new Vector(position.x, position.y), new Vector(size.x, size.y));
+        super(position, size); // position和size是Vector实例
         this.type = type;
     }
 }
 
-// Interaction类，继承自Hitbox
+// Interaction类，继承自Hitbox（关键修复：避免position被覆盖）
 class Interaction extends Hitbox {
     constructor(position, size, type, autoTrigger, extra = {}) {
-        super(new Vector(position.x, position.y), new Vector(size.x, size.y));
+        super(position, size); // 1. 先传Vector实例给父类
         this.type = type;
         this.autoTrigger = !!autoTrigger;
+        
+        // 2. 合并extra数据（可能包含普通对象的position）
         Object.assign(this, extra);
-        // 新增：为每个交互点添加唯一ID
+        
+        // 3. 关键修复：重新强制设置position和size为Vector实例（覆盖普通对象）
+        this.position = position;
+        this.size = size;
+        
+        // 4. 唯一ID
         this.__id = `${Date.now()}-${Math.floor(Math.random() * 10000)}`;
     }
 }
@@ -38,130 +45,137 @@ class MapManager {
         this._triggeredInteractionIds = new Set();
     }
 
-    /**
-     * 加载指定层和房间的地图数据
-     * @param {number|string} layer 层编号或名称
-     * @param {number|string} room 房间编号或名称
-     */
     async loadRoom(layer, room) {
         const url = `assets/stages/layer${layer}/room${room}.json`;
         try {
             const data = await dataManager.loadJSON(url);
-            this.rawMapData = JSON.parse(JSON.stringify(data)); // 深拷贝一份原始地图数据
-            // 记录当前层与房间，供存档使用
+            this.rawMapData = JSON.parse(JSON.stringify(data));
             this.currentLayer = typeof layer === 'string' ? parseInt(layer, 10) : layer;
             this.currentRoom = typeof room === 'string' ? parseInt(room, 10) : room;
             this.playerSpawn = data.playerSpawn ? { ...data.playerSpawn } : null;
             this.enemySpawns = Array.isArray(data.enemySpawns) ? data.enemySpawns.map(e => ({ ...e })) : [];
             this.backgrounds = (data.backgrounds || []).map(obj => ({ ...obj }));
 
-            this.blocks = (data.blocks || []).map(obj => new Block(obj.position, obj.size, obj.type));
+            // 修复1：Block的position/size转为Vector
+            this.blocks = (data.blocks || []).map(obj => {
+                const pos = new Vector(obj.position.x, obj.position.y);
+                const size = new Vector(obj.size.x, obj.size.y);
+                return new Block(pos, size, obj.type);
+            });
+            
             this.textures = (data.textures || []).map(obj => ({ ...obj }));
-            // 生成交互点碰撞盒，自动触发的排前面
+            
+            // 修复2：Interaction的position/size转为Vector（配合Interaction类的修复）
             const allInteractions = (data.interactions || []).map(obj => {
-                // 添加对话数据支持
                 if (obj.type === 'dialog') {
                     obj.dialogs = obj.dialogs || [];
                 }
-                return new Interaction(obj.position, obj.size, obj.type, obj.autoTrigger, obj);
+                const pos = new Vector(obj.position.x, obj.position.y);
+                const size = new Vector(obj.size.x, obj.size.y);
+                return new Interaction(pos, size, obj.type, obj.autoTrigger, obj);
             });
+            
             this.interactions = [
                 ...allInteractions.filter(i => i.autoTrigger),
                 ...allInteractions.filter(i => !i.autoTrigger)
             ];
+            
+            console.log("加载的交互点总数:", this.interactions.length);
+            this.interactions.forEach((inter, idx) => {
+                console.log(`交互点${idx + 1}: type=${inter.type}, position类型=${inter.position.constructor.name}`); // 验证：应该输出"Vector"
+            });
+            
             this._triggeredInteractionIds.clear();
         } catch (e) {
             console.error('MapManager.loadRoom error:', e);
         }
     }
 
-    /** 获取玩家出生点 */
+    // 工具方法（验证position类型，方便调试）
+    checkVectorType() {
+        this.interactions.forEach((inter, idx) => {
+            if (inter.position.constructor.name !== 'Vector') {
+                console.error(`交互点${idx}的position不是Vector！类型是：`, inter.position.constructor.name);
+            }
+        });
+    }
+
     getPlayerSpawn() { return this.playerSpawn; }
-    /** 获取敌人生成信息 */
     getEnemySpawns() { return this.enemySpawns || []; }
-    /** 获取所有方块的碰撞盒数组 */
     getBlockHitboxes() { return this.blocks || []; }
-    /** 获取所有交互点的碰撞盒数组 */
     getInteractionHitboxes() { return this.interactions || []; }
 
-    /**
-     * 每帧更新：检测玩家与交互点重叠并触发
-     * - autoTrigger: 首次进入范围立即触发一次
-     * - 手动交互: 按下 E 键且重叠时触发
-     */
     update(deltaTime, player) {
         try {
-            if (!player || !this.interactionHitboxes || this.interactionHitboxes.length === 0) return;
+            if (!player) return;
+            const interactionHitboxes = this.getInteractionHitboxes();
+            if (!Array.isArray(interactionHitboxes) || interactionHitboxes.length === 0) return;
+
+            // 调试：调用验证方法，看是否有非Vector的position
+            this.checkVectorType();
+
             const playerHitbox = player.hitbox || player.getHitbox?.();
             if (!playerHitbox) return;
 
-            // 遍历 interactions（保持与 hitboxes 排序一致：自动→手动）
-            for (let i = 0; i < this.interactions.length; i++) {
-                const inter = this.interactions[i];
-                const hb = this.interactionHitboxes[i];
+            for (let i = 0; i < interactionHitboxes.length; i++) {
+                const inter = interactionHitboxes[i];
+                const hb = inter; // Interaction是Hitbox实例
                 if (!hb) continue;
+
+                // 此时hb.position应该是Vector实例，可正常调用addVector
                 const overlapping = playerHitbox.checkHit(hb);
-                const already = this._triggeredInteractionIds.has(inter.__id);
-                
+                const alreadyTriggered = this._triggeredInteractionIds.has(inter.__id);
+
                 if (overlapping) {
-                    if (inter.autoTrigger && !already) {
+                    if (inter.autoTrigger && !alreadyTriggered) {
+                        console.log(`[触发事件] 发射interaction.trigger，type=${inter.type}`);
                         this._triggeredInteractionIds.add(inter.__id);
-                        bus.emit(Events.interaction.trigger, { type: inter.type, event: inter.event, data: inter });
+                        bus.emit(Events.interaction.trigger, { 
+                            type: inter.type, 
+                            event: inter.event, 
+                            data: inter 
+                        });
                         continue;
                     }
-                    // 手动交互：E 键
                     if (!inter.autoTrigger && inputManager.isKeyDown('KeyE')) {
-                        bus.emit(Events.interaction.trigger, { type: inter.type, event: inter.event, data: inter });
+                        bus.emit(Events.interaction.trigger, { 
+                            type: inter.type, 
+                            event: inter.event, 
+                            data: inter 
+                        });
                     }
                 }
             }
         } catch (err) {
             console.error('MapManager.update error:', err);
+            console.error('错误堆栈:', err.stack);
         }
     }
 
-    /**
-     * 渲染地图，显示顺序：背景-方块-贴图
-     * @param {CanvasRenderingContext2D} ctx
-     */
     draw(ctx) {
-        // 绘制背景
         for (const bg of this.backgrounds) {
             this.drawItem(ctx, bg, 'background');
         }
-        // 绘制方块
         for (const block of this.blocks) {
             this.drawItem(ctx, block, 'block');
         }
-        // 绘制贴图
         for (const tex of this.textures) {
             this.drawItem(ctx, tex, 'texture');
         }
     }
 
-    /**
-     * 绘制单个元素（背景/方块/贴图）
-     */
     drawItem(ctx, item, type) {
         ctx.save();
-        // 优先用 TextureManager 获取贴图
         let texture = null;
-        // 贴图命名建议：如 backgrounds/xxx, blocks/xxx, textures/xxx
         let key = type + 's';
         texture = textureManager.getTexture(key, item.type);
         if (texture) {
             ctx.drawImage(texture, item.position.x, item.position.y, item.size.x, item.size.y);
         } else {
-            // 没有贴图时用不同颜色区分
-            if (type === 'background') {
-                ctx.fillStyle = '#e0e0e0';
-            } else if (type === 'block') {
-                ctx.fillStyle = '#654321';
-            } else if (type === 'texture') {
-                ctx.fillStyle = '#8888ff';
-            } else {
-                ctx.fillStyle = '#cccccc';
-            }
+            if (type === 'background') ctx.fillStyle = '#e0e0e0';
+            else if (type === 'block') ctx.fillStyle = '#654321';
+            else if (type === 'texture') ctx.fillStyle = '#8888ff';
+            else ctx.fillStyle = '#cccccc';
             ctx.fillRect(item.position.x, item.position.y, item.size.x, item.size.y);
         }
         ctx.restore();
