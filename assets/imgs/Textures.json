@@ -1,6 +1,26 @@
 {
     "player": {
-        "0": "assets/imgs/像素小人/character.png"
+        "0": "assets/imgs/像素小人/character.png",
+        "dash_1" :"assets/imgs/像素小人/冲刺/1.png",
+        "dash_2" :"assets/imgs/像素小人/冲刺/2.png",
+        "dash_3" :"assets/imgs/像素小人/冲刺/3.png",
+        "dash_4" :"assets/imgs/像素小人/冲刺/4.png",
+        "melee_1":"assets/imgs/像素小人/近战/1.png",
+        "melee_2":"assets/imgs/像素小人/近战/2.png",
+        "melee_3":"assets/imgs/像素小人/近战/3.png",
+        "melee_4":"assets/imgs/像素小人/近战/4.png",
+        "melee_5":"assets/imgs/像素小人/近战/5.png",
+        "melee_6":"assets/imgs/像素小人/近战/6.png",
+        "stand_1":"assets/imgs/像素小人/站立/1.png",
+        "stand_2":"assets/imgs/像素小人/站立/2.png",
+        "stand_3":"assets/imgs/像素小人/站立/3.png",
+        "stand_4":"assets/imgs/像素小人/站立/4.png",
+        "ranged_1":"assets/imgs/像素小人/远程攻击/1.png",
+        "ranged_2":"assets/imgs/像素小人/远程攻击/2.png",
+        "ranged_3":"assets/imgs/像素小人/远程攻击/3.png",
+        "ranged_4":"assets/imgs/像素小人/远程攻击/4.png",
+        "ranged_5":"assets/imgs/像素小人/远程攻击/5.png",
+        "ranged_6":"assets/imgs/像素小人/远程攻击/6.png"
     },
     "enemy": {
         "1": "assets/imgs/敌对生物/旧版其他/creep1.png",
