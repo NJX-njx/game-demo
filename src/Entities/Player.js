@@ -390,10 +390,8 @@ class Player extends Entity {
         let finalDmg = bus.emitReduce(Events.player.takeDamage, { baseDamage: dmg }, (_, next) => next).baseDamage;
         this.state.hp -= finalDmg;
         if (this.state.hp <= 0) {
-            if (!bus.emitInterruptible(Events.player.fatelDmg)) {
-                bus.emit(Events.player.die);
-                alert("你死了");
-            }
+            bus.emit(Events.player.die);
+            alert("你死了");
         }
     }
     takeHeal(amount, source = null) { // 原有逻辑不变

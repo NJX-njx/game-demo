@@ -18,7 +18,16 @@ class Interaction extends Hitbox {
         super(new Vector(position.x, position.y), new Vector(size.x, size.y));
         this.type = type;
         this.autoTrigger = !!autoTrigger;
-        Object.assign(this, extra);
+        
+        // 安全地合并额外属性，避免覆盖position和size
+        for (const key in extra) {
+            if (key !== 'position' && key !== 'size') {
+                this[key] = extra[key];
+            }
+        }
+        
+        // 生成唯一ID用于跟踪已触发的交互
+        this.__id = Math.random().toString(36).substr(2, 9);
     }
 }
 
@@ -33,6 +42,7 @@ class MapManager {
         this.interactions = [];
         this.mapHitBox = new Hitbox(new Vector(0, 0), new Vector(1280, 720));
         this._triggeredInteractionIds = new Set();
+        this._completedEvents = new Set(); // 记录已完成的事件
     }
 
     /**
@@ -61,6 +71,18 @@ class MapManager {
                 ...allInteractions.filter(i => !i.autoTrigger)
             ];
             this._triggeredInteractionIds.clear();
+            
+            // 调试信息：显示加载的交互点
+            console.log('🗺️ 加载交互点:', this.interactions.map(i => ({
+                type: i.type,
+                position: i.position,
+                size: i.size,
+                autoTrigger: i.autoTrigger,
+                can_be_used_when: i.can_be_used_when,
+                positionType: typeof i.position,
+                sizeType: typeof i.size,
+                hasAddVector: typeof i.position?.addVector
+            })));
         } catch (e) {
             console.error('MapManager.loadRoom error:', e);
         }
@@ -82,26 +104,42 @@ class MapManager {
      */
     update(deltaTime, player) {
         try {
-            if (!player || !this.interactionHitboxes || this.interactionHitboxes.length === 0) return;
+            if (!player || !this.interactions || this.interactions.length === 0) return;
             const playerHitbox = player.hitbox || player.getHitbox?.();
             if (!playerHitbox) return;
 
-            // 遍历 interactions（保持与 hitboxes 排序一致：自动→手动）
+            // 遍历 interactions
             for (let i = 0; i < this.interactions.length; i++) {
                 const inter = this.interactions[i];
-                const hb = this.interactionHitboxes[i];
-                if (!hb) continue;
-                const overlapping = playerHitbox.checkHit(hb);
+                if (!inter) continue;
+                
+                // 检查玩家是否与交互点重叠
+                const overlapping = playerHitbox.checkHit(inter);
                 const already = this._triggeredInteractionIds.has(inter.__id);
+                
                 if (overlapping) {
+                    // 调试信息：显示重叠检测
+                    if (inter.type === 'next_room' || inter.type === 'exit') {
+                        console.log('🎯 玩家在传送点区域:', {
+                            type: inter.type,
+                            playerPos: playerHitbox.position,
+                            interactionPos: inter.position,
+                            overlapping: overlapping
+                        });
+                    }
+                    
                     if (inter.autoTrigger && !already) {
                         this._triggeredInteractionIds.add(inter.__id);
                         bus.emit(Events.interaction.trigger, { type: inter.type, event: inter.event, data: inter });
                         continue;
                     }
                     // 手动交互：E 键
-                    if (!inter.autoTrigger && inputManager.isKeyDown('KeyE')) {
-                        bus.emit(Events.interaction.trigger, { type: inter.type, event: inter.event, data: inter });
+                    if (!inter.autoTrigger) {
+                        const eKeyDown = inputManager.isKeyDown('E');
+                        if (eKeyDown) {
+                            console.log('🔑 E键按下，触发交互:', inter.type, inter.event);
+                            bus.emit(Events.interaction.trigger, { type: inter.type, event: inter.event, data: inter });
+                        }
                     }
                 }
             }
@@ -127,10 +165,10 @@ class MapManager {
         for (const tex of this.textures) {
             this.drawItem(ctx, tex, 'texture');
         }
-        // 可选：绘制交互点提示
-        // for (const inter of this.interactions) {
-        //     this.drawInteraction(ctx, inter);
-        // }
+        // 绘制交互点提示
+        for (const inter of this.interactions) {
+            this.drawInteraction(ctx, inter);
+        }
     }
 
     /**
@@ -161,13 +199,105 @@ class MapManager {
         ctx.restore();
     }
 
-    // 可扩展：绘制交互点
-    // drawInteraction(ctx, inter) {
-    //     ctx.save();
-    //     ctx.strokeStyle = '#ff0000';
-    //     ctx.strokeRect(inter.position.x, inter.position.y, inter.size.x, inter.size.y);
-    //     ctx.restore();
-    // }
+    /**
+     * 绘制交互点提示（只显示传送点）
+     * @param {CanvasRenderingContext2D} ctx
+     * @param {Object} inter - 交互点数据
+     */
+    drawInteraction(ctx, inter) {
+        // 只绘制传送点
+        if (inter.type !== 'next_room' && inter.type !== 'exit') {
+            return;
+        }
+
+        ctx.save();
+        
+        // 绘制交互点边框
+        ctx.lineWidth = 2;
+        
+        // 检查当前房间是否有敌人
+        const hasEnemies = this.enemySpawns && this.enemySpawns.length > 0;
+        const requiresBattleEnd = inter.can_be_used_when === 'battle_end' || hasEnemies;
+        
+        // 根据条件显示不同颜色
+        if (requiresBattleEnd) {
+            ctx.strokeStyle = '#ffaa00'; // 橙色边框
+        } else {
+            ctx.strokeStyle = '#00ff00'; // 绿色边框
+        }
+        
+        ctx.strokeRect(inter.position.x, inter.position.y, inter.size.x, inter.size.y);
+        
+        // 绘制文字背景
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(inter.position.x, inter.position.y - 25, inter.size.x, 20);
+        
+        // 绘制文字
+        let text = '';
+        let textColor = '#ffffff';
+        
+        if (requiresBattleEnd) {
+            text = '传送点 (需击败所有敌人)';
+            textColor = '#ffaa00';
+        } else {
+            text = '传送点 (按E键传送)';
+            textColor = '#00ff00';
+        }
+        
+        ctx.fillStyle = textColor;
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(
+            text, 
+            inter.position.x + inter.size.x / 2, 
+            inter.position.y - 10
+        );
+        
+        ctx.restore();
+    }
+
+    /**
+     * 获取当前地图状态
+     * @returns {Object} 包含地图状态的对象
+     */
+    getMapState() {
+        return {
+            triggeredInteractions: Array.from(this._triggeredInteractionIds),
+            completedEvents: Array.from(this._completedEvents),
+            currentLayer: this.currentLayer,
+            currentRoom: this.currentRoom
+        };
+    }
+
+    /**
+     * 恢复地图状态
+     * @param {Object} state 地图状态对象
+     */
+    restoreMapState(state) {
+        if (state.triggeredInteractions) {
+            this._triggeredInteractionIds = new Set(state.triggeredInteractions);
+        }
+        if (state.completedEvents) {
+            this._completedEvents = new Set(state.completedEvents);
+        }
+    }
+
+    /**
+     * 标记事件为已完成
+     * @param {string} eventId 事件ID
+     */
+    completeEvent(eventId) {
+        this._completedEvents.add(eventId);
+    }
+
+    /**
+     * 检查事件是否已完成
+     * @param {string} eventId 事件ID
+     * @returns {boolean}
+     */
+    isEventCompleted(eventId) {
+        return this._completedEvents.has(eventId);
+    }
 }
 
 export const mapManager = new MapManager();
