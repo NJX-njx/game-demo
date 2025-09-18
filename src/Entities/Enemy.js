@@ -460,7 +460,7 @@ export class Enemy extends Entity {
     }
 
     // 受击判定
-    takeDamage(dmg, attackType) {
+    takeDamage(dmg, attackType, attacker = null) {
         this.state.hp -= dmg;
         if (this.state.hp <= 0) {
             // 死亡逻辑

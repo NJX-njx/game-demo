@@ -16,12 +16,14 @@ class Player_Animation {
         "stand": 4,
         "melee": 6,
         "ranged": 6, // 远程动画：6帧/秒（轮播时每1秒循环一次）
+        "block": 5, // 格挡动画：5帧/秒
     };
     static Frames = {
         "dash": 4,
         "stand": 4,
         "melee": 6,
         "ranged": 6, // 远程动画：6帧（轮播范围1~6）
+        "block": 5, // 格挡动画：5帧
     };
     constructor() {
         this.status = "stand";
@@ -53,6 +55,7 @@ class Player_Animation {
                 case "run":
                 case "stand":
                 case "ranged": // 远程动画：轮播（1→6→1）
+                case "block": // 格挡动画：轮播（1→5→1）
                     this.frame = 1;
                     break;
                 case "melee": // 近战仍保持单次播放后固定最后一帧
@@ -77,6 +80,9 @@ class Player_Animation {
                 break;
             case "ranged":
                 textureKey = `ranged_${this.frame}`; // 轮播时自动切换1~6帧
+                break;
+            case "block":
+                textureKey = `block_${this.frame}`; // 格挡动画
                 break;
             case "stand":
                 textureKey = `stand_${this.frame}`;
@@ -126,6 +132,14 @@ class Player extends Entity {
         this.isRangedHolding = false; // 标记是否长按L键
         this.rangedLoopCooldown = new Cooldown(0); // 远程轮播攻击的冷却（避免攻击过快）
 
+        // 3. 新增：格挡系统相关状态
+        this.isBlocking = false; // 是否正在格挡
+        this.isParrying = false; // 是否在弹反窗口内
+        this.isInRecovery = false; // 是否在后摇状态
+        this.blockStartTime = 0; // 格挡开始时间
+        this.blockCooldown = new Cooldown(0); // 格挡冷却
+        this.recoveryCooldown = new Cooldown(0); // 后摇冷却
+
         this.baseState = {
             hp_max: 100,
             attack: {
@@ -138,6 +152,12 @@ class Player extends Entity {
             },
             dash_cooldownTime: 600,
             dash_maxCount: 1,
+            block: {
+                parryWindow: 200, // 弹反窗口时间（毫秒）
+                recoveryTime: 300, // 后摇时间（毫秒）
+                damageReduction: 0.5, // 格挡伤害减免系数
+                parryDamageMultiplier: 1.5, // 弹反伤害倍数
+            },
         }
         this.state = {
             hp: this.baseState.hp_max,
@@ -158,6 +178,12 @@ class Player extends Entity {
                 },
                 loopInterval: this.baseState.attack.RangedLoopInterval // 轮播攻击间隔（同步动画）
             },
+            block: {
+                parryWindow: this.baseState.block.parryWindow,
+                recoveryTime: this.baseState.block.recoveryTime,
+                damageReduction: this.baseState.block.damageReduction,
+                parryDamageMultiplier: this.baseState.block.parryDamageMultiplier,
+            },
         }
         this.attack = {
             targetSelector: () => game.enemies,
@@ -170,7 +196,8 @@ class Player extends Entity {
         this.initDash();
         this.hurtBox = this.hitbox;
         this.controllerX = () => {
-            if (this.blockMove) return 0;
+            if (this.blockMove || this.isInRecovery) return 0; // 后摇期间无法移动
+            // 格挡期间可以移动，但不能攻击
             let moveLeft = inputManager.isKeysDown(["A", "Left"]);
             let moveRight = inputManager.isKeysDown(["D", "Right"]);
             let move = 0;
@@ -194,6 +221,9 @@ class Player extends Entity {
         this.initRangedAttackListener();
         // 3. 初始化远程轮播冷却（间隔与动画时长匹配）
         this.rangedLoopCooldown.set(this.state.attack.loopInterval);
+        
+        // 4. 初始化格挡系统
+        this.initBlockSystem();
     }
 
     initMeleeAttackListener() { // 原有逻辑不变
@@ -236,13 +266,119 @@ class Player extends Entity {
         };
     }
 
+    // 5. 初始化格挡系统
+    initBlockSystem() {
+        this.blockCooldown.set(0);
+        this.recoveryCooldown.set(this.state.block.recoveryTime);
+    }
+
+    // 6. 格挡输入检测和状态管理
+    updateBlockInput(deltaTime) {
+        const currentTime = Date.now();
+        
+        // 检测U键按下
+        if (inputManager.isFirstDown('U') && !this.isInRecovery && !this.isBlocking) {
+            this.startBlocking(currentTime);
+        }
+        
+        // 检测U键松开
+        if (inputManager.isReleased('U') && this.isBlocking) {
+            this.stopBlocking();
+        }
+        
+        // 更新格挡状态
+        if (this.isBlocking) {
+            this.updateBlockingState(currentTime);
+        }
+        
+        // 更新后摇状态
+        if (this.isInRecovery) {
+            this.updateRecoveryState(deltaTime);
+        }
+    }
+
+    // 7. 开始格挡
+    startBlocking(currentTime) {
+        this.isBlocking = true;
+        this.isParrying = true;
+        this.blockStartTime = currentTime;
+        console.log(`开始格挡 - 进入弹反窗口 (${this.state.block.parryWindow}ms)`);
+    }
+
+    // 8. 停止格挡
+    stopBlocking() {
+        if (this.isBlocking) {
+            this.isBlocking = false;
+            this.isParrying = false;
+            this.startRecovery();
+            console.log("停止格挡 - 进入后摇");
+        }
+    }
+
+    // 9. 更新格挡状态
+    updateBlockingState(currentTime) {
+        const elapsedTime = currentTime - this.blockStartTime;
+        
+        // 检查是否超过弹反窗口时间
+        if (elapsedTime >= this.state.block.parryWindow && this.isParrying) {
+            this.isParrying = false;
+            console.log(`弹反窗口结束 - 进入格挡状态 (经过${elapsedTime}ms)`);
+        }
+    }
+
+    // 10. 开始后摇
+    startRecovery() {
+        this.isInRecovery = true;
+        this.recoveryCooldown.start();
+    }
+
+    // 11. 更新后摇状态
+    updateRecoveryState(deltaTime) {
+        this.recoveryCooldown.tick(deltaTime);
+        
+        // 检查跳跃取消后摇
+        if (inputManager.isFirstDown("Space") && this.isInRecovery) {
+            this.cancelRecovery();
+            return;
+        }
+        
+        // 后摇自然结束
+        if (this.recoveryCooldown.ready()) {
+            this.isInRecovery = false;
+            console.log("后摇结束");
+        }
+    }
+
+    // 12. 跳跃取消后摇
+    cancelRecovery() {
+        this.isInRecovery = false;
+        this.recoveryCooldown.reset();
+        console.log("跳跃取消后摇");
+    }
+
+    // 13. 检查攻击方向是否在格挡范围内
+    isAttackFromFront(attacker) {
+        if (!attacker || !attacker.hitbox) return false;
+        
+        const attackerCenterX = attacker.hitbox.getCenter().x;
+        const playerCenterX = this.hitbox.getCenter().x;
+        
+        // 如果玩家面向右侧(facing = 1)，攻击者必须在玩家右侧
+        // 如果玩家面向左侧(facing = -1)，攻击者必须在玩家左侧
+        if (this.facing > 0) {
+            return attackerCenterX > playerCenterX;
+        } else {
+            return attackerCenterX < playerCenterX;
+        }
+    }
+
     update(deltaTime) {
         this.updateState();
         bus.emit(Events.player.hpPercent, this.state.hp / this.state.hp_max);
 
         // 5. 关键修改：远程长按逻辑（核心）
         // 5.1 监听L键长按/松开：更新长按标记
-        if (inputManager.isHeld('L') && !this.isMeleeAttacking) { // 近战优先级高于远程
+        if (inputManager.isHeld('L') && !this.isMeleeAttacking && !this.isBlocking) { // 近战和格挡优先级高于远程
             this.isRangedHolding = true; // 按下L键：标记长按
         } else {
             // 松开L键：重置所有远程相关状态（停止轮播和攻击）
@@ -261,8 +397,11 @@ class Player extends Entity {
             }
         }
 
+        // 14. 格挡输入检测
+        this.updateBlockInput(deltaTime);
+
         // 原有攻击逻辑（单次按下L键仍生效，兼容长按）
-        if (inputManager.isKeyDown('J')) this.attack.melee.trigger();
+        if (inputManager.isKeyDown('J') && !this.isInRecovery && !this.isBlocking) this.attack.melee.trigger();
         this.attack.melee.update(deltaTime);
         this.attack.ranged.update(deltaTime);
 
@@ -271,11 +410,13 @@ class Player extends Entity {
         let move = this.controllerX();
         this.updateXY(deltaFrame, move, this.controllerY());
 
-        // 6. 动画状态切换：长按远程时强制设为ranged状态
+        // 15. 动画状态切换：长按远程时强制设为ranged状态
         if (this.isMeleeAttacking) {
             this.animation.setStatus("melee", this.facing);
         } else if (this.isRangedHolding || this.isRangedAttacking) { // 长按或攻击中：保持远程动画
             this.animation.setStatus("ranged", this.facing);
+        } else if (this.isBlocking || this.isParrying) { // 格挡状态
+            this.animation.setStatus("block", this.facing);
         } else if (this.dash.isDashing) {
             this.animation.setStatus("dash", this.facing);
         } else if (this.jumping.jumpVelocity > 0) {
@@ -284,7 +425,7 @@ class Player extends Entity {
             if (this.jumping.jumpVelocity < 0)
                 this.animation.setStatus("fall", this.facing);
         } else {
-            if (move !== 0) {
+            if (move !== 0 && !this.isInRecovery) { // 后摇期间无法移动
                 this.animation.setStatus("run", this.facing);
             } else {
                 this.animation.setStatus("stand", this.facing);
@@ -361,7 +502,7 @@ class Player extends Entity {
             if (inputManager.isKeysDown(['W', 'Up'])) dy -= 1;
             if (inputManager.isKeysDown(['S', 'Down'])) dy += 1;
 
-            if (!this.dash.isDashing && this.dash.dashCount > 0 && inputManager.isKeyDown('K')) {
+            if (!this.dash.isDashing && this.dash.dashCount > 0 && inputManager.isKeyDown('K') && !this.isInRecovery) {
                 if (dx === 0 && dy === 0) dx = this.facing;
                 let len = Math.sqrt(dx * dx + dy * dy);
                 if (len === 0) len = 1;
@@ -385,14 +526,62 @@ class Player extends Entity {
         };
     }
 
-    beforeTakeDamage(dmg) { if (this.dash.isDashing === true) return false; return true; }
-    takeDamage(dmg, attackType) { // 原有逻辑不变
+    beforeTakeDamage(dmg, attacker = null) { 
+        if (this.dash.isDashing === true) return false; 
+        return true; 
+    }
+    
+    takeDamage(dmg, attackType, attacker = null) { 
+        // 16. 格挡和弹反处理
+        if (this.isBlocking && attacker && this.isAttackFromFront(attacker)) {
+            if (this.isParrying) {
+                // 弹反：完全免疫伤害并触发弹反攻击
+                this.performParry(attacker);
+                console.log("弹反成功！");
+                return; // 完全免疫伤害
+            } else {
+                // 格挡：伤害减免
+                dmg = dmg * this.state.block.damageReduction;
+                console.log(`格挡成功，伤害减免至: ${dmg}`);
+            }
+        }
+        
         let finalDmg = bus.emitReduce(Events.player.takeDamage, { baseDamage: dmg }, (_, next) => next).baseDamage;
         this.state.hp -= finalDmg;
         if (this.state.hp <= 0) {
             bus.emit(Events.player.die);
             alert("你死了");
         }
+    }
+    
+    // 17. 执行弹反攻击
+    performParry(attacker) {
+        console.log("执行弹反攻击！");
+        
+        // 立即触发一次无前后摇的近战攻击
+        const originalStartupTime = this.state.attack.startupTime.melee;
+        const originalRecoveryTime = this.state.attack.recoveryTime.melee;
+        
+        // 临时设置无前后摇
+        this.state.attack.startupTime.melee = 0;
+        this.state.attack.recoveryTime.melee = 0;
+        
+        // 临时增加伤害
+        const originalDamage = this.state.attack.damage.melee;
+        this.state.attack.damage.melee *= this.state.block.parryDamageMultiplier;
+        
+        // 触发攻击
+        this.attack.melee.trigger();
+        
+        // 恢复原始值
+        setTimeout(() => {
+            this.state.attack.startupTime.melee = originalStartupTime;
+            this.state.attack.recoveryTime.melee = originalRecoveryTime;
+            this.state.attack.damage.melee = originalDamage;
+        }, 50); // 短暂延迟确保攻击完成
+        
+        // 播放弹反音效
+        soundManager.playSound('player', 'parry');
     }
     takeHeal(amount, source = null) { // 原有逻辑不变
         let modifiedAmount = amount * (1 + AM.getAttrSum(Attrs.player.HEAL));
@@ -407,18 +596,43 @@ class Player extends Entity {
 
         const drawX = this.hitbox.position.x;
         const drawY = this.hitbox.position.y;
-        const drawWidth = this.size.x;
-        const drawHeight = this.size.y;
+        let drawWidth = this.size.x;
+        let drawHeight = this.size.y;
 
-        ctx.save();
-        if (this.animation.facing === -1) {
-            ctx.translate(drawX + drawWidth, drawY);
-            ctx.scale(-1, 1);
-            ctx.drawImage(currentTexture, 0, 0, drawWidth, drawHeight);
+        // 格挡动画特殊处理：使用更大的渲染尺寸
+        if (this.animation.status === "block") {
+            // 格挡动画纹理是420x420，需要适当缩放
+            const scaleFactor = 420 / 256; // 相对于基础纹理的缩放比例
+            drawWidth = this.size.x * scaleFactor;
+            drawHeight = this.size.y * scaleFactor;
+            // 调整位置，让角色居中
+            const offsetX = (drawWidth - this.size.x) / 2;
+            const offsetY = (drawHeight - this.size.y) / 2;
+            const adjustedX = drawX - offsetX;
+            const adjustedY = drawY - offsetY;
+            
+            ctx.save();
+            if (this.animation.facing === -1) {
+                ctx.translate(adjustedX + drawWidth, adjustedY);
+                ctx.scale(-1, 1);
+                ctx.drawImage(currentTexture, 0, 0, drawWidth, drawHeight);
+            } else {
+                ctx.drawImage(currentTexture, adjustedX, adjustedY, drawWidth, drawHeight);
+            }
+            ctx.restore();
         } else {
-            ctx.drawImage(currentTexture, drawX, drawY, drawWidth, drawHeight);
+            // 其他动画使用原有逻辑
+            ctx.save();
+            if (this.animation.facing === -1) {
+                ctx.translate(drawX + drawWidth, drawY);
+                ctx.scale(-1, 1);
+                ctx.drawImage(currentTexture, 0, 0, drawWidth, drawHeight);
+            } else {
+                ctx.drawImage(currentTexture, drawX, drawY, drawWidth, drawHeight);
+            }
+            ctx.restore();
         }
-        ctx.restore();
+        
         this.drawDashUI(ctx);
     }
     drawBoxs(ctx) { // 原有逻辑不变

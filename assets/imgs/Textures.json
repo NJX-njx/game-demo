@@ -20,7 +20,12 @@
         "ranged_3":"assets/imgs/像素小人/远程攻击/3.png",
         "ranged_4":"assets/imgs/像素小人/远程攻击/4.png",
         "ranged_5":"assets/imgs/像素小人/远程攻击/5.png",
-        "ranged_6":"assets/imgs/像素小人/远程攻击/6.png"
+        "ranged_6":"assets/imgs/像素小人/远程攻击/6.png",
+        "block_1":"assets/imgs/像素小人/近战格挡/1(格挡).png",
+        "block_2":"assets/imgs/像素小人/近战格挡/2.png",
+        "block_3":"assets/imgs/像素小人/近战格挡/3.png",
+        "block_4":"assets/imgs/像素小人/近战格挡/4.png",
+        "block_5":"assets/imgs/像素小人/近战格挡/5.png"
     },
     "enemy": {
         "1": "assets/imgs/敌对生物/旧版其他/creep1.png",
