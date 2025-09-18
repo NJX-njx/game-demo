@@ -71,7 +71,7 @@ export class AttackBase {
             ).baseDamage;
         }
 
-        target.takeDamage(finalDamage, this.type);
+        target.takeDamage(finalDamage, this.type, this.owner);
     }
 
     onHit(owner, damage) { }

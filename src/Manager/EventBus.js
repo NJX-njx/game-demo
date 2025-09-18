@@ -56,6 +56,7 @@ class EventBus {
 
         this.listeners = new Map();
         this.validEvents = new Set();
+        this._completedEvents = new Set(); // 记录已完成的事件
 
         this._initValidEvents(EventTypes);
     }
@@ -193,6 +194,41 @@ class EventBus {
             }
         }
         return result;
+    }
+
+    /**
+     * 获取已完成事件列表
+     * @returns {Array<string>} 已完成的事件ID数组
+     */
+    getCompletedEvents() {
+        return Array.from(this._completedEvents);
+    }
+
+    /**
+     * 恢复已完成事件
+     * @param {Array<string>} events 已完成的事件ID数组
+     */
+    restoreCompletedEvents(events) {
+        if (Array.isArray(events)) {
+            this._completedEvents = new Set(events);
+        }
+    }
+
+    /**
+     * 标记事件为已完成
+     * @param {string} eventId 事件ID
+     */
+    completeEvent(eventId) {
+        this._completedEvents.add(eventId);
+    }
+
+    /**
+     * 检查事件是否已完成
+     * @param {string} eventId 事件ID
+     * @returns {boolean}
+     */
+    isEventCompleted(eventId) {
+        return this._completedEvents.has(eventId);
     }
 }
 

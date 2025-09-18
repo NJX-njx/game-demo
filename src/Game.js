@@ -58,7 +58,10 @@ class Game {
         let loaded = false;
         try { loaded = await Game.loadGame(selectedSlot); } catch (_) { loaded = false; }
         if (!loaded) {
-            await mapManager.loadRoom(0, 4);
+
+            await mapManager.loadRoom(0, 3);
+            console.log('🎮 游戏初始化完成，当前房间: layer0/room3');
+
         }
 
         // 初始化玩家：只有在未从存档加载时才使用默认出生点
@@ -112,8 +115,19 @@ class Game {
 
         bus.on({
             event: Events.player.die,
-            handler: () => this.stop()
+            handler: () => {
+                this.stop();
+                window.location.href = "menu.html";
+            }
         });
+
+        // 监听交互点触发事件
+        bus.on({
+            event: Events.interaction.trigger,
+            handler: (payload) => this.handleInteraction(payload),
+            priority: 0
+        });
+
 
         // 初始化敌人
         const enemySpawns = mapManager.getEnemySpawns();
@@ -123,7 +137,14 @@ class Game {
                 this.enemies.push(new Enemy(e.type, new Vector(e.x, e.y)));
             }
         }
-        // 测试用
+
+        console.log('👹 敌人初始化完成:', {
+            enemySpawnsCount: enemySpawns ? enemySpawns.length : 0,
+            enemiesCount: this.enemies.length,
+            enemyTypes: this.enemies.map(e => e.type)
+        });
+        //TODO:测试用
+
         itemManager.tryAcquire(Items.xq休憩);
         itemManager.tryAcquire(Items.yy友谊);
         itemManager.tryAcquire(Items.ls朗诵);
@@ -252,43 +273,462 @@ class Game {
 
     saveCurrentGame(slotId = 1) {
         const saveData = {
+            version: 1, // 存档版本号
             player: player.constructor.getSaveData(),
+            enemies: this.enemies.map(enemy => ({
+                type: enemy.type,
+                position: enemy.hitbox.position,
+                state: enemy.state,
+                defeated: enemy.state.hp <= 0
+            })),
             layer: mapManager.currentLayer,
             room: mapManager.currentRoom,
+            mapState: mapManager.getMapState(), // 保存地图交互状态
+            completedEvents: bus.getCompletedEvents(), // 保存已完成事件
             timestamp: new Date().toISOString()
         };
+        
+        // 验证存档数据
+        if (!this.validateSaveData(saveData)) {
+            console.error('存档数据验证失败');
+            return null;
+        }
+        
+        try {
+            JSON.stringify(saveData); // 测试数据是否可序列化
+        } catch (e) {
+            console.error('存档数据序列化失败:', e);
+            return null;
+        }
+
         // 读取或初始化 present_data
         let currentPlayer = null;
-        try { currentPlayer = JSON.parse(localStorage.getItem("present_data")); } catch (_) { currentPlayer = null; }
+        try { 
+            currentPlayer = JSON.parse(localStorage.getItem("present_data")); 
+        } catch (_) { 
+            currentPlayer = null; 
+            console.error('读取存档数据失败');
+        }
+        
         if (!currentPlayer || typeof currentPlayer !== 'object') {
             currentPlayer = { saveSlots: [] };
         }
         currentPlayer.saveSlots = currentPlayer.saveSlots || [];
         currentPlayer.saveSlots[slotId - 1] = saveData;
-        localStorage.setItem("present_data", JSON.stringify(currentPlayer));
+        
+        try {
+            localStorage.setItem("present_data", JSON.stringify(currentPlayer));
+            console.log('存档成功:', saveData);
+            return saveData;
+        } catch (e) {
+            console.error('存档写入失败:', e);
+            return null;
+        }
+    }
+
+    /**
+     * 验证存档数据的完整性和有效性
+     * @param {Object} saveData 存档数据
+     * @returns {boolean} 验证是否通过
+     */
+    validateSaveData(saveData) {
+        // 检查必需字段
+        if (!saveData || typeof saveData !== 'object') {
+            console.warn('存档数据不是有效对象');
+            return false;
+        }
+        
+        // 检查版本号
+        if (typeof saveData.version !== 'number' || saveData.version < 1) {
+            console.warn('存档版本号无效:', saveData.version);
+            return false;
+        }
+        
+        // 检查玩家数据
+        if (!saveData.player || typeof saveData.player !== 'object') {
+            console.warn('存档缺少玩家数据');
+            return false;
+        }
+        
+        // 检查地图数据
+        if (typeof saveData.layer !== 'number' || typeof saveData.room !== 'number') {
+            console.warn('存档地图数据无效');
+            return false;
+        }
+        
+        // 检查敌人数据
+        if (!Array.isArray(saveData.enemies)) {
+            console.warn('存档敌人数据不是数组');
+            return false;
+        }
+        
+        return true;
+    }
+
+    /**
+     * 修复损坏的存档数据
+     * @param {Object} saveData 原始存档数据
+     * @returns {Object} 修复后的存档数据
+     */
+    repairSaveData(saveData) {
+        console.log('尝试修复存档数据...');
+        
+        // 确保版本号存在
+        if (typeof saveData.version !== 'number') {
+            saveData.version = 1;
+        }
+        
+        // 修复玩家数据
+        if (!saveData.player || typeof saveData.player !== 'object') {
+            console.log('修复玩家数据');
+            saveData.player = {
+                position: { x: 100, y: 100 },
+                state: {
+                    hp: 100,
+                    hp_max: 100,
+                    attack: { atk: 10 }
+                },
+                timestamp: new Date().toISOString()
+            };
+        }
+        
+        // 修复地图数据
+        if (typeof saveData.layer !== 'number') {
+            saveData.layer = 0;
+        }
+        if (typeof saveData.room !== 'number') {
+            saveData.room = 3;
+        }
+        
+        // 修复敌人数据
+        if (!Array.isArray(saveData.enemies)) {
+            saveData.enemies = [];
+        }
+        
+        // 修复地图状态
+        if (!saveData.mapState || typeof saveData.mapState !== 'object') {
+            saveData.mapState = {
+                triggeredInteractions: [],
+                completedEvents: [],
+                currentLayer: saveData.layer,
+                currentRoom: saveData.room
+            };
+        }
+        
+        // 修复已完成事件
+        if (!Array.isArray(saveData.completedEvents)) {
+            saveData.completedEvents = [];
+        }
+        
+        console.log('存档数据修复完成');
         return saveData;
     }
 
     async loadGame(slotId = 1) {
+        console.log('开始加载存档，槽位:', slotId);
         let currentPlayer = null;
-        try { currentPlayer = JSON.parse(localStorage.getItem("present_data")); } catch (_) { currentPlayer = null; }
-        if (!currentPlayer?.saveSlots?.[slotId - 1]) return false;
+        try { 
+            const rawData = localStorage.getItem("present_data");
+            console.log('原始存档数据:', rawData);
+            currentPlayer = JSON.parse(rawData); 
+        } catch (e) { 
+            console.error('解析存档数据失败:', e);
+            currentPlayer = null; 
+        }
+        
+        if (!currentPlayer?.saveSlots?.[slotId - 1]) {
+            console.log('存档槽位不存在:', slotId);
+            return false;
+        }
 
-        const saveData = currentPlayer.saveSlots[slotId - 1];
-        // 先加载地图，再恢复玩家位置/状态（注意将位置还原为 Vector）
+        let saveData = currentPlayer.saveSlots[slotId - 1];
+        console.log('存档数据内容:', saveData);
+
+        // 检查存档版本并验证数据
+        if (!this.validateSaveData(saveData)) {
+            console.warn('存档数据验证失败，尝试修复...');
+            saveData = this.repairSaveData(saveData);
+            
+            if (!this.validateSaveData(saveData)) {
+                console.error('存档数据无法修复，加载失败');
+                return false;
+            }
+            
+            // 保存修复后的数据
+            currentPlayer.saveSlots[slotId - 1] = saveData;
+            try {
+                localStorage.setItem("present_data", JSON.stringify(currentPlayer));
+                console.log('修复后的存档数据已保存');
+            } catch (e) {
+                console.warn('保存修复后的存档数据失败:', e);
+            }
+        }
+
+        // 处理不同版本的存档
+        switch (saveData.version) {
+            case 1:
+                // 当前版本，直接处理
+                break;
+            default:
+                console.warn(`未知的存档版本: ${saveData.version}，尝试按版本1处理`);
+                break;
+        }
+
+        // 先加载地图，再恢复玩家位置/状态
+        console.log(`加载地图: layer${saveData.layer}/room${saveData.room}`);
         await mapManager.loadRoom(saveData.layer, saveData.room);
+        
         try {
+            // 恢复玩家状态
             if (saveData.player?.position) {
                 const pos = saveData.player.position;
+                console.log('恢复玩家位置:', pos);
                 player.setPosition(new Vector(pos.x, pos.y));
             }
             if (saveData.player?.state) {
+                console.log('恢复玩家状态:', saveData.player.state);
                 player.state = saveData.player.state;
             }
-        } catch (_) {
+
+            // 恢复敌人状态
+            if (Array.isArray(saveData.enemies)) {
+                console.log('恢复敌人状态，数量:', saveData.enemies.length);
+                this.enemies = saveData.enemies.map(enemyData => {
+                    const enemy = new Enemy(enemyData.type, new Vector(enemyData.position.x, enemyData.position.y));
+                    
+                    // 深度合并状态
+                    if (enemyData.state) {
+                        enemy.state = {
+                            ...enemy.state, // 保留默认状态
+                            ...enemyData.state, // 应用存档状态
+                            attack: {
+                                ...enemy.state.attack,
+                                ...(enemyData.state.attack || {})
+                            }
+                        };
+                        
+                        // 确保血量不超过最大值
+                        enemy.state.hp = Math.min(enemy.state.hp, enemy.state.hp_max);
+                    }
+                    
+                    // 恢复敌人击败状态
+                    if (enemyData.defeated) {
+                        console.log(`敌人 ${enemyData.type} 已被击败`);
+                        enemy.state.hp = 0;
+                        enemy.state.isDefeated = true;
+                    }
+                    
+                    return enemy;
+                });
+            }
+
+            // 恢复地图状态
+            if (saveData.mapState) {
+                console.log('恢复地图状态:', saveData.mapState);
+                mapManager.restoreMapState(saveData.mapState);
+            }
+
+            // 恢复已完成事件
+            if (Array.isArray(saveData.completedEvents)) {
+                console.log('恢复已完成事件:', saveData.completedEvents);
+                bus.restoreCompletedEvents(saveData.completedEvents);
+            }
+        } catch (e) {
+            console.error('加载存档时出错:', e);
             // 容错：若旧版本数据结构不一致，则只使用地图加载结果
         }
+        
+        console.log('存档加载完成');
         return true;
+    }
+
+    /**
+     * 处理交互点触发事件
+     * @param {Object} payload - 交互事件数据
+     * @param {string} payload.type - 交互点类型
+     * @param {string} payload.event - 事件名称
+     * @param {Object} payload.data - 交互点数据
+     */
+    async handleInteraction(payload) {
+        const { type, event, data } = payload;
+        console.log('🎮 交互点触发:', { type, event, data });
+
+        try {
+            switch (type) {
+                case 'next_room':
+                case 'exit':
+                    await this.handleRoomTransition(event, data);
+                    break;
+                case 'plot':
+                case 'teach':
+                case 'fire':
+                case 'sword':
+                    this.handlePlotEvent(event, data);
+                    break;
+                case 'npc':
+                case 'angel':
+                    this.handleNPCEvent(event, data);
+                    break;
+                case 'chest':
+                    this.handleChestEvent(event, data);
+                    break;
+                case 'hidden':
+                    this.handleHiddenRoomEvent(event, data);
+                    break;
+                default:
+                    console.log('未处理的交互类型:', type, event);
+            }
+        } catch (error) {
+            console.error('处理交互事件时出错:', error);
+        }
+    }
+
+    /**
+     * 处理房间切换
+     * @param {string} event - 事件名称
+     * @param {Object} data - 交互点数据
+     */
+    async handleRoomTransition(event, data) {
+        console.log('🚪 房间切换触发:', event, data);
+        
+        // 检查使用条件
+        const hasEnemies = this.enemies.length > 0;
+        const requiresBattleEnd = data.can_be_used_when === 'battle_end' || hasEnemies;
+        
+        console.log('🔍 初始检查:', {
+            hasEnemies: hasEnemies,
+            enemiesCount: this.enemies.length,
+            requiresBattleEnd: requiresBattleEnd,
+            explicitCondition: data.can_be_used_when === 'battle_end'
+        });
+        
+        if (requiresBattleEnd) {
+            // 检查是否还有敌人存活
+            const aliveEnemies = this.enemies.filter(enemy => enemy.state && enemy.state.hp > 0);
+            console.log('🔍 检查敌人状态:', {
+                totalEnemies: this.enemies.length,
+                aliveEnemies: aliveEnemies.length,
+                enemyHPs: this.enemies.map(e => e.state ? e.state.hp : 'no state'),
+                requiresBattleEnd: requiresBattleEnd,
+                hasEnemies: hasEnemies,
+                explicitCondition: data.can_be_used_when === 'battle_end'
+            });
+            
+            if (aliveEnemies.length > 0) {
+                console.log('⚠️ 还有敌人存活，无法切换房间');
+                // TODO: 这里可以显示UI提示给玩家
+                return;
+            }
+        }
+
+        // 根据当前房间决定下一个房间
+        const currentLayer = mapManager.currentLayer;
+        const currentRoom = mapManager.currentRoom;
+        
+        let nextLayer = currentLayer;
+        let nextRoom = currentRoom + 1;
+
+        // 房间切换逻辑
+        if (currentLayer === 0) {
+            if (currentRoom >= 4) {
+                // layer0 的最后一个房间，切换到 layer1
+                nextLayer = 1;
+                nextRoom = 1;
+            }
+        } else if (currentLayer === 1) {
+            if (currentRoom >= 1) {
+                // layer1 的最后一个房间，可以回到 layer0 或结束游戏
+                nextLayer = 0;
+                nextRoom = 1;
+            }
+        }
+
+        console.log(`🔄 从 layer${currentLayer}/room${currentRoom} 切换到 layer${nextLayer}/room${nextRoom}`);
+        
+        // 执行房间切换
+        await this.switchRoom(nextLayer, nextRoom);
+    }
+
+    /**
+     * 执行房间切换
+     * @param {number} layer - 目标层
+     * @param {number} room - 目标房间
+     */
+    async switchRoom(layer, room) {
+        try {
+            // 保存当前游戏状态
+            this.saveCurrentGame(this.currentSlotId);
+            
+            // 加载新房间
+            await mapManager.loadRoom(layer, room);
+            
+            // 设置玩家到新房间的出生点
+            const spawn = mapManager.getPlayerSpawn();
+            if (spawn) {
+                player.setPosition(new Vector(spawn.x, spawn.y));
+            }
+            
+            // 重新初始化敌人
+            const enemySpawns = mapManager.getEnemySpawns();
+            this.enemies = [];
+            if (Array.isArray(enemySpawns)) {
+                for (const e of enemySpawns) {
+                    this.enemies.push(new Enemy(e.type, new Vector(e.x, e.y)));
+                }
+            }
+            console.log('👹 新房间敌人初始化:', {
+                layer: layer,
+                room: room,
+                enemySpawnsCount: enemySpawns ? enemySpawns.length : 0,
+                enemiesCount: this.enemies.length,
+                enemyTypes: this.enemies.map(e => e.type)
+            });
+            
+            console.log(`✅ 成功切换到 layer${layer}/room${room}`);
+        } catch (error) {
+            console.error('房间切换失败:', error);
+        }
+    }
+
+    /**
+     * 处理剧情事件
+     * @param {string} event - 事件名称
+     * @param {Object} data - 交互点数据
+     */
+    handlePlotEvent(event, data) {
+        console.log('剧情事件触发:', event, data);
+        // TODO: 实现剧情对话系统
+        // 这里可以显示对话框、播放剧情等
+    }
+
+    /**
+     * 处理NPC事件
+     * @param {string} event - 事件名称
+     * @param {Object} data - 交互点数据
+     */
+    handleNPCEvent(event, data) {
+        console.log('NPC事件触发:', event, data);
+        // TODO: 实现NPC对话系统
+    }
+
+    /**
+     * 处理宝箱事件
+     * @param {string} event - 事件名称
+     * @param {Object} data - 交互点数据
+     */
+    handleChestEvent(event, data) {
+        console.log('宝箱事件触发:', event, data);
+        // TODO: 实现宝箱系统
+    }
+
+    /**
+     * 处理隐藏房间事件
+     * @param {string} event - 事件名称
+     * @param {Object} data - 交互点数据
+     */
+    handleHiddenRoomEvent(event, data) {
+        console.log('隐藏房间事件触发:', event, data);
+        // TODO: 实现隐藏房间功能
     }
 }
 
