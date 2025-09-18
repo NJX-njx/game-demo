@@ -1,5 +1,8 @@
 {
-    "playerSpawn": { "x": 20, "y": 620 },
+    "playerSpawn": {
+        "x": 20,
+        "y": 620
+    },
     "backgrounds": [
         {
             "position": {
@@ -3584,7 +3587,49 @@
             },
             "type": "plot",
             "autoTrigger": false,
-            "event": "plot2-1"
+            "event": "plot2-1",
+            "dialogs": [
+                {
+                    "speaker": "?",
+                    "text": "她曾背负的，是他人的期望与恶意，垒成的高墙。"
+                },
+                {
+                    "speaker": "?",
+                    "text": "时间的刻度被无限拉长，填满永不结束的考核。"
+                },
+                {
+                    "speaker": "?",
+                    "text": "窗外没有四季，没有晴雨。"
+                },
+                {
+                    "speaker": "?",
+                    "text": "只有一片名为‘未来’的、灰蒙蒙的光。"
+                },
+                {
+                    "speaker": "?",
+                    "text": "直到那一天，她选择…提前交卷。"
+                },
+                {
+                    "speaker": "?",
+                    "text": "笔尖划下的不是句号，是一个通往此地的入口。"
+                },
+                {
+                    "speaker": "?",
+                    "text": "所有的重量消失了……连同她的存在一起。"
+                },
+                {
+                    "speaker": "?",
+                    "text": "而使她如此绝望，以至于了结自己的……"
+                },
+                {
+                    "speaker": "?",
+                    "text": "正是声称‘关心着她，爱护着她’的人。"
+                },
+                {
+                    "speaker": "?",
+                    "text": "‘为她好’的人。"
+                }
+            ]
         },
         {
             "position": {
@@ -3597,7 +3642,17 @@
             },
             "type": "plot",
             "autoTrigger": true,
-            "event": "plot2-2"
+            "event": "plot2-2",
+            "dialogs": [
+                {
+                    "speaker": "?",
+                    "text": "她避无可避。"
+                },
+                {
+                    "speaker": "?",
+                    "text": "她插翅难飞。"
+                }
+            ]
         }
     ]
 }

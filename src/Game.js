@@ -58,7 +58,7 @@ class Game {
         let loaded = false;
         try { loaded = await Game.loadGame(selectedSlot); } catch (_) { loaded = false; }
         if (!loaded) {
-            await mapManager.loadRoom(0, 1);
+            await mapManager.loadRoom(0, 4);
         }
 
         // 初始化玩家：只有在未从存档加载时才使用默认出生点
