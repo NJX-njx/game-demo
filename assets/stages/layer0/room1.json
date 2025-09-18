@@ -1,5 +1,8 @@
 {
-    "playerSpawn": { "x": 1080, "y": 620 },
+    "playerSpawn": {
+        "x": 1080,
+        "y": 620
+    },
     "backgrounds": [
         {
             "position": {
@@ -17974,7 +17977,13 @@
             },
             "type": "plot",
             "autoTrigger": true,
-            "event": "plot1-2"
+            "event": "plot1-2",
+            "dialogs": [
+                {
+                    "speaker": "?",
+                    "text": "我需要继续前进，找到真相"
+                }
+            ]
         },
         {
             "position": {
@@ -17987,7 +17996,25 @@
             },
             "type": "plot",
             "autoTrigger": true,
-            "event": "plot1-1"
+            "event": "plot1-1",
+            "dialogs": [
+                {
+                    "speaker": "?",
+                    "text": "沉重的躯壳，依旧拖着不肯离去的身影。"
+                },
+                                {
+                    "speaker":"?",
+                    "text":"前行，是此刻唯一能做的事，也是本能最后的呼唤。"
+                },
+                                {
+                    "speaker":"?",
+                    "text":"往世之章，于此翻开新的一页。"
+                },
+                {
+                    "speaker":"?",
+                    "text":"向前走…这是她唯一的选择。无论多么沉重。"
+                }
+            ]
         },
         {
             "position": {
@@ -17998,9 +18025,15 @@
                 "x": 20,
                 "y": 280
             },
-            "type": "plot",
+            "type": "teach",
             "autoTrigger": true,
-            "event": "teach1-1"
+            "event": "teach1-1",
+            "dialogs": [
+                {
+                    "speaker": "【系统提示】",
+                    "text": "[AD] 移动"
+                }
+            ]
         },
         {
             "position": {
@@ -18013,7 +18046,13 @@
             },
             "type": "teach",
             "autoTrigger": true,
-            "event": "teach1-2"
+            "event": "teach1-2",
+            "dialogs": [
+                {
+                    "speaker": "【系统提示】",
+                    "text": "[Space] 跳跃"
+                }
+            ]
         },
         {
             "position": {
@@ -18024,9 +18063,15 @@
                 "x": 20,
                 "y": 280
             },
-            "type": "teach",
+            "type": "plot",
             "autoTrigger": true,
-            "event": "plot1-3"
+            "event": "plot1-3",
+            "dialogs": [
+                {
+                    "speaker": "?",
+                    "text": "曾经的沟壑，她选择坠落。如今的阻碍，她当跃过。"
+                }
+            ]
         }
     ]
 }

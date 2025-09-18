@@ -18,9 +18,9 @@ export const EventTypes = {
         die: "PLAYER_DIE",
         hpPercent: "PLAYER_HP_PERCENT",
         heal: "PLAYER_HEAL",
-        dealDamage: "PLAYER_DEAL_DAMAGE", // 造成伤害
-        takeDamage: "PLAYER_TAKE_DAMAGE", // 受到伤害
-        fatelDmg: "PLAYER_FATEL_DAMAGE" // 受到致命伤
+        dealDamage: "PLAYER_DEAL_DAMAGE",
+        takeDamage: "PLAYER_TAKE_DAMAGE",
+        fatelDmg: "PLAYER_FATEL_DAMAGE"
     },
     enemy: {
         die: "ENEMY_DIE"
@@ -28,21 +28,25 @@ export const EventTypes = {
     boss: {},
     interaction: {
         trigger: "MAP_INTERACTION_TRIGGER"
+    },
+    dialog: {
+        start: "DIALOG_START",
+        end: "DIALOG_END"
     }
 };
 
 export const ItemEvents = {
-    GAIN: "Item_Gain",                          // 获得道具时触发
-    REMOVE: "Item_onRemove",                      // 移除道具时触发
-    ON_CLEAR_STAGE: "onClearStage",             // 通关关卡时触发
-    PLAYER_TAKE_DAMAGE: "Item_PlayerTakeDamage",             // 受到伤害时触发
-    ON_ENTER_SHOP: "onEnterShop",               // 进入商店时触发
-    ON_NEXT_FLOOR: "onNextFloor",               // 进入下一层时触发
-    ON_ACTIVE_USE: "onActiveUse",               // 主动使用道具或技能时触发
-    ON_PARRY: "onParry",                        // 成功格挡时触发
-    ON_DODGE_COUNTER: "onDodgeCounter",         // 闪避反击时触发
-    ON_DASH_CHARGE_TICK: "onDashChargeTick",    // 冲刺/蓄力中每刻触发
-    ON_PROJECTILE_HIT: "onProjectileHit"        // 远程攻击命中时触发
+    GAIN: "Item_Gain",
+    REMOVE: "Item_onRemove",
+    ON_CLEAR_STAGE: "onClearStage",
+    PLAYER_TAKE_DAMAGE: "Item_PlayerTakeDamage",
+    ON_ENTER_SHOP: "onEnterShop",
+    ON_NEXT_FLOOR: "onNextFloor",
+    ON_ACTIVE_USE: "onActiveUse",
+    ON_PARRY: "onParry",
+    ON_DODGE_COUNTER: "onDodgeCounter",
+    ON_DASH_CHARGE_TICK: "onDashChargeTick",
+    ON_PROJECTILE_HIT: "onProjectileHit"
 };
 
 class EventBus {
@@ -50,10 +54,6 @@ class EventBus {
         if (EventBus.instance) return EventBus.instance;
         EventBus.instance = this;
 
-        /**
-         * 存储事件监听器
-         * Map<eventName, Array<{handler: Function, priority: number, maxCalls: number, callCount: number, onDispose: Function}>>
-         */
         this.listeners = new Map();
         this.validEvents = new Set();
         this._completedEvents = new Set(); // 记录已完成的事件
@@ -61,10 +61,6 @@ class EventBus {
         this._initValidEvents(EventTypes);
     }
 
-    /**
-     * 扁平化 EventTypes，将所有合法事件名加入 Set
-     * @param {object} obj 
-     */
     _initValidEvents(obj) {
         for (const key in obj) {
             if (typeof obj[key] === "object") {
@@ -75,27 +71,14 @@ class EventBus {
         }
     }
 
-    /**
-     * 检查事件是否合法
-     * @param {string} event 
-     */
     _checkEvent(event) {
         const exists = this.validEvents.has(event);
         if (!exists) console.warn(`[EventBus] 事件 "${event}" 不存在`);
     }
 
-    /**
-     * 注册事件监听器
-     * @param {object} options
-     * @param {string} options.event - 事件名称
-     * @param {Function} options.handler - 回调函数
-     * @param {number} [options.priority] - 优先级（默认 0）
-     * @param {number} [options.maxCalls] - 最大触发次数（默认 Infinity）
-     * @param {Function} [options.onDispose] - 注销时回调
-     * @param {string} [options.source] - 来源
-     * @returns {Function} - 注销函数
-     */
-    on({ event, handler, priority = 0, maxCalls = Infinity, onDispose = null, source = null }) {
+    // 修复：只接受options对象参数
+    on(options) {
+        const { event, handler, priority = 0, maxCalls = Infinity, onDispose = null, source = null } = options;
         this._checkEvent(event);
         if (!this.listeners.has(event)) this.listeners.set(event, []);
 
@@ -116,11 +99,6 @@ class EventBus {
         return () => this.off(event, handler);
     }
 
-    /**
-     * 注销事件监听器
-     * @param {string} event - 事件名称
-     * @param {Function} handler - 要移除的回调函数
-     */
     off(event, handler) {
         this._checkEvent(event);
         const arr = this.listeners.get(event);
@@ -134,10 +112,6 @@ class EventBus {
         }));
     }
 
-    /**
-     * 移除特定来源的所有事件
-     * @param {string} source - 要移除的来源
-     */
     offBySource(source) {
         for (const [event, arr] of this.listeners.entries()) {
             const newArr = arr.filter(h => {
@@ -151,17 +125,11 @@ class EventBus {
             if (newArr.length > 0) {
                 this.listeners.set(event, newArr);
             } else {
-                // 如果该事件已无回调，直接删掉
                 this.listeners.delete(event);
             }
         }
     }
 
-    /**
-     * 触发事件
-     * @param {string} event - 事件名称
-     * @param {*} payload - 事件数据
-     */
     emit(event, payload) {
         this._checkEvent(event);
         const arr = this.listeners.get(event);
@@ -181,12 +149,6 @@ class EventBus {
         }
     }
 
-    /**
-     * 触发可中断事件
-     * - 某个监听器返回 true → 中断传播，立即返回 true
-     * - 所有监听器都没返回 true → 返回 false
-     * @returns {boolean} 是否被中断
-     */
     emitInterruptible(event, payload) {
         this._checkEvent(event);
         const arr = this.listeners.get(event);
@@ -212,13 +174,6 @@ class EventBus {
         return false;
     }
 
-    /**
-     * 触发可累积事件（Reducer 型）
-     * @param {string} event - 事件名称
-     * @param {*} payload - 初始数据
-     * @param {Function} reducer - 累积逻辑函数 (prev, next) => newValue
-     * @returns {*} - 最终累积结果
-     */
     emitReduce(event, payload, reducer) {
         this._checkEvent(event);
         const arr = this.listeners.get(event);

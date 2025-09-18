@@ -11,6 +11,8 @@ import { Vector } from "./Utils/Vector";
 import { itemManager } from "./System/Item/ItemManager";
 import { ItemConfigs as Items } from "./System/Item/ItemConfigs";
 import { uiManager } from "./System/UI/UIManager";
+import { dialogManager } from "./Manager/DialogManager";
+
 class Game {
     constructor() {
         if (Game.instance) return Game.instance;
@@ -56,8 +58,10 @@ class Game {
         let loaded = false;
         try { loaded = await Game.loadGame(selectedSlot); } catch (_) { loaded = false; }
         if (!loaded) {
+
             await mapManager.loadRoom(0, 3);
             console.log('🎮 游戏初始化完成，当前房间: layer0/room3');
+
         }
 
         // 初始化玩家：只有在未从存档加载时才使用默认出生点
@@ -133,12 +137,14 @@ class Game {
                 this.enemies.push(new Enemy(e.type, new Vector(e.x, e.y)));
             }
         }
+
         console.log('👹 敌人初始化完成:', {
             enemySpawnsCount: enemySpawns ? enemySpawns.length : 0,
             enemiesCount: this.enemies.length,
             enemyTypes: this.enemies.map(e => e.type)
         });
         //TODO:测试用
+
         itemManager.tryAcquire(Items.xq休憩);
         itemManager.tryAcquire(Items.yy友谊);
         itemManager.tryAcquire(Items.ls朗诵);
@@ -219,13 +225,19 @@ class Game {
             inputManager.update();
 
             if (inputManager.isFirstDown("Esc")) {
-                this.switchPause();
+                // 对话时不允许暂停游戏
+                if (!dialogManager.isActive) {
+                    this.switchPause();
+                }
             }
 
             if (game.enemies.length == 0)
                 bus.emit(Events.game.battle.end);
 
-            if (!this.isPaused && !this.isStop) bus.emit(Events.game.tick, { deltaTime: deltaTime });
+            // 对话活跃时，即使游戏暂停也触发tick（仅让DialogManager响应）
+            if ((!this.isPaused && !this.isStop) || dialogManager.isActive) {
+                bus.emit(Events.game.tick, { deltaTime: deltaTime });
+            }
 
             this.draw();
         }
