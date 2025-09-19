@@ -140,6 +140,7 @@ class Player extends Entity {
         this.blockStartTime = 0; // 格挡开始时间
         this.blockCooldown = new Cooldown(0); // 格挡冷却
         this.recoveryCooldown = new Cooldown(0); // 后摇冷却
+        this.blockMove = false; // 移动阻断标记（原有）
 
         this.baseState = {
             hp_max: 100,
@@ -227,7 +228,7 @@ class Player extends Entity {
         this.initBlockSystem();
     }
 
-    initMeleeAttackListener() { // 原有逻辑不变
+    initMeleeAttackListener() { 
         const melee = this.attack.melee;
         if (!melee.startupCooldown) melee.startupCooldown = new Cooldown(0);
         if (!melee.recoveryCooldown) melee.recoveryCooldown = new Cooldown(0);
@@ -244,11 +245,18 @@ class Player extends Entity {
             soundManager.playSound('player', 'melee');
         };
 
-        // 修复：正确注册对话事件监听
+        // 🔴 对话暂停修改：完善对话事件监听（新增状态重置）
         bus.on({
             event: Events.dialog.start,
             handler: () => {
-                this.blockMove = true;
+                this.blockMove = true; // 阻断移动
+                this.isRangedHolding = false; // 取消远程长按
+                this.isRangedAttacking = false; // 取消远程攻击
+                this.isMeleeAttacking = false; // 取消近战攻击
+                this.isBlocking = false; // 取消格挡
+                this.isParrying = false; // 取消弹反
+                this.isInRecovery = false; // 取消后摇
+                this.dash.isDashing = false; // 取消冲刺
             },
             priority: 0
         });
@@ -256,7 +264,15 @@ class Player extends Entity {
         bus.on({
             event: Events.dialog.end,
             handler: () => {
-                this.blockMove = false;
+                this.blockMove = false; // 恢复移动
+                // 重置所有动作状态，避免对话结束后残留异常
+                this.isRangedHolding = false;
+                this.isRangedAttacking = false;
+                this.isMeleeAttacking = false;
+                this.isBlocking = false;
+                this.isParrying = false;
+                this.isInRecovery = false;
+                this.rangedLoopCooldown.reset(); // 重置远程冷却
             },
             priority: 0
         });
@@ -270,6 +286,9 @@ class Player extends Entity {
 
         const originalTrigger = ranged.trigger.bind(ranged);
         ranged.trigger = () => {
+            // 🔴 对话暂停修改：对话时不触发远程攻击
+            if (dialogManager.isActive) return;
+            
             this.isRangedAttacking = true; // 标记攻击中（确保动画不被切换）
             ranged.startupCooldown.set(this.state.attack.startupTime.ranged);
             ranged.startupCooldown.start();
@@ -292,6 +311,9 @@ class Player extends Entity {
 
     // 6. 格挡输入检测和状态管理
     updateBlockInput(deltaTime) {
+        // 🔴 对话暂停修改：对话时不处理格挡输入
+        if (dialogManager.isActive) return;
+        
         const currentTime = Date.now();
         
         // 检测U键按下
@@ -391,14 +413,21 @@ class Player extends Entity {
     }
 
     update(deltaTime) {
+        // 🔴 对话暂停修改：对话活跃时，阻断所有玩家更新逻辑
+        if (dialogManager.isActive) {
+            // 强制动画为“站立”（静止状态）
+            this.animation.setStatus("stand", this.facing);
+            this.animation.update(deltaTime); // 仅更新动画帧，确保静止视觉
+            // 阻断后续所有逻辑（移动、攻击、格挡等）
+            return;
+        }
+
         this.updateState();
         bus.emit(Events.player.hpPercent, this.state.hp / this.state.hp_max);
 
-        // 5. 关键修改：远程长按逻辑（核心）
-
+        // 5. 远程长按逻辑（核心）
         // 5.1 监听L键长按/松开：更新长按标记
         if (inputManager.isHeld('L') && !this.isMeleeAttacking && !this.isBlocking) { // 近战和格挡优先级高于远程
-
             this.isRangedHolding = true; // 按下L键：标记长按
         } else {
             // 松开L键：重置所有远程相关状态（停止轮播和攻击）
@@ -417,12 +446,13 @@ class Player extends Entity {
             }
         }
 
-
         // 14. 格挡输入检测
         this.updateBlockInput(deltaTime);
 
-        // 原有攻击逻辑（单次按下L键仍生效，兼容长按）
-        if (inputManager.isKeyDown('J') && !this.isInRecovery && !this.isBlocking) this.attack.melee.trigger();
+        // 🔴 对话暂停修改：对话时不响应近战攻击输入
+        if (!dialogManager.isActive && inputManager.isKeyDown('J') && !this.isInRecovery && !this.isBlocking) {
+            this.attack.melee.trigger();
+        }
 
         this.attack.melee.update(deltaTime);
         this.attack.ranged.update(deltaTime);
@@ -491,7 +521,7 @@ class Player extends Entity {
         this.rangedLoopCooldown.set(this.state.attack.loopInterval);
     }
 
-    initDash() { // 原有逻辑不变
+    initDash() { 
         this.dash = {
             isDashing: false,
             dashDuration: 200,
@@ -509,6 +539,12 @@ class Player extends Entity {
         this.dash.dashCooldown = new Cooldown(this.dash.dashCooldownTime);
 
         this.dash.update = (deltaTime) => {
+            // 🔴 对话暂停修改：对话时不处理冲刺
+            if (dialogManager.isActive) {
+                this.dash.isDashing = false;
+                return;
+            }
+            
             if (this.isOnGround()) {
                 this.dash.dashCooldown.tick(deltaTime);
                 if (this.dash.dashCooldown.ready() && this.dash.dashCount < this.dash.dashMaxCount) {
@@ -579,6 +615,9 @@ class Player extends Entity {
     performParry(attacker) {
         console.log("执行弹反攻击！");
         
+        // 🔴 对话暂停修改：对话时不执行弹反
+        if (dialogManager.isActive) return;
+        
         // 立即触发一次无前后摇的近战攻击
         const originalStartupTime = this.state.attack.startupTime.melee;
         const originalRecoveryTime = this.state.attack.recoveryTime.melee;
@@ -604,14 +643,14 @@ class Player extends Entity {
         // 播放弹反音效
         soundManager.playSound('player', 'parry');
     }
-    takeHeal(amount, source = null) { // 原有逻辑不变
+    takeHeal(amount, source = null) { 
         let modifiedAmount = amount * (1 + AM.getAttrSum(Attrs.player.HEAL));
         modifiedAmount = bus.emitReduce(Events.player.heal, { baseHeal: modifiedAmount }, (_, next) => next).baseHeal;
         const finalAmount = Math.max(0, modifiedAmount);
         this.state.hp = Math.min(this.state.hp_max, this.state.hp + finalAmount);
     }
     setPosition(position) { this.hitbox.position = position; }
-    draw(ctx) { // 原有逻辑不变
+    draw(ctx) { 
         const currentTexture = this.animation.getFrame();
         if (!currentTexture) return;
 
@@ -656,7 +695,7 @@ class Player extends Entity {
         
         this.drawDashUI(ctx);
     }
-    drawBoxs(ctx) { // 原有逻辑不变
+    drawBoxs(ctx) { 
         ctx.strokeStyle = this.isInvulnerable ? '#cccccc' : '#00aaff';
         ctx.strokeRect(this.hitbox.position.x, this.hitbox.position.y, this.hitbox.size.x, this.hitbox.size.y);
 
@@ -667,7 +706,7 @@ class Player extends Entity {
         ctx.strokeRect(attackBoxPos.x, attackBoxPos.y, attackBoxSize.x, attackBoxSize.y);
         ctx.restore();
     }
-    drawDashUI(ctx) { // 原有逻辑不变
+    drawDashUI(ctx) { 
         const max = this.dash.dashMaxCount;
         const current = this.dash.dashCount;
         const size = 8;
