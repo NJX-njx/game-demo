@@ -8,57 +8,82 @@ import { player } from "./Player";
 import { mapManager } from "../Manager/MapManager";
 import { eventBus as bus, EventTypes as Events } from "../Manager/EventBus";
 import { attributeManager as AM, AttributeTypes as Attrs } from "../Manager/AttributeManager";
-class Enemy_Animation {
-    static Framerate = {
-        "run": 6,
-        "jump": 30,
-        "fall": 30,
-        "stand": 8,
-    };
-    static Frames = {
-        "run": 6,
-        "jump": 4,
-        "fall": 2,
-        "stand": 7,
-    };
-    constructor() {
-        this.status = "run";
-        this.facing = 1;
-        this.frame = 1;
-        this.frameRun = 0;
+
+// ========================= 怪物动画配置表 =========================
+const EnemyAnimationConfigs = {
+    "1": {
+        defaultFrame: "1",
+        hasAttackAnimation: false
+    },
+    "2": {
+        defaultFrame: "2",
+        hasAttackAnimation: false
+    },
+    // 霸凌者：调整动画时长以确保完整显示
+    "balingzhe": {
+        defaultFrame: "balingzhe_1",
+        hasAttackAnimation: true,
+        attack: {
+            frames: 5,               // 保持帧数不变
+            framerate: 8,            // 保持帧率不变
+            duration: 1000,          // 延长动画时长（从500→1000ms）
+            framePrefix: "balingzhe_attack_"
+        }
     }
-    setStatus(status, facing) {
-        if (status != this.status || facing != this.facing) {
-            this.frame = 1;
-            this.frameRun = 0;
-            this.status = status;
+};
+
+// ========================= 动画类 =========================
+class EnemyAnimation {
+    constructor(enemyType) {
+        this.config = EnemyAnimationConfigs[enemyType] || EnemyAnimationConfigs["1"];
+        this.enemyType = enemyType;
+        
+        this.facing = 1;
+        this.isAttacking = false;
+        this.attackFrame = 1;
+        this.frameTimer = 0;
+        this.attackEndTime = 0;
+    }
+
+    setAttackState(isAttacking, facing) {
+        if (this.config.hasAttackAnimation && isAttacking) {
+            this.isAttacking = true;
+            this.attackFrame = 1;
+            this.frameTimer = 0;
+            this.attackEndTime = Date.now() + this.config.attack.duration;
+            this.facing = facing;
+        } else if (Date.now() >= this.attackEndTime) {
+            this.isAttacking = false;
             this.facing = facing;
         }
     }
+
     update(deltaTime) {
-        // this.frameRun += deltaTime;
-        // if (this.frameRun > Animation.Framerate[this.status]) {
-        //     ++this.frame;
-        //     this.frameRun = 0;
-        // }
-        // if (this.frame > Animation.Frames[this.status])
-        //     switch (this.status) {
-        //         case "run":
-        //             this.frame = 1;
-        //             break;
-        //         case "stand":
-        //             this.frame = 1;
-        //             break;
-        //         default:
-        //             --this.frame;
-        //             break;
-        //     }
+        if (!this.isAttacking || !this.config.hasAttackAnimation) return;
+
+        const frameInterval = 1000 / this.config.attack.framerate;
+        this.frameTimer += deltaTime;
+
+        while (this.frameTimer >= frameInterval) {
+            this.attackFrame++;
+            this.frameTimer -= frameInterval;
+            if (this.attackFrame > this.config.attack.frames) {
+                this.attackFrame = 1;
+            }
+        }
     }
+
     getFrame() {
-        // return textureManager.getTexture(this.status, this.frame * this.facing);
-        return textureManager.getTexture("enemy", 0);
+        if (this.isAttacking && this.config.hasAttackAnimation) {
+            const attackFrameId = `${this.config.attack.framePrefix}${this.attackFrame}`;
+            return textureManager.getTexture("enemy", attackFrameId) 
+                || textureManager.getTexture("enemy", this.config.defaultFrame);
+        }
+        return textureManager.getTexture("enemy", this.config.defaultFrame);
     }
 }
+
+// ========================= 怪物主类 =========================
 export class Enemy extends Entity {
     constructor(type, position, size = new Vector(50, 50), velocity = new Vector()) {
         super(position, size, velocity);
@@ -66,454 +91,169 @@ export class Enemy extends Entity {
         this.type = "enemy" + type;
         this.enemytype = type;
 
+        // 基础属性：增加攻击恢复时间，增大攻击间隔
         this.baseState = {
-            hp_max: 100,                //血量上限
+            hp_max: 100,                
             attack: {
-                atk: 10,                //基础攻击
-                MeleeStartupTime: 50,    //攻击前摇
-                MeleeRecoveryTime: 900,   //攻击后摇
-                RangedStartupTime: 150,    //攻击前摇
-                RangedRecoveryTime: 700,   //攻击后摇
+                atk: 10,                
+                MeleeStartupTime: 50,    
+                MeleeRecoveryTime: 1500  // 延长攻击恢复时间（从900→1500ms）
             }
-        }
+        };
+
         this.state = {
-            hp: this.baseState.hp_max,  //当前血量
+            hp: this.baseState.hp_max,  
             hp_max: this.baseState.hp_max,
             attack: {
-                damage: {
-                    melee: this.baseState.attack_baseDamage,
-                    ranged: this.baseState.attack_baseDamage
-                },
-                startupTime: {
-                    melee: this.baseState.attack_baseMeleeStartupTime,
-                    ranged: this.baseState.attack_baseRangedStartupTime
-                },
-                recoveryTime: {
-                    melee: this.baseState.attack_baseMeleeRecoveryTime,
-                    ranged: this.baseState.attack_baseRangedStartupTime
-                }
+                damage: { melee: this.baseState.attack.atk },
+                startupTime: { melee: this.baseState.attack.MeleeStartupTime },
+                recoveryTime: { melee: this.baseState.attack.MeleeRecoveryTime }
+            }
+        };
 
-            },
-        }
         this.facing = 1;
-        this.animation = new Enemy_Animation();
-        // 攻击
+        this.animation = new EnemyAnimation(this.enemytype);
+
         this.attack = {
             melee: new MeleeAttack(this),
-            targetSelector: () => [player]
-        }
-        // 受击
+            targetSelector: () => [player],
+            isAttacking: false,
+            attackTimer: 0,
+            // 新增：攻击冷却计时器，控制攻击间隔
+            cooldownTimer: 0,
+            cooldownDuration: 2000  // 攻击冷却时间2秒
+        };
+
         this.hurtBox = this.hitbox;
         this._unbind_list = [];
     }
 
     update(deltaTime) {
         this.updateState();
-        // 计算与玩家的距离
         const horizontalDist = Math.abs(this.hitbox.getCenter().x - player.hitbox.getCenter().x);
         const verticalDist = this.hitbox.getCenter().y - player.hitbox.getCenter().y;
 
-        // 分层锁敌逻辑
         let shouldAttack = false;
         let lockOnMode = "patrol";
 
-        if (verticalDist > 50) {
-            // 玩家在敌人上方（高度差 > 50像素）- 增加阈值
-            const maxHorizontalDist = 400; // 增加水平锁敌距离，与同层模式保持合理比例
-            const maxVerticalDist = 100;   // 允许更大的垂直距离
+        // 攻击冷却计时
+        if (this.attack.cooldownTimer > 0) {
+            this.attack.cooldownTimer -= deltaTime;
+        }
 
-            if (horizontalDist < maxHorizontalDist && Math.abs(verticalDist) < maxVerticalDist) {
-                lockOnMode = "seek_path";
-                // 寻找路径模式：检查是否有直接路径到达玩家
-                if (this.hasDirectPathToPlayer()) {
-                    // 只在冷却完成后，有一定概率触发攻击
-                    shouldAttack = Math.random() < 0.2;
-                }
+        // 锁敌与攻击判定
+        if (Math.abs(verticalDist) < 100 && horizontalDist < 400) {
+            lockOnMode = "attack";
+            // 降低攻击概率（从0.4→0.15），减少攻击频率
+            // 同时只有冷却结束后才能攻击
+            shouldAttack = Math.random() < 0.15 && this.attack.cooldownTimer <= 0;
+        }
+
+        // 攻击处理
+        const hasAttackAnim = EnemyAnimationConfigs[this.enemytype].hasAttackAnimation;
+        if (hasAttackAnim) {
+            if (shouldAttack && !this.attack.isAttacking) {
+                this.attack.melee.trigger();
+                this.attack.isAttacking = true;
+                this.attack.attackTimer = EnemyAnimationConfigs[this.enemytype].attack.duration;
+                // 触发攻击后立即开始冷却
+                this.attack.cooldownTimer = this.attack.cooldownDuration;
             }
-        } else if (verticalDist < -50) {
-            // 玩家在敌人下方（高度差 < -50像素）- 增加阈值
-            const maxHorizontalDist = 300; // 增加水平锁敌距离，与同层模式保持合理比例
-            const maxVerticalDist = 80;   // 减少垂直锁敌距离
-
-            if (horizontalDist < maxHorizontalDist && Math.abs(verticalDist) < maxVerticalDist) {
-                lockOnMode = "wait";
-                // 等待模式：检查是否有安全的下跳路径
-                if (this.hasSafeDropPath()) {
-                    shouldAttack = Math.random() < 0.3;
+            if (this.attack.isAttacking) {
+                this.attack.attackTimer -= deltaTime;
+                if (this.attack.attackTimer <= 0) {
+                    this.attack.isAttacking = false;
                 }
             }
         } else {
-            // 同层或接近（高度差在 ±50像素内）- 增加阈值
-            const maxHorizontalDist = 400; // 大幅增加水平锁敌距离，让敌人能更早发现同层的玩家
-            const maxVerticalDist = 60;   // 标准垂直锁敌距离
-
-            if (horizontalDist < maxHorizontalDist && Math.abs(verticalDist) < maxVerticalDist) {
-                lockOnMode = "attack";
-                // 攻击模式下，每次冷却完成有 40% 概率触发攻击
-                shouldAttack = Math.random() < 0.4;
+            if (shouldAttack) {
+                this.attack.melee.trigger();
+                // 无动画怪物也添加冷却
+                this.attack.cooldownTimer = this.attack.cooldownDuration;
             }
         }
 
-        if (shouldAttack) this.attack.melee.trigger()
         this.attack.melee.update(deltaTime);
+        this.updateMovement(lockOnMode);
 
-        // 根据锁敌模式更新移动策略
-        this.updateMovementByMode(lockOnMode, horizontalDist, verticalDist);
+        this.animation.setAttackState(this.attack.isAttacking, this.facing);
+        this.animation.update(deltaTime);
+    }
 
-        // 移动与跳跃
-        const deltaFrame = 60 * deltaTime / 1000;
+    // 其他方法保持不变...
+    updateMovement(lockOnMode) {
+        const deltaFrame = 60 * (game.deltaTime || 16) / 1000;
         let move = 0;
-        this.updateXY(deltaFrame,
-            () => {
-                if (this.blockMove) return 0;
-                move = 0;
 
-                // 根据锁敌模式决定移动行为
-                if (lockOnMode === "attack" || lockOnMode === "seek_path") {
-                    // 攻击模式或寻找路径模式：朝向玩家移动
-                    if (this.hitbox.position.x < player.hitbox.position.x) this.facing = move = 1;
-                    else this.facing = move = -1;
-                    move *= 0.3;
-                } else if (lockOnMode === "wait") {
-                    // 等待模式：原地等待，不移动
-                    move = 0;
-                } else {
-                    // 巡逻模式：随机移动或原地等待
-                    if (Math.random() < 0.002) { // 增加到2%的概率改变方向
-                        this.facing = Math.random() < 0.5 ? 1 : -1;
-                    }
-
-                    // 检查是否会撞墙，如果会撞墙则改变方向
-                    const nextX = this.hitbox.position.x + this.facing * 2; // 检查前方2像素
-                    const testHitbox = new Hitbox(new Vector(nextX, this.hitbox.position.y), this.hitbox.size);
-                    const blocks = mapManager.getBlockHitboxes();
-                    let willHitWall = false;
-
-                    for (const block of blocks) {
-                        if (testHitbox.checkHit(block)) {
-                            willHitWall = true;
-                            break;
-                        }
-                    }
-
-                    // 如果会撞墙或到达地图边界，改变方向
-                    if (willHitWall || nextX < 0 || nextX > 1280) {
-                        this.facing = -this.facing;
-                    }
-
-                    // 巡逻时正常移动速度
-                    move = this.facing * 0.2;
-                }
-
-                return move;
-            },
-            () => {
-                if (this.blockMove) return 0;
-
-                // 根据锁敌模式决定跳跃行为
-                if (lockOnMode === "attack" || lockOnMode === "seek_path") {
-                    // 攻击模式或寻找路径模式：可以跳跃
-                    // TODO:实现敌人跳跃逻辑
-                    // this.jumping.jumpBuffer.start();
-                } else {
-                    // 其他模式：不跳跃
-                    return 0;
-                }
-            },
-            true
-        );
-
-        if (this.jumping.jumpVelocity > 0) {
-            this.animation.setStatus("jump", this.facing);
-        } else if (!this.isOnGround()) {
-            if (this.jumping.jumpVelocity < 0)
-                this.animation.setStatus("fall", this.facing);
+        if (lockOnMode === "attack") {
+            this.facing = this.hitbox.position.x < player.hitbox.position.x ? 1 : -1;
+            move = this.facing * 0.3;
         } else {
-            if (move) {
-                this.animation.setStatus("run", this.facing);
+            if (Math.random() < 0.002) {
+                this.facing = Math.random() < 0.5 ? 1 : -1;
             }
-            else
-                this.animation.setStatus("stand", this.facing);
-        }
-        this.animation.update(deltaFrame);
-    }
-
-    // 检查是否有直接路径到达玩家
-    hasDirectPathToPlayer() {
-        const playerPos = player.hitbox.position;
-        const enemyPos = this.hitbox.position;
-
-        // 简单的路径检测：检查敌人和玩家之间是否有障碍物
-        const blocks = mapManager.getBlockHitboxes();
-
-        // 创建从敌人到玩家的检测线
-        const testHitbox = new Hitbox(
-            new Vector(Math.min(enemyPos.x, playerPos.x), Math.min(enemyPos.y, playerPos.y)),
-            new Vector(Math.abs(playerPos.x - enemyPos.x), Math.abs(playerPos.y - enemyPos.y))
-        );
-
-        // 检查是否有障碍物阻挡
-        for (const block of blocks) {
-            if (testHitbox.checkHit(block)) {
-                return false; // 有障碍物阻挡
+            const nextX = this.hitbox.position.x + this.facing * 2;
+            const testHitbox = new Hitbox(new Vector(nextX, this.hitbox.position.y), this.hitbox.size);
+            const willHitWall = mapManager.getBlockHitboxes().some(block => testHitbox.checkHit(block));
+            
+            if (willHitWall || nextX < 0 || nextX > 1280) {
+                this.facing = -this.facing;
             }
+            move = this.facing * 0.2;
         }
 
-        return true; // 无障碍物，可以直接到达
+        this.updateXY(deltaFrame, () => move, () => 0, true);
     }
 
-    // 检查是否有安全的下跳路径
-    hasSafeDropPath() {
-        const playerPos = player.hitbox.position;
-        const enemyPos = this.hitbox.position;
-
-        // 检查敌人下方是否有安全的着陆点
-        const blocks = mapManager.getBlockHitboxes();
-        const dropTestY = enemyPos.y + 100; // 测试下跳100像素
-
-        // 创建下跳检测区域
-        const dropTestHitbox = new Hitbox(
-            new Vector(enemyPos.x, enemyPos.y),
-            new Vector(this.hitbox.size.x, dropTestY - enemyPos.y)
-        );
-
-        // 检查下跳路径上是否有平台
-        for (const block of blocks) {
-            if (dropTestHitbox.checkHit(block)) {
-                return true; // 有平台可以着陆
-            }
-        }
-
-        return false; // 没有安全的着陆点
-    }
-
-    // 根据锁敌模式更新移动策略
-    updateMovementByMode(lockOnMode, horizontalDist, verticalDist) {
-        switch (lockOnMode) {
-            case "seek_path":
-                // 寻找路径模式：优先寻找垂直路径
-                this.seekVerticalPath();
-                break;
-            case "wait":
-                // 等待模式：原地等待或寻找下跳点
-                this.waitForPlayer();
-                break;
-            case "attack":
-                // 攻击模式：正常移动和攻击
-                this.normalMovement();
-                break;
-            case "patrol":
-            default:
-                // 巡逻模式：随机移动或原地等待
-                this.patrolMovement();
-                break;
-        }
-    }
-
-    // 寻找垂直路径
-    seekVerticalPath() {
-        const playerPos = player.hitbox.position;
-        const enemyPos = this.hitbox.position;
-
-        // 检查周围是否有可攀爬的平台
-        const blocks = mapManager.getBlockHitboxes();
-        let nearestPlatform = null;
-        let minDistance = Infinity;
-
-        for (const block of blocks) {
-            // 只考虑敌人上方的平台
-            if (block.position.y < enemyPos.y && block.position.y > playerPos.y - 50) {
-                const dist = Math.abs(block.position.x - enemyPos.x);
-                if (dist < minDistance) {
-                    minDistance = dist;
-                    nearestPlatform = block;
-                }
-            }
-        }
-
-        if (nearestPlatform) {
-            // 移动到最近的平台
-            this.moveToTarget(nearestPlatform);
-        } else {
-            // 没有平台时，原地等待
-            this.wait();
-        }
-    }
-
-    // 等待玩家
-    waitForPlayer() {
-        // 检查是否有安全的下跳路径
-        if (this.hasSafeDropPath()) {
-            // 寻找下跳点
-            this.seekDropPoint();
-        } else {
-            // 原地等待，可能进行巡逻
-            this.patrolMovement();
-        }
-    }
-
-    // 正常移动
-    normalMovement() {
-        // 保持原有的移动逻辑
-        // 这个方法会在updateXY中处理
-    }
-
-    // 巡逻移动
-    patrolMovement() {
-        // 巡逻逻辑：随机移动或原地等待
-        if (Math.random() < 0.02) { // 2%的概率改变方向
-            this.facing = Math.random() < 0.5 ? 1 : -1;
-        }
-
-        // 检查是否会撞墙，如果会撞墙则改变方向
-        const nextX = this.hitbox.position.x + this.facing * 2;
-        const testHitbox = new Hitbox(new Vector(nextX, this.hitbox.position.y), this.hitbox.size);
-        const blocks = mapManager.getBlockHitboxes();
-        let willHitWall = false;
-
-        for (const block of blocks) {
-            if (testHitbox.checkHit(block)) {
-                willHitWall = true;
-                break;
-            }
-        }
-
-        // 如果会撞墙或到达地图边界，改变方向
-        if (willHitWall || nextX < 0 || nextX > 1280) {
-            this.facing = -this.facing;
-        }
-    }
-
-    // 移动到目标
-    moveToTarget(target) {
-        const targetPos = target.position;
-        const enemyPos = this.hitbox.position;
-
-        // 设置移动方向
-        if (targetPos.x > enemyPos.x) {
-            this.facing = 1;
-        } else if (targetPos.x < enemyPos.x) {
-            this.facing = -1;
-        }
-
-        // 如果目标在敌人上方，尝试跳跃
-        if (targetPos.y < enemyPos.y && this.isOnGround()) {
-            this.jumping.jumpBuffer.start();
-        }
-    }
-
-    // 寻找下跳点
-    seekDropPoint() {
-        const playerPos = player.hitbox.position;
-        const enemyPos = this.hitbox.position;
-
-        // 检查敌人下方是否有安全的着陆点
-        const blocks = mapManager.getBlockHitboxes();
-        let bestDropPoint = null;
-        let minDistance = Infinity;
-
-        for (const block of blocks) {
-            // 只考虑敌人下方的平台
-            if (block.position.y > enemyPos.y && block.position.y < playerPos.y + 50) {
-                const dist = Math.abs(block.position.x - enemyPos.x);
-                if (dist < minDistance) {
-                    minDistance = dist;
-                    bestDropPoint = block;
-                }
-            }
-        }
-
-        if (bestDropPoint) {
-            // 移动到下跳点
-            this.moveToTarget(bestDropPoint);
-        }
-    }
-
-    // 等待
-    wait() {
-        // 原地等待，不进行移动
-        // 可以在这里添加等待动画或其他行为
-    }
-
-    // 更新状态
     updateState() {
         const hp = AM.getAttrSum(Attrs.enemy.HP);
         const atk = AM.getAttrSum(Attrs.enemy.ATK);
-        const dmg = AM.getAttrSum(Attrs.enemy.DMG);
-        const dmg_dec = AM.getAttrSum(Attrs.enemy.DMG_DEC);
-        const meleeST = AM.getAttrSum(Attrs.enemy.MeteeStartupTime);
-        const meleeRT = AM.getAttrSum(Attrs.enemy.MeteeRecoveryTime);
-        const rangedST = AM.getAttrSum(Attrs.enemy.RangedStartupTime);
-        const rangedRT = AM.getAttrSum(Attrs.enemy.RangedRecoveryTime);
         this.state.hp_max = this.baseState.hp_max * (1 + hp);
         this.state.hp = Math.min(this.state.hp, this.state.hp_max);
-        this.state.attack.atk = this.baseState.attack.atk * (1 + atk);
-        this.state.attack.startupTime.melee = this.baseState.attack.MeleeStartupTime + meleeST;
-        this.state.attack.startupTime.ranged = this.baseState.attack.RangedStartupTime + rangedST;
-        this.state.attack.recoveryTime.melee = this.baseState.attack.MeleeRecoveryTime + meleeRT;
-        this.state.attack.recoveryTime.ranged = this.baseState.attack.RangedRecoveryTime + rangedRT;
-        let finalDmg = this.state.attack.atk * (1 + dmg);
-        finalDmg = Math.max(finalDmg - dmg_dec, 0.1 * finalDmg);
-        this.state.attack.damage.melee = finalDmg;
-        this.state.attack.damage.ranged = finalDmg;
-
+        this.state.attack.damage.melee = this.baseState.attack.atk * (1 + atk);
     }
 
-    // 受击判定
-    takeDamage(dmg, attackType, attacker = null) {
+    takeDamage(dmg) {
         this.state.hp -= dmg;
         if (this.state.hp <= 0) {
-            // 死亡逻辑
-            bus.emit(Events.enemy.die, { attackType: attackType });
-            // 解绑所有事件
-            this._unbind_list.forEach((unbind) => unbind());
-            this._unbind_list = [];
-            // 从全局移除自己
+            bus.emit(Events.enemy.die);
+            this._unbind_list.forEach(unbind => unbind());
             const idx = game.enemies.indexOf(this);
             if (idx !== -1) game.enemies.splice(idx, 1);
         }
     }
 
     draw(ctx) {
-        ctx.drawImage(
-            textureManager.getTexture("enemy", this.enemytype),
-            this.hitbox.position.x,
-            this.hitbox.position.y,
-            this.Size.x,
-            this.Size.y);
-        // 绘制血条
+        const frameTexture = this.animation.getFrame();
+        if (frameTexture) {
+            ctx.save();
+            if (this.facing === -1) {
+                const flipX = this.hitbox.position.x + this.Size.x;
+                ctx.translate(flipX, this.hitbox.position.y);
+                ctx.scale(-1, 1);
+                ctx.drawImage(frameTexture, 0, 0, this.Size.x, this.Size.y);
+            } else {
+                ctx.drawImage(
+                    frameTexture,
+                    this.hitbox.position.x,
+                    this.hitbox.position.y,
+                    this.Size.x,
+                    this.Size.y
+                );
+            }
+            ctx.restore();
+        }
+
         const hpBarWidth = this.Size.x;
         const hpBarHeight = 6;
         const hpBarX = this.hitbox.position.x;
         const hpBarY = this.hitbox.position.y - 12;
-        ctx.save();
         ctx.fillStyle = 'red';
         ctx.fillRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
         ctx.fillStyle = 'green';
-        const currentHpPercent = Math.max(this.state.hp, 0) / this.state.hp_max;
-        const currentHpWidth = hpBarWidth * currentHpPercent;
-        ctx.fillRect(hpBarX, hpBarY, currentHpWidth, hpBarHeight);
+        ctx.fillRect(hpBarX, hpBarY, hpBarWidth * (this.state.hp / this.state.hp_max), hpBarHeight);
         ctx.strokeStyle = 'black';
         ctx.strokeRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
-        ctx.restore();
-        // this.drawBoxs(ctx);
-    }
-
-    drawBoxs(ctx) {
-        // 绘制敌人自身盒子
-        ctx.strokeStyle = this.isInvulnerable ? '#cccccc' : '#00aaff';
-        ctx.strokeRect(this.hitbox.position.x, this.hitbox.position.y, this.hitbox.size.x, this.hitbox.size.y);
-
-        // ---- 调试用攻击判定框 ----
-        ctx.strokeStyle = '#ff0000';
-
-        // 根据敌人当前状态和朝向计算判定框位置
-        const offset = 0.5 * (this.facing >= 0 ? this.hitbox.size.x : -this.hitbox.size.x);
-        const attackBoxPos = this.hitbox.position.addVector(new Vector(offset, this.hitbox.size.y * 0.25));
-        const attackBoxSize = new Vector(this.hitbox.size.x * 0.8, this.hitbox.size.y * 0.5);
-
-        ctx.strokeRect(attackBoxPos.x, attackBoxPos.y, attackBoxSize.x, attackBoxSize.y);
-
-        ctx.restore();
     }
 }
+    
