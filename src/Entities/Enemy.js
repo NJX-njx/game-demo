@@ -2,8 +2,11 @@ import { Entity } from "./Entity";
 import { Vector } from "../Utils/Vector";
 import { Hitbox } from "../Utils/Hitbox";
 import { MeleeAttack } from "../System/Attack/MeleeAttack";
+import { RangedAttack } from "../System/Attack/RangedArrack"; // 假设已修正拼写
+import { Cooldown } from "../Utils/Cooldown";
 import { game } from "../Game";
 import { textureManager } from "../Manager/TextureManager";
+import { soundManager } from "../Manager/SoundManager";
 import { player } from "./Player";
 import { mapManager } from "../Manager/MapManager";
 import { eventBus as bus, EventTypes as Events } from "../Manager/EventBus";
@@ -13,21 +16,60 @@ import { attributeManager as AM, AttributeTypes as Attrs } from "../Manager/Attr
 const EnemyAnimationConfigs = {
     "1": {
         defaultFrame: "1",
-        hasAttackAnimation: false
+        hasAttackAnimation: false,
+        attackType: "melee"
     },
     "2": {
         defaultFrame: "2",
-        hasAttackAnimation: false
+        hasAttackAnimation: false,
+        attackType: "melee"
     },
-    // 霸凌者：调整动画时长以确保完整显示
+    // 霸凌者：近战
     "balingzhe": {
         defaultFrame: "balingzhe_1",
         hasAttackAnimation: true,
+        attackType: "melee",
         attack: {
-            frames: 5,               // 保持帧数不变
-            framerate: 8,            // 保持帧率不变
-            duration: 1000,          // 延长动画时长（从500→1000ms）
+            frames: 5,
+            framerate: 8,
+            duration: 1000,
             framePrefix: "balingzhe_attack_"
+        }
+    },
+    // 新增：弓箭手（远程）
+    "archer": {
+        defaultFrame: "archer_idle_1",
+        hasAttackAnimation: true,
+        attackType: "ranged",
+        attack: {
+            frames: 4,
+            framerate: 6,
+            duration: 800,
+            framePrefix: "archer_shoot_"
+        },
+        rangedAttack: {
+            range: 600,
+            cooldown: 2500,
+            damage: 15,
+            projectileSpeed: 5
+        }
+    },
+    // 新增：法师（远程）
+    "mage": {
+        defaultFrame: "mage_idle_1",
+        hasAttackAnimation: true,
+        attackType: "ranged",
+        attack: {
+            frames: 3,
+            framerate: 5,
+            duration: 700,
+            framePrefix: "mage_cast_"
+        },
+        rangedAttack: {
+            range: 500,
+            cooldown: 3000,
+            damage: 20,
+            projectileSpeed: 4
         }
     }
 };
@@ -83,21 +125,22 @@ class EnemyAnimation {
     }
 }
 
-// ========================= 怪物主类 =========================
+// ========================= 基础怪物类（保持原有近战功能） =========================
 export class Enemy extends Entity {
     constructor(type, position, size = new Vector(50, 50), velocity = new Vector()) {
         super(position, size, velocity);
         this.Size = size;
         this.type = "enemy" + type;
         this.enemytype = type;
+        this.config = EnemyAnimationConfigs[this.enemytype] || EnemyAnimationConfigs["1"];
 
-        // 基础属性：增加攻击恢复时间，增大攻击间隔
+        // 基础属性
         this.baseState = {
             hp_max: 100,                
             attack: {
                 atk: 10,                
                 MeleeStartupTime: 50,    
-                MeleeRecoveryTime: 1500  // 延长攻击恢复时间（从900→1500ms）
+                MeleeRecoveryTime: 1500
             }
         };
 
@@ -119,9 +162,8 @@ export class Enemy extends Entity {
             targetSelector: () => [player],
             isAttacking: false,
             attackTimer: 0,
-            // 新增：攻击冷却计时器，控制攻击间隔
             cooldownTimer: 0,
-            cooldownDuration: 2000  // 攻击冷却时间2秒
+            cooldownDuration: 2000
         };
 
         this.hurtBox = this.hitbox;
@@ -144,19 +186,16 @@ export class Enemy extends Entity {
         // 锁敌与攻击判定
         if (Math.abs(verticalDist) < 100 && horizontalDist < 400) {
             lockOnMode = "attack";
-            // 降低攻击概率（从0.4→0.15），减少攻击频率
-            // 同时只有冷却结束后才能攻击
             shouldAttack = Math.random() < 0.15 && this.attack.cooldownTimer <= 0;
         }
 
         // 攻击处理
-        const hasAttackAnim = EnemyAnimationConfigs[this.enemytype].hasAttackAnimation;
+        const hasAttackAnim = this.config.hasAttackAnimation;
         if (hasAttackAnim) {
             if (shouldAttack && !this.attack.isAttacking) {
                 this.attack.melee.trigger();
                 this.attack.isAttacking = true;
-                this.attack.attackTimer = EnemyAnimationConfigs[this.enemytype].attack.duration;
-                // 触发攻击后立即开始冷却
+                this.attack.attackTimer = this.config.attack.duration;
                 this.attack.cooldownTimer = this.attack.cooldownDuration;
             }
             if (this.attack.isAttacking) {
@@ -168,7 +207,6 @@ export class Enemy extends Entity {
         } else {
             if (shouldAttack) {
                 this.attack.melee.trigger();
-                // 无动画怪物也添加冷却
                 this.attack.cooldownTimer = this.attack.cooldownDuration;
             }
         }
@@ -180,7 +218,6 @@ export class Enemy extends Entity {
         this.animation.update(deltaTime);
     }
 
-    // 其他方法保持不变...
     updateMovement(lockOnMode) {
         const deltaFrame = 60 * (game.deltaTime || 16) / 1000;
         let move = 0;
@@ -244,6 +281,7 @@ export class Enemy extends Entity {
             ctx.restore();
         }
 
+        // 绘制血条
         const hpBarWidth = this.Size.x;
         const hpBarHeight = 6;
         const hpBarX = this.hitbox.position.x;
@@ -256,4 +294,178 @@ export class Enemy extends Entity {
         ctx.strokeRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
     }
 }
-    
+
+// ========================= 远程攻击怪物类（新增，不影响原有近战功能） =========================
+export class RangedEnemy extends Enemy {
+    constructor(type, position, size = new Vector(50, 50), velocity = new Vector()) {
+        super(type, position, size, velocity);
+        
+        // 远程怪物特有属性
+        this.rangedConfig = this.config.rangedAttack;
+        
+        // 初始化远程攻击
+        this.attack.ranged = new RangedAttack(this);
+        this.attack.rangedCooldown = new Cooldown(this.rangedConfig.cooldown);
+        this.attack.isRangedAttacking = false;
+        
+        // 覆盖基础属性
+        this.baseState.attack.rangedDamage = this.rangedConfig.damage;
+        this.state.attack.damage.ranged = this.rangedConfig.damage;
+    }
+
+    update(deltaTime) {
+        this.updateState();
+        const enemyCenter = this.hitbox.getCenter();
+        const playerCenter = player.hitbox.getCenter();
+        const horizontalDist = Math.abs(enemyCenter.x - playerCenter.x);
+        const verticalDist = Math.abs(enemyCenter.y - playerCenter.y);
+        const totalDist = Math.sqrt(horizontalDist **2 + verticalDist** 2);
+
+        let shouldAttack = false;
+        let lockOnMode = "patrol";
+
+        // 冷却计时更新
+        if (this.attack.cooldownTimer > 0) {
+            this.attack.cooldownTimer -= deltaTime;
+        }
+        this.attack.rangedCooldown.tick(deltaTime);
+
+        // 远程攻击判定逻辑
+        if (verticalDist < 150 && totalDist <= this.rangedConfig.range) {
+            lockOnMode = "attack";
+            // 远程攻击条件：不在攻击中且冷却结束
+            shouldAttack = !this.attack.isRangedAttacking && this.attack.rangedCooldown.ready();
+        } else if (totalDist > this.rangedConfig.range && totalDist < this.rangedConfig.range + 200) {
+            lockOnMode = "approach"; // 靠近目标
+        }
+
+        // 远程攻击处理
+        const hasAttackAnim = this.config.hasAttackAnimation;
+        if (hasAttackAnim) {
+            if (shouldAttack && !this.attack.isRangedAttacking) {
+                // 触发远程攻击
+                this.triggerRangedAttack();
+                this.attack.isRangedAttacking = true;
+                this.attack.attackTimer = this.config.attack.duration;
+                this.attack.rangedCooldown.reset();
+            }
+            if (this.attack.isRangedAttacking) {
+                this.attack.attackTimer -= deltaTime;
+                if (this.attack.attackTimer <= 0) {
+                    this.attack.isRangedAttacking = false;
+                }
+            }
+        } else {
+            if (shouldAttack) {
+                this.triggerRangedAttack();
+                this.attack.rangedCooldown.reset();
+            }
+        }
+
+        this.attack.ranged.update(deltaTime);
+        this.updateMovement(lockOnMode);
+
+        this.animation.setAttackState(this.attack.isRangedAttacking, this.facing);
+        this.animation.update(deltaTime);
+    }
+
+    // 触发远程攻击
+    triggerRangedAttack() {
+        if (!this.attack.ranged) return;
+        
+        // 播放攻击音效
+        soundManager.playSound('enemy', 'ranged_attack');
+        
+        // 计算方向
+        const direction = this.hitbox.getCenter().x < player.hitbox.getCenter().x ? 1 : -1;
+        
+        // 触发远程攻击
+        this.attack.ranged.trigger({
+            direction: new Vector(direction, 0),
+            speed: this.rangedConfig.projectileSpeed,
+            damage: this.state.attack.damage.ranged
+        });
+    }
+
+    // 重写移动逻辑，远程怪物保持距离
+    updateMovement(lockOnMode) {
+        const deltaFrame = 60 * (game.deltaTime || 16) / 1000;
+        let move = 0;
+        const enemyCenterX = this.hitbox.getCenter().x;
+        const playerCenterX = player.hitbox.getCenter().x;
+        const distance = Math.abs(enemyCenterX - playerCenterX);
+
+        switch (lockOnMode) {
+            case "attack":
+                // 攻击模式：保持距离，面向玩家
+                this.facing = enemyCenterX < playerCenterX ? 1 : -1;
+                // 如果距离过近则后退
+                if (distance < this.rangedConfig.range * 0.7) {
+                    move = -this.facing * 0.2;
+                } else if (distance > this.rangedConfig.range * 0.9) {
+                    // 如果距离过远则前进
+                    move = this.facing * 0.2;
+                } else {
+                    move = 0; // 保持在最佳攻击距离
+                }
+                break;
+                
+            case "approach":
+                // 靠近模式：移动到攻击范围内
+                this.facing = enemyCenterX < playerCenterX ? 1 : -1;
+                move = this.facing * 0.25;
+                break;
+                
+            default:
+                // 巡逻模式
+                if (Math.random() < 0.002) {
+                    this.facing = Math.random() < 0.5 ? 1 : -1;
+                }
+                const nextX = this.hitbox.position.x + this.facing * 2;
+                const testHitbox = new Hitbox(new Vector(nextX, this.hitbox.position.y), this.hitbox.size);
+                const willHitWall = mapManager.getBlockHitboxes().some(block => testHitbox.checkHit(block));
+                
+                if (willHitWall || nextX < 0 || nextX > 1280) {
+                    this.facing = -this.facing;
+                }
+                move = this.facing * 0.15; // 远程怪物巡逻速度稍慢
+                break;
+        }
+
+        this.updateXY(deltaFrame, () => move, () => 0, true);
+    }
+
+    // 重写状态更新，包含远程攻击属性
+    updateState() {
+        super.updateState(); // 调用父类方法更新近战和HP属性
+        const atk = AM.getAttrSum(Attrs.enemy.ATK);
+        // 更新远程攻击伤害
+        this.state.attack.damage.ranged = this.baseState.attack.rangedDamage * (1 + atk);
+    }
+
+    // 绘制远程攻击 projectile
+    drawProjectiles(ctx) {
+        if (this.attack.ranged && this.attack.ranged.projectiles) {
+            this.attack.ranged.projectiles.forEach(projectile => {
+                ctx.save();
+                ctx.fillStyle = projectile.color || '#ff6600';
+                ctx.beginPath();
+                ctx.arc(
+                    projectile.position.x, 
+                    projectile.position.y, 
+                    projectile.size || 5, 
+                    0, 
+                    Math.PI * 2
+                );
+                ctx.fill();
+                ctx.restore();
+            });
+        }
+    }
+
+    // 重写绘制方法，添加远程攻击效果
+    draw(ctx) {
+        super.draw(ctx); // 绘制怪物本身
+        this.drawProjectiles(ctx); // 绘制远程攻击 projectile
+    }
+}
