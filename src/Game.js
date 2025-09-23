@@ -59,7 +59,7 @@ class Game {
         try { loaded = await Game.loadGame(selectedSlot); } catch (_) { loaded = false; }
         if (!loaded) {
 
-            await mapManager.loadRoom(0, 3);
+            await mapManager.loadRoom(0, 4);
             console.log('🎮 游戏初始化完成，当前房间: layer0/room3');
 
         }
