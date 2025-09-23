@@ -8,7 +8,7 @@ class DialogManager {
         this.printing = false;  // 是否正在打印
         this.triggeredEvents = new Set(); // 已触发的自动事件
         this.CTRL_KEYS = ['LCtrl', 'RCtrl']; // 加速/继续键
-
+        this.isActive = false;
         // 订阅交互事件
         eventBus.on({
             event: EventTypes.interaction.trigger,
@@ -132,11 +132,12 @@ class DialogManager {
             this.charName.innerHTML = '';
             this.textContent.innerHTML = '';
             this.promptText.style.display = 'none';
+            this.isActive = true; // 对话启动，标记为活跃
 
             this.dialog.style.display = 'block';
             setTimeout(() => {
                 this.dialog.style.opacity = '1';
-                setTimeout(resolve, 300); // 等待动画完成
+                setTimeout(resolve, 300);
             }, 10);
         });
     }
@@ -148,8 +149,9 @@ class DialogManager {
             setTimeout(() => {
                 this.dialog.style.display = 'none';
                 this.printing = false;
+                this.isActive = false; // 对话结束，取消活跃
                 resolve();
-            }, 300); // 匹配动画时长
+            }, 300);
         });
     }
 
@@ -218,6 +220,7 @@ class DialogManager {
     clear() {
         this.buffer = [];
         this.printing = false;
+        this.isActive = false; // 强制终止对话，取消活跃
         this.close();
     }
 }
