@@ -42,7 +42,16 @@
     "backgrounds": {
         "brick_R": "assets/imgs/map/地块元素/砖块深红.png",
         "yellow": "assets/imgs/map/background/房间02.png",
-        "ICU": "assets/imgs/map/地块元素/墙面手术室.png"
+        "ICU": "assets/imgs/map/地块元素/墙面手术室.png",
+        "office_1": "assets/imgs/map/background/办公室1.png",
+        "office_2": "assets/imgs/map/background/办公室2.png",
+        "office_3": "assets/imgs/map/background/办公室3.png",
+        "room_01": "assets/imgs/map/background/房间01.png",
+        "room_02": "assets/imgs/map/background/房间02.png",
+        "room_03": "assets/imgs/map/background/房间03.png",
+        "campus_01": "assets/imgs/map/background/校园01.png",
+        "campus_02": "assets/imgs/map/background/校园02.jpg",
+        "campus_03": "assets/imgs/map/background/校园03.jpg"
     },
     "blocks": {
         "black": "assets/imgs/map/地块元素/纯黑.png"
@@ -50,6 +59,49 @@
     "textures": {
         "door": "assets/imgs/map/地块元素/门.png",
         "bed": "assets/imgs/map/地块元素/手术床.png",
-        "torch": "assets/imgs/map/地块元素/火把.png"
+        "torch": "assets/imgs/map/地块元素/火把.png",
+        "block_1": "assets/imgs/map/地块元素/1.png",
+        "block_2": "assets/imgs/map/地块元素/2.png",
+        "block_3": "assets/imgs/map/地块元素/3.png",
+        "treasure_1": "assets/imgs/map/地块元素/宝箱1.png",
+        "treasure_2": "assets/imgs/map/地块元素/宝箱2.png",
+        "treasure_3": "assets/imgs/map/地块元素/宝箱3.png",
+        "trampoline": "assets/imgs/map/地块元素/蹦床.png",
+        "grass": "assets/imgs/map/地块元素/草块.png",
+        "grass_yellow": "assets/imgs/map/地块元素/草块泛黄.png",
+        "white": "assets/imgs/map/地块元素/纯白.png",
+        "black": "assets/imgs/map/地块元素/纯黑.png",
+        "sign_1": "assets/imgs/map/地块元素/告示牌1.png",
+        "sign_2": "assets/imgs/map/地块元素/告示牌2.png",
+        "interaction": "assets/imgs/map/地块元素/交互提示.png",
+        "cage": "assets/imgs/map/地块元素/笼子.png",
+        "door_1": "assets/imgs/map/地块元素/门1.png",
+        "door_2": "assets/imgs/map/地块元素/门2.png",
+        "door_3": "assets/imgs/map/地块元素/门3.png",
+        "door_4": "assets/imgs/map/地块元素/门4.png",
+        "door_5": "assets/imgs/map/地块元素/门5.png",
+        "wall_yellow": "assets/imgs/map/地块元素/墙面泛黄.png",
+        "wall_gray": "assets/imgs/map/地块元素/墙面灰白.png",
+        "desk": "assets/imgs/map/地块元素/书桌.png",
+        "tree": "assets/imgs/map/地块元素/树.png",
+        "water_1": "assets/imgs/map/地块元素/水1.png",
+        "water_2": "assets/imgs/map/地块元素/水2.png",
+        "water_3": "assets/imgs/map/地块元素/水3.png",
+        "water_gif": "assets/imgs/map/地块元素/水GIF.gif",
+        "track": "assets/imgs/map/地块元素/塑胶跑道.png",
+        "vine": "assets/imgs/map/地块元素/藤蔓.png",
+        "soil": "assets/imgs/map/地块元素/土块.png",
+        "rock": "assets/imgs/map/地块元素/岩层v2.png",
+        "weed_1": "assets/imgs/map/地块元素/杂草1.png",
+        "weed_2": "assets/imgs/map/地块元素/杂草2.png",
+        "brick_black_blue": "assets/imgs/map/地块元素/砖块蓝黑.png",
+        "brick_black_blue_v2": "assets/imgs/map/地块元素/砖块蓝黑v2.png",
+        "brick_red": "assets/imgs/map/地块元素/砖块深红.png"
+    },
+    "npc": {
+        "demon": "assets/imgs/map/npc/恶魔.png",
+        "demon_v3": "assets/imgs/map/npc/恶魔v3.png",
+        "angel": "assets/imgs/map/npc/天使.png",
+        "angel_v3": "assets/imgs/map/npc/天使v3.png"
     }
 }
