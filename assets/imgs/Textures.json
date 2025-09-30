@@ -1,10 +1,43 @@
 {
     "player": {
-        "0": "assets/imgs/像素小人/character.png"
+        "default": "assets/imgs/像素小人/character.png",
+        "dash_1": "assets/imgs/像素小人/冲刺/1.png",
+        "dash_2": "assets/imgs/像素小人/冲刺/2.png",
+        "dash_3": "assets/imgs/像素小人/冲刺/3.png",
+        "dash_4": "assets/imgs/像素小人/冲刺/4.png",
+        "melee_1": "assets/imgs/像素小人/近战/1.png",
+        "melee_2": "assets/imgs/像素小人/近战/2.png",
+        "melee_3": "assets/imgs/像素小人/近战/3.png",
+        "melee_4": "assets/imgs/像素小人/近战/4.png",
+        "melee_5": "assets/imgs/像素小人/近战/5.png",
+        "melee_6": "assets/imgs/像素小人/近战/6.png",
+        "stand_1": "assets/imgs/像素小人/站立/1.png",
+        "stand_2": "assets/imgs/像素小人/站立/2.png",
+        "stand_3": "assets/imgs/像素小人/站立/3.png",
+        "stand_4": "assets/imgs/像素小人/站立/4.png",
+        "ranged_1": "assets/imgs/像素小人/远程攻击/1.png",
+        "ranged_2": "assets/imgs/像素小人/远程攻击/2.png",
+        "ranged_3": "assets/imgs/像素小人/远程攻击/3.png",
+        "ranged_4": "assets/imgs/像素小人/远程攻击/4.png",
+        "ranged_5": "assets/imgs/像素小人/远程攻击/5.png",
+        "ranged_6": "assets/imgs/像素小人/远程攻击/6.png",
+        "block_1": "assets/imgs/像素小人/近战格挡/1(格挡).png",
+        "block_2": "assets/imgs/像素小人/近战格挡/2.png",
+        "block_3": "assets/imgs/像素小人/近战格挡/3.png",
+        "block_4": "assets/imgs/像素小人/近战格挡/4.png",
+        "block_5": "assets/imgs/像素小人/近战格挡/5.png"
     },
     "enemy": {
         "1": "assets/imgs/敌对生物/旧版其他/creep1.png",
         "2": "assets/imgs/敌对生物/旧版其他/creep2.png"
+    },
+    "enemy_balingzhe": {
+        "default": "assets/imgs/敌对生物/小怪1 近战 霸凌者/1.png",
+        "attack_1": "assets/imgs/敌对生物/小怪1 近战 霸凌者/1.png",
+        "attack_2": "assets/imgs/敌对生物/小怪1 近战 霸凌者/2.png",
+        "attack_3": "assets/imgs/敌对生物/小怪1 近战 霸凌者/3.png",
+        "attack_4": "assets/imgs/敌对生物/小怪1 近战 霸凌者/4.png",
+        "attack_5": "assets/imgs/敌对生物/小怪1 近战 霸凌者/5.png"
     },
     "backgrounds": {
         "brick_R": "assets/imgs/map/地块元素/砖块深红.png",

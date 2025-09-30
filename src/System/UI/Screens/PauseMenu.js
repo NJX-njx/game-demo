@@ -1,6 +1,7 @@
 import { UIScreen } from "../base/UIScreen";
 import { UIButton } from "../Elements/UIButton";
 import { game } from "../../../Game";
+import { uiManager } from "../UIManager";
 
 class PauseMenu extends UIScreen {
     constructor() {
@@ -19,13 +20,18 @@ class PauseMenu extends UIScreen {
 
         const startY = cy - 60;
 
-        this.addElement(new UIButton(cx - buttonWidth / 2, startY, buttonWidth, buttonHeight, "继续游戏", () => game.resume()));
-        this.addElement(new UIButton(cx - buttonWidth / 2, startY + (buttonHeight + gap), buttonWidth, buttonHeight, "返回主菜单", () => {
-            game.save();
-            window.location.href = "menu.html";
+        this.addElement(new UIButton(cx - buttonWidth / 2, startY, buttonWidth, buttonHeight, "继续游戏", () => {
+            uiManager.closeAll();
+            game.resume();
+        }));
+        this.addElement(new UIButton(cx - buttonWidth / 2, startY + (buttonHeight + gap), buttonWidth, buttonHeight, "音效设置", () => {
+            uiManager.switchScreen("soundSettings");
         }));
         this.addElement(new UIButton(cx - buttonWidth / 2, startY + 2 * (buttonHeight + gap), buttonWidth, buttonHeight, "存档", () => {
-            game.save();
+            game.saveGame();
+        }));
+        this.addElement(new UIButton(cx - buttonWidth / 2, startY + 3 * (buttonHeight + gap), buttonWidth, buttonHeight, "返回主菜单", () => {
+            window.location.href = "menu.html";
         }));
     }
 

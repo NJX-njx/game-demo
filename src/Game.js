@@ -6,11 +6,12 @@ import { mapManager } from "./Manager/MapManager";
 import { projectilesManager } from "./System/Attack/ProjectilesManager";
 import { attributeManager } from "./Manager/AttributeManager";
 import { player } from "./Entities/Player";
-import { Enemy } from "./Entities/Enemy";
-import { Vector } from "./Utils/Vector";
 import { itemManager } from "./System/Item/ItemManager";
 import { ItemConfigs as Items } from "./System/Item/ItemConfigs";
 import { uiManager } from "./System/UI/UIManager";
+import { interactionManager } from "./Manager/InteractionManager";
+import { saveManager } from "./Manager/SaveManager";
+
 class Game {
     constructor() {
         if (Game.instance) return Game.instance;
@@ -30,40 +31,27 @@ class Game {
 
         this.isStop = false;
         this.isPaused = false;
+        this.isStopUpdate = false;
 
         this.lastTime = 0;
         const maxGameFrameRate = 60;
-        this.targetFrameTime = 1000 / maxGameFrameRate;
-        this.loop = this.loop.bind(this);
-
-        this.statistics = {
-            portal: 0,
-            bullet: 0,
-            restart: 0,
-            jump: 0,
-            jumpTime: 0,
+        this.FrameTime = 1000 / maxGameFrameRate;
+        // 帧率统计数据
+        this.stats = {
+            frameCount: 0,
+            tickCount: 0,
+            tickTimeAccum: 0,
+            frameTimeAccum: 0,
+            lastStatsSampleTime: performance.now()
         };
+        this.loop = this.loop.bind(this);
     }
+
+    get enemies() { return mapManager.enemies; }
 
     async init() {
         await textureManager.load();
         await soundManager.load();
-
-        // 读取选中槽位并尝试加载存档
-        const selectedSlotRaw = localStorage.getItem('selected_slot');
-        const selectedSlot = Math.max(1, parseInt(selectedSlotRaw || '1', 10) || 1);
-        this.currentSlotId = selectedSlot;
-        let loaded = false;
-        try { loaded = await Game.loadGame(selectedSlot); } catch (_) { loaded = false; }
-        if (!loaded) {
-            await mapManager.loadRoom(0, 1);
-        }
-
-        // 初始化玩家：只有在未从存档加载时才使用默认出生点
-        if (!loaded) {
-            const spawn = mapManager.getPlayerSpawn();
-            player.setPosition(new Vector(spawn.x, spawn.y));
-        }
 
         // 监听玩家血量变化事件，更新currentHpPercent
         bus.on({
@@ -75,53 +63,91 @@ class Game {
         });
 
         // 游戏主循环事件
-        // 先更新地图交互（优先级略高于玩家/敌人）
-        bus.on({
-            event: Events.game.tick,
-            handler: ({ deltaTime }) => mapManager.update(deltaTime, player),
-            priority: 0.8
-        });
+        {
+            // 物品管理器更新（如物品冷却、持续效果）
+            bus.on({
+                event: Events.game.tick,
+                handler: ({ deltaTime }) => itemManager.update(deltaTime),
+                priority: 1
+            });
 
-        bus.on({
-            event: Events.game.tick,
-            handler: ({ deltaTime }) => itemManager.update(deltaTime),
-            priority: 1
-        });
-        bus.on({
-            event: Events.game.tick,
-            handler: ({ deltaTime }) => attributeManager.update(deltaTime),
-            priority: 0.7
-        });
-        bus.on({
-            event: Events.game.tick,
-            handler: ({ deltaTime }) => player.update(deltaTime),
-            priority: 0.5
-        });
-        bus.on({
-            event: Events.game.tick,
-            handler: ({ deltaTime }) => this.enemies.forEach(enemy => enemy.update(deltaTime)),
-            priority: 0.3
-        });
-        bus.on({
-            event: Events.game.tick,
-            handler: ({ deltaTime }) => projectilesManager.update(deltaTime),
-            priority: 0.1
-        });
+            // 属性管理器更新（如属性衰减、buff计时）
+            bus.on({
+                event: Events.game.tick,
+                handler: ({ deltaTime }) => attributeManager.update(deltaTime),
+                priority: 0.9
+            });
+
+            // 地图交互更新
+            bus.on({
+                event: Events.game.tick,
+                handler: ({ deltaTime }) => {
+                    mapManager.update(deltaTime);
+                },
+                priority: 0.8
+            });
+
+            // 玩家更新（移动、攻击等）
+            bus.on({
+                event: Events.game.tick,
+                handler: ({ deltaTime }) => player.update(deltaTime),
+                priority: 0.5
+            });
+
+            // 敌人更新（AI、移动、攻击）
+            bus.on({
+                event: Events.game.tick,
+                handler: ({ deltaTime }) => this.enemies.forEach(enemy => enemy.update(deltaTime)),
+                priority: 0.3
+            });
+
+            // 子弹管理器更新（子弹飞行、碰撞检测）
+            bus.on({
+                event: Events.game.tick,
+                handler: ({ deltaTime }) => projectilesManager.update(deltaTime),
+                priority: 0.1
+            });
+        }
 
         bus.on({
             event: Events.player.die,
             handler: () => this.stop()
         });
 
-        // 初始化敌人
-        const enemySpawns = mapManager.getEnemySpawns();
-        this.enemies = [];
-        if (Array.isArray(enemySpawns)) {
-            for (const e of enemySpawns) {
-                this.enemies.push(new Enemy(e.type, new Vector(e.x, e.y)));
-            }
+        // 监听交互点触发事件
+        bus.on({
+            event: Events.interaction.trigger,
+            handler: ({ interaction }) => interactionManager.handleInteraction(interaction)
+        });
+
+        bus.on({
+            event: Events.dialog.start,
+            handler: () => {
+                this.stopUpdaet();
+            },
+            priority: 1
+        });
+
+        bus.on({
+            event: Events.dialog.end,
+            handler: () => {
+                this.resumeUpdate();
+            },
+            priority: -1
+        });
+
+        // 读取选中槽位并尝试加载存档
+        const selectedSlotRaw = localStorage.getItem('selected_slot');
+        const selectedSlot = Math.max(1, parseInt(selectedSlotRaw || '1', 10) || 1);
+        this.currentSlotId = selectedSlot;
+        let loaded = false;
+        try { loaded = await Game.loadGame(selectedSlot); } catch (_) { loaded = false; }
+        if (!loaded) {
+            await mapManager.loadRoom(0, 1);
         }
+
         //TODO:测试用
+        mapManager.loadRoom(0, 3);
         itemManager.tryAcquire(Items.xq休憩);
         itemManager.tryAcquire(Items.yy友谊);
         itemManager.tryAcquire(Items.ls朗诵);
@@ -192,38 +218,91 @@ class Game {
         ctx.fillRect(config.x, fgY, config.width, currentHeight);
     }
 
-    start(prev = 0) {
-        this.loop(0);
-    }
-
-    loop(currentTime) {
-        const deltaTime = currentTime - this.lastTime;
-        if (deltaTime >= this.targetFrameTime) {
-            inputManager.update();
-
-            if (inputManager.isFirstDown("Esc")) {
-                this.switchPause();
-            }
-
-            if (game.enemies.length == 0)
-                bus.emit(Events.game.battle.end);
-
-            if (!this.isPaused && !this.isStop) bus.emit(Events.game.tick, { deltaTime: deltaTime });
-
-            this.draw();
-        }
-        this.lastTime = currentTime - (deltaTime % this.targetFrameTime);
+    start() {
+        this.lastTime = performance.now();
+        this.accumulator = 0;
         requestAnimationFrame(this.loop);
     }
 
+    loop(currentTime) {
+        let frameTime = currentTime - this.lastTime;
+        this.lastTime = currentTime;
+
+        // accumulate frame interval for MSPF calculation
+        this.stats.frameTimeAccum += frameTime;
+
+        this.accumulator = (this.accumulator || 0) + frameTime;
+
+        while (this.accumulator >= this.FrameTime) {
+            const tickStart = performance.now();
+            inputManager.update();
+
+            if (inputManager.isFirstDown("Esc")) {
+                // 优先让 UI 回退一层（若有界面打开）
+                if (uiManager.isUIOpen()) {
+                    uiManager.goBack();
+                    // 回退后若没有 UI 再切换暂停
+                    if (!uiManager.isUIOpen()) this.resume();
+                } else {
+                    this.pause();
+                }
+            }
+
+            if (game.enemies.length == 0) bus.emit(Events.game.battle.end);
+
+            if (!this.isStopUpdate) {
+                bus.emit(Events.game.tick, { deltaTime: this.FrameTime });
+                this.stats.tickCount++;
+            }
+            const tickEnd = performance.now();
+            this.stats.tickTimeAccum += (tickEnd - tickStart);
+            this.accumulator -= this.FrameTime;
+        }
+
+        this.draw();
+        this.stats.frameCount++;
+
+        // 每十秒计算一次帧率等数据
+        const now = performance.now();
+        const elapsed = now - this.stats.lastStatsSampleTime;
+        const calcTime = 10000;
+        if (elapsed >= calcTime) {
+            const seconds = elapsed / 1000;
+            const fps = this.stats.frameCount / seconds;
+            const tps = this.stats.tickCount / seconds;
+            const mspt = this.stats.tickCount > 0 ? (this.stats.tickTimeAccum / this.stats.tickCount) : 0;
+            const mspf = this.stats.frameCount > 0 ? (this.stats.frameTimeAccum / this.stats.frameCount) : 0;
+            console.log(`FPS: ${fps.toFixed(1)}, TPS: ${tps.toFixed(1)}, MSPT: ${mspt.toFixed(2)}ms, MSPF: ${mspf.toFixed(2)}ms`);
+            // reset
+            this.stats.frameCount = 0;
+            this.stats.tickCount = 0;
+            this.stats.tickTimeAccum = 0;
+            this.stats.frameTimeAccum = 0;
+            this.stats.lastStatsSampleTime = now;
+        }
+
+        requestAnimationFrame(this.loop);
+    }
+
+    stopUpdaet() {
+        this.isStopUpdate = true;
+    }
+
+    resumeUpdate() {
+        this.isStopUpdate = false;
+    }
+
     pause() {
+        if (this.isPaused) return;
         this.isPaused = true;
+        this.stopUpdaet();
         uiManager.switchScreen("pauseMenu");
     }
 
     resume() {
+        if (!this.isPaused) return;
         this.isPaused = false;
-        uiManager.switchScreen();
+        this.resumeUpdate();
     }
 
     switchPause() {
@@ -234,53 +313,18 @@ class Game {
     }
 
     stop() {
+        if (this.isStop) return;
         this.isStop = true;
+        this.stopUpdaet();
     }
 
-    save() {
+    saveGame() {
         const slotToSave = this.currentSlotId && this.currentSlotId > 0 ? this.currentSlotId : 1;
-        this.saveCurrentGame(slotToSave); // 游戏退出时自动保存到当前槽位
-    }
-
-    saveCurrentGame(slotId = 1) {
-        const saveData = {
-            player: player.constructor.getSaveData(),
-            layer: mapManager.currentLayer,
-            room: mapManager.currentRoom,
-            timestamp: new Date().toISOString()
-        };
-        // 读取或初始化 present_data
-        let currentPlayer = null;
-        try { currentPlayer = JSON.parse(localStorage.getItem("present_data")); } catch (_) { currentPlayer = null; }
-        if (!currentPlayer || typeof currentPlayer !== 'object') {
-            currentPlayer = { saveSlots: [] };
-        }
-        currentPlayer.saveSlots = currentPlayer.saveSlots || [];
-        currentPlayer.saveSlots[slotId - 1] = saveData;
-        localStorage.setItem("present_data", JSON.stringify(currentPlayer));
-        return saveData;
+        saveManager.save(slotToSave);
     }
 
     async loadGame(slotId = 1) {
-        let currentPlayer = null;
-        try { currentPlayer = JSON.parse(localStorage.getItem("present_data")); } catch (_) { currentPlayer = null; }
-        if (!currentPlayer?.saveSlots?.[slotId - 1]) return false;
-
-        const saveData = currentPlayer.saveSlots[slotId - 1];
-        // 先加载地图，再恢复玩家位置/状态（注意将位置还原为 Vector）
-        await mapManager.loadRoom(saveData.layer, saveData.room);
-        try {
-            if (saveData.player?.position) {
-                const pos = saveData.player.position;
-                player.setPosition(new Vector(pos.x, pos.y));
-            }
-            if (saveData.player?.state) {
-                player.state = saveData.player.state;
-            }
-        } catch (_) {
-            // 容错：若旧版本数据结构不一致，则只使用地图加载结果
-        }
-        return true;
+        return await saveManager.load(slotId);
     }
 }
 

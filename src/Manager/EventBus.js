@@ -28,6 +28,10 @@ export const EventTypes = {
     boss: {},
     interaction: {
         trigger: "MAP_INTERACTION_TRIGGER"
+    },
+    dialog: {
+        start: "DIALOG_START",
+        end: "DIALOG_END"
     }
 };
 

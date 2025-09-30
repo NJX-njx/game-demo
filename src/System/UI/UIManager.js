@@ -1,6 +1,7 @@
 import { itemBar } from "./Screens/ItemBarSeen";
 import { itemManager } from "../Item/ItemManager";
 import { pauseMenu } from "./Screens/PauseMenu";
+import { soundSettings } from "./Screens/SoundSettings";
 
 class UIManager {
     static instance;
@@ -12,6 +13,7 @@ class UIManager {
         this.screens = {};              // 所有界面
         this.currentScreen = null;      // 当前操作界面
         this.persistentScreens = new Set(); // 一直显示的界面
+        this._history = []; // 已打开的界面历史栈
     }
 
     /**
@@ -27,14 +29,70 @@ class UIManager {
     /**
      * 切换当前操作界面
      * persistent 屏幕不会被隐藏
+     * 默认会把当前界面入栈，以便后续可以回退（按 Esc）
+     * @param {string} screenName
+     * @param {boolean} pushCurrent 是否将当前界面压入历史（默认 true）
      */
-    switchScreen(screenName) {
+    switchScreen(screenName, pushCurrent = true) {
+        const next = this.screens[screenName];
+        if (!next) return;
+
+        // 如果需要入栈当前界面（供回退），且当前存在且不是 persistent
+        if (pushCurrent && this.currentScreen && !this.persistentScreens.has(this.currentScreen.name)) {
+            this._history.push(this.currentScreen.name);
+        }
+
+        // 隐藏当前（如果不是 persistent）
         if (this.currentScreen && !this.persistentScreens.has(this.currentScreen.name)) {
             this.currentScreen.hide();
         }
 
-        this.currentScreen = this.screens[screenName];
+        this.currentScreen = next;
         this.currentScreen?.show();
+    }
+
+    /**
+     * 关闭当前界面和所有历史界面（不关闭 persistent 常驻界面）
+     */
+    closeAll() {
+        // 隐藏当前
+        if (this.currentScreen && !this.persistentScreens.has(this.currentScreen.name)) {
+            this.currentScreen.hide();
+        }
+        this.currentScreen = null;
+
+        // 隐藏并清空历史中记录的界面（忽略 persistent）
+        while (this._history.length > 0) {
+            const name = this._history.pop();
+            const screen = this.screens[name];
+            if (screen && !this.persistentScreens.has(name) && typeof screen.hide === 'function') {
+                try { screen.hide(); } catch (e) { /* ignore */ }
+            }
+        }
+    }
+
+    /**
+     * 返回是否有当前操作界面在显示（不包含 persistent 常驻界面）
+     */
+    isUIOpen() {
+        return !!(this.currentScreen && this.currentScreen.visible);
+    }
+
+    /**
+     * 回退到上一个界面（弹出历史栈一层）
+     */
+    goBack() {
+        if (this._history.length > 0) {
+            const prev = this._history.pop();
+            // 切换到 prev，但不要把当前再次入栈
+            this.switchScreen(prev, false);
+            return;
+        }
+        // 若没有历史，关闭当前非 persistent 界面
+        if (this.currentScreen && !this.persistentScreens.has(this.currentScreen.name)) {
+            this.currentScreen.hide();
+            this.currentScreen = null;
+        }
     }
 
     /**
@@ -91,3 +149,4 @@ const canvas = document.getElementById('ui-canvas');
 });
 uiManager.addScreen(itemBar, true);
 uiManager.addScreen(pauseMenu);
+uiManager.addScreen(soundSettings);

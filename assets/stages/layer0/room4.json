@@ -1,5 +1,8 @@
 {
-    "playerSpawn": { "x": 20, "y": 20 },
+    "playerSpawn": {
+        "x": 20,
+        "y": 20
+    },
     "enemySpawns": [
         {
             "x": 1200,
@@ -20135,7 +20138,45 @@
             },
             "type": "plot",
             "autoTrigger": true,
-            "event": "plot4-1"
+            "event": "plot4-1",
+            "dialogs": [
+                {
+                    "speaker": "?",
+                    "text": "取火。人类最古老的慰藉，照亮未知，驱散黑暗。"
+                },
+                {
+                    "speaker": "?",
+                    "text": "有时，敌人需要被保持在远方。用光…而非剑。"
+                },
+                {
+                    "speaker": "?",
+                    "text": "心念流转，她能为不同的困境，探究不同的答案。"
+                },
+                {
+                    "speaker": "【系统提示】",
+                    "text": "点按 [K] 冲刺，冲刺期间不会受到伤害。"
+                },
+                {
+                    "speaker": "?",
+                    "text": "逃避可耻，但在此地…它有用。直面需要力量，也需要智慧。"
+                },
+                {
+                    "speaker": "【系统提示】",
+                    "text": "长按 [Q] 格挡，受到的伤害将降低。"
+                },
+                {
+                    "speaker": "?",
+                    "text": "并非所有非议都需要承受。学会隔绝，学会化解。"
+                },
+                {
+                    "speaker": "【系统提示】",
+                    "text": "在敌人攻击时点按 [Q] 可执行弹反。闪避敌人的攻击后按 [J] 可进行更强的反击。"
+                },
+                {
+                    "speaker": "?",
+                    "text": "理解敌人，即是理解自己，反之亦然。聪慧如她，当然有天分看破自己的心魔"
+                }
+            ]
         },
         {
             "position": {
@@ -20148,7 +20189,13 @@
             },
             "type": "fire",
             "autoTrigger": true,
-            "event": "teach4-1"
+            "event": "teach4-1",
+            "dialogs": [
+                {
+                    "speaker": "【系统提示】",
+                    "text": "[R] 切换远程武器"
+                }
+            ]
         },
         {
             "position": {
@@ -20176,7 +20223,29 @@
             "type": "plot",
             "autoTrigger": false,
             "event": "plot4-2",
-            "can_be_used_when": "battle_end"
+            "can_be_used_when": "battle_end",
+            "dialogs": [
+                {
+                    "speaker": "?",
+                    "text": "她已找回旧日的武器，执掌驱暗的明火。"
+                },
+                {
+                    "speaker": "?",
+                    "text": "她记得如何驱散心魔，保全自己。"
+                },
+                {
+                    "speaker": "?",
+                    "text": "但请记住，在这条路上，她最需要战胜的…"
+                },
+                {
+                    "speaker": "?",
+                    "text": "永远是昨天的自己。"
+                },
+                                {
+                    "speaker": "?",
+                    "text": "前进吧。她的归途，方才开始。"
+                }
+            ]
         },
         {
             "position": {

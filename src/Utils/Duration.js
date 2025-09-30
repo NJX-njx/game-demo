@@ -22,6 +22,9 @@ export class Duration {
     expired() {
         return this.remainingTime <= 0;
     }
+    finished() {
+        return this.expired();
+    }
 
     /** 重置计时器 */
     reset() {

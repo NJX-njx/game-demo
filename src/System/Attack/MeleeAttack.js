@@ -3,8 +3,8 @@ import { Hitbox } from "../../Utils/Hitbox";
 import { Vector } from "../../Utils/Vector";
 
 export class MeleeAttack extends AttackBase {
-    constructor(owner) {
-        super(owner, "melee");
+    constructor(owner, options = {}) {
+        super(owner, "melee", options);
     }
 
     onHit(owner, damage) {
@@ -14,7 +14,7 @@ export class MeleeAttack extends AttackBase {
         const size = new Vector(owner.hitbox.size.x * 0.8, owner.hitbox.size.y * 0.5);
         const attackBox = new Hitbox(pos, size);
 
-        this.targetSelector().forEach(target => {
+        this.targets.forEach(target => {
             if (attackBox.checkHit(target.hurtBox)) {
                 this.applyDamage(target, damage);
             }

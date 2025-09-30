@@ -1,16 +1,22 @@
 {
-    "playerSpawn": { "x": 20, "y": 380 },
+    "playerSpawn": {
+        "x": 20,
+        "y": 380
+    },
     "enemySpawns": [
         {
             "x": 300,
             "y": 620,
-            "type": "1"
+            "type": "balingzhe"
         }
     ],
     "events": [
         {
             "case": "battle_end",
-            "event": ["plot3-4", "teach3-2"]
+            "event": [
+                "plot3-4",
+                "teach3-2"
+            ]
         }
     ],
     "backgrounds": [
@@ -8171,7 +8177,25 @@
             },
             "type": "plot",
             "autoTrigger": false,
-            "event": "plot3-1"
+            "event": "plot3-1",
+            "dialogs": [
+                {
+                    "speaker": "?",
+                    "text": "看，一件被遗弃的旧物。它曾属于一个…更轻盈的她。那时，她的敌人是幻想中的巨龙，故事中的恶徒。"
+                },
+                {
+                    "speaker": "?",
+                    "text": "她认出了它。曾被长辈斥为‘无用’的幻想，被弃于角落的告慰。但此刻，它比任何事物都来得真实。"
+                },
+                {
+                    "speaker": "?",
+                    "text": "女孩子家家的，学这些打打杀杀做什么？长大了变成杀人犯怎么办？"
+                },
+                {
+                    "speaker": "?",
+                    "text": "是啊……中国人的想象惟在这一层能够如此跃进。"
+                }
+            ]
         },
         {
             "position": {
@@ -8197,7 +8221,21 @@
             },
             "type": "plot",
             "autoTrigger": true,
-            "event": "plot3-2"
+            "event": "plot3-2",
+            "dialogs": [
+                {
+                    "speaker": "?",
+                    "text": "每一次挥动，都是对过往沉默的一次反驳。"
+                },
+                {
+                    "speaker": "?",
+                    "text": "挥动它并不难。难的是记起，她曾相信，自己能凭它战胜一切。"
+                },
+                {
+                    "speaker": "?",
+                    "text": "在中国，任何超脱飞扬的思想都会砰然坠地的，现实的引力太沉重了。"
+                }
+            ]
         },
         {
             "position": {
@@ -8210,7 +8248,17 @@
             },
             "type": "plot",
             "autoTrigger": true,
-            "event": "teach3-1"
+            "event": "teach3-1",
+            "dialogs": [
+                {
+                    "speaker": "【系统提示】",
+                    "text": "近战攻击解锁"
+                },
+                {
+                    "speaker": "【系统提示】",
+                    "text": " [J] 攻击"
+                }
+            ]
         },
         {
             "position": {
@@ -8223,7 +8271,17 @@
             },
             "type": "plot",
             "autoTrigger": true,
-            "event": "plot3-3"
+            "event": "plot3-3",
+            "dialogs": [
+                {
+                    "speaker": "【系统提示】",
+                    "text": "近战攻击解锁"
+                },
+                {
+                    "speaker": "【系统提示】",
+                    "text": " [J] 攻击"
+                }
+            ]
         },
         {
             "position": {
