@@ -1,0 +1,123 @@
+{
+    "backgrounds": [
+        {
+            "position": {
+                "x": 40,
+                "y": 0
+            },
+            "size": {
+                "x": 1240,
+                "y": 660
+            },
+            "type": "CG6-3"
+        }
+    ],
+    "blocks": [
+        {
+            "position": {
+                "x": 0,
+                "y": 0
+            },
+            "size": {
+                "x": 40,
+                "y": 720
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 40,
+                "y": 660
+            },
+            "size": {
+                "x": 440,
+                "y": 60
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 1140,
+                "y": 660
+            },
+            "size": {
+                "x": 140,
+                "y": 20
+            },
+            "type": "grass"
+        },
+        {
+            "position": {
+                "x": 1140,
+                "y": 680
+            },
+            "size": {
+                "x": 140,
+                "y": 40
+            },
+            "type": "dirt"
+        },
+        {
+            "position": {
+                "x": 480,
+                "y": 660
+            },
+            "size": {
+                "x": 660,
+                "y": 60
+            },
+            "type": "water"
+        }
+    ],
+    "textures": [
+        {
+            "position": {
+                "x": 420,
+                "y": 620
+            },
+            "size": {
+                "x": 60,
+                "y": 40
+            },
+            "type": "sign"
+        },
+        {
+            "position": {
+                "x": 0,
+                "y": 580
+            },
+            "size": {
+                "x": 40,
+                "y": 80
+            },
+            "type": "door"
+        }
+    ],
+    "interactions": [
+        {
+            "position": {
+                "x": 400,
+                "y": 0
+            },
+            "size": {
+                "x": 880,
+                "y": 660
+            },
+            "events": [
+                {
+                    "event": "plot",
+                    "payout": {
+                        "id": "63-1"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ]
+        }
+    ],
+    "playerSpawn": {
+        "x": 60,
+        "y": 600
+    }
+}

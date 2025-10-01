@@ -41,6 +41,7 @@
     },
     "backgrounds": {
         "brick_R": "assets/imgs/map/地块元素/砖块深红.png",
+        "white": "assets/imgs/map/地块元素/纯白.png",
         "yellow": "assets/imgs/map/background/房间02.png",
         "ICU": "assets/imgs/map/地块元素/墙面手术室.png",
         "office_1": "assets/imgs/map/background/办公室1.png",
@@ -51,7 +52,8 @@
         "room_03": "assets/imgs/map/background/房间03.png",
         "campus_01": "assets/imgs/map/background/校园01.png",
         "campus_02": "assets/imgs/map/background/校园02.jpg",
-        "campus_03": "assets/imgs/map/background/校园03.jpg"
+        "campus_03": "assets/imgs/map/background/校园03.jpg",
+        "yellow_wall": "assets/imgs/map/地块元素/墙面泛黄.png"
     },
     "blocks": {
         "black": "assets/imgs/map/地块元素/纯黑.png"
@@ -71,6 +73,7 @@
         "grass_yellow": "assets/imgs/map/地块元素/草块泛黄.png",
         "white": "assets/imgs/map/地块元素/纯白.png",
         "black": "assets/imgs/map/地块元素/纯黑.png",
+        "sign": "assets/imgs/map/地块元素/告示牌1.png",
         "sign_1": "assets/imgs/map/地块元素/告示牌1.png",
         "sign_2": "assets/imgs/map/地块元素/告示牌2.png",
         "interaction": "assets/imgs/map/地块元素/交互提示.png",
@@ -80,7 +83,6 @@
         "door_3": "assets/imgs/map/地块元素/门3.png",
         "door_4": "assets/imgs/map/地块元素/门4.png",
         "door_5": "assets/imgs/map/地块元素/门5.png",
-        "wall_yellow": "assets/imgs/map/地块元素/墙面泛黄.png",
         "wall_gray": "assets/imgs/map/地块元素/墙面灰白.png",
         "desk": "assets/imgs/map/地块元素/书桌.png",
         "tree": "assets/imgs/map/地块元素/树.png",
@@ -97,6 +99,14 @@
         "brick_black_blue": "assets/imgs/map/地块元素/砖块蓝黑.png",
         "brick_black_blue_v2": "assets/imgs/map/地块元素/砖块蓝黑v2.png",
         "brick_red": "assets/imgs/map/地块元素/砖块深红.png"
+    },
+    "interactions": {
+        "next_room": "assets/imgs/map/地块元素/门1.png",
+        "chest": "assets/imgs/map/地块元素/宝箱3.png",
+        "chest_boss": "assets/imgs/map/地块元素/宝箱3.png",
+        "chest_end": "assets/imgs/map/地块元素/宝箱3.png",
+        "angel": "assets/imgs/map/npc/天使v3.png",
+        "demon": "assets/imgs/map/npc/恶魔v3.png"
     },
     "npc": {
         "demon": "assets/imgs/map/npc/恶魔.png",

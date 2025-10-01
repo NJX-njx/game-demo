@@ -2,10 +2,9 @@ import { Hitbox } from "../Utils/Hitbox";
 import { Vector } from "../Utils/Vector";
 import { textureManager } from "./TextureManager";
 import { dataManager } from "./DataManager";
-import { eventBus as bus, EventTypes as Events } from "./EventBus";
-import { inputManager } from "../System/Input/InputManager";
 import { player } from "../Entities/Player";
 import { spawnEnemy } from "../Entities/Enemys/Enemy";
+import { Interaction } from "./InteractionManager";
 
 // Block类，继承自Hitbox
 class Block extends Hitbox {
@@ -15,22 +14,7 @@ class Block extends Hitbox {
     }
 }
 
-// Interaction类，继承自Hitbox
-class Interaction extends Hitbox {
-    constructor(position, size, extra = {}) {
-        super(new Vector(position.x, position.y), new Vector(size.x, size.y));
-        for (const key in extra) {
-            if (key !== 'position' && key !== 'size') {
-                this[key] = extra[key];
-            }
-        }
-        this.type = extra.type;
-        this.autoTrigger = !!extra.autoTrigger;
-        this.triggered = false; // 是否已触发
-    }
-}
-
-const layerRooms = { 0: 4, 1: 1 };
+const layerRooms = { 0: 4, 1: 8, 2: 8, 3: 8, 4: 8, 5: 10, 6: 3 };
 
 class MapManager {
     constructor() {
@@ -55,9 +39,9 @@ class MapManager {
      * @param {number} room 房间编号或名称
      */
     async loadRoom(layer, room) {
-        const url = `assets/stages/layer${layer}/room${room}.json`;
         try {
-            console.log(`🗺️ 开始加载房间layer${layer}/room${room}`);
+            const url = `assets/stages/Chapter${layer}/Lv${layer}-${room}.json`;
+            console.log(`🗺️ 开始加载房间: ${url}`)
 
             const data = await dataManager.loadJSON(url);
             this.currentLayer = layer;
@@ -67,16 +51,24 @@ class MapManager {
             this.backgrounds = (data.backgrounds || []).map(obj => ({ ...obj }));
             this.blocks = (data.blocks || []).map(obj => new Block(obj.position, obj.size, obj.type));
             this.textures = (data.textures || []).map(obj => ({ ...obj }));
-            const allInteractions = (data.interactions || []).map(obj => new Interaction(obj.position, obj.size, obj));
-            // 自动触发的排前面
-            this.interactions = [
-                ...allInteractions.filter(i => i.autoTrigger),
-                ...allInteractions.filter(i => !i.autoTrigger)
-            ];
+            this.interactions = (data.interactions || []).map(obj => new Interaction(obj.position, obj.size, obj));
+
+            // 检查所引用的贴图是否存在，尽早在加载阶段警告缺失的资源
+            const checkTexture = (kind, item, source) => {
+                const texture = textureManager.getTexture(kind, item.type);
+                if (!texture) {
+                    console.warn(`缺少贴图: kind='${kind}' id='${item.type}' (source=${source})`, item);
+                }
+            };
+
+            for (const bg of this.backgrounds) checkTexture('backgrounds', bg, 'backgrounds');
+            for (const block of this.blocks) checkTexture('blocks', block, 'blocks');
+            for (const tex of this.textures) checkTexture('textures', tex, 'textures');
 
             player.setPosition(new Vector(playerSpawn.x, playerSpawn.y));
 
             this.enemies = [];
+            this.enemySpawns = enemySpawns;
             for (const e of enemySpawns) {
                 this.enemies.push(spawnEnemy(e.type, new Vector(e.x, e.y), new Vector(50, 50)));
             }
@@ -85,9 +77,9 @@ class MapManager {
             console.log('🗺️ 加载交互点:', this.interactions);
             console.log('👹 加载敌人:', this.enemies);
 
-            console.log(`✅ 成功切换到layer${layer}/room${room}`);
+            console.log(`✅ 成功切换到 ${url}`);
         } catch (e) {
-            console.error(`加载房间layer${layer}/room${room}失败，error:${e}`);
+            console.error(`加载房间失败: ${url}，error:`, e);
         }
     }
 
@@ -108,30 +100,7 @@ class MapManager {
     /** 获取所有方块的碰撞盒数组 */
     getBlockHitboxes() { return this.blocks; }
     /** 获取所有交互点的碰撞盒数组 */
-    getInteractionHitboxes() { return this.interactions; }
-
-    /**
-     * 每帧更新：检测玩家与交互点重叠并触发
-     * - autoTrigger: 首次进入范围立即触发一次
-     * - 手动交互: 按下 E 键且重叠时触发
-     */
-    update(deltaTime) {
-        try {
-            // 遍历 interactions
-            for (let inter of this.interactions) {
-                // 检查玩家是否与交互点重叠及交互点是否已触发过
-                if (!player.hitbox.checkHit(inter) || inter.triggered) continue;
-
-                if (inter.autoTrigger || inputManager.isKeyDown('E')) {// 自动触发或手动交互：E 键
-                    inter.triggered = true;
-                    bus.emit(Events.interaction.trigger, { interaction: inter });
-                    break; // 每帧只触发一个交互点
-                }
-            }
-        } catch (err) {
-            console.error('MapManager.update error:', err);
-        }
-    }
+    getInteractions() { return this.interactions; }
 
     /**
      * 渲染地图，显示顺序：背景-方块-贴图
@@ -152,7 +121,7 @@ class MapManager {
         }
         // 绘制交互点提示
         for (const inter of this.interactions) {
-            this.drawInteraction(ctx, inter);
+            inter.draw(ctx);
         }
     }
 
@@ -174,81 +143,6 @@ class MapManager {
             ctx.fillRect(item.position.x, item.position.y, item.size.x, item.size.y);
         }
         ctx.restore();
-    }
-
-    /**
-     * 绘制交互点提示（只显示传送点）
-     * @param {CanvasRenderingContext2D} ctx
-     * @param {Object} inter - 交互点数据
-     */
-    drawInteraction(ctx, inter) {
-        // 只绘制传送点
-        if (inter.type !== 'next_room' && inter.type !== 'exit') {
-            return;
-        }
-
-        ctx.save();
-
-        // 绘制交互点边框
-        ctx.lineWidth = 2;
-
-        // 检查当前房间是否有敌人
-        const hasEnemies = this.enemySpawns && this.enemySpawns.length > 0;
-        const requiresBattleEnd = inter.can_be_used_when === 'battle_end' || hasEnemies;
-
-        // 根据条件显示不同颜色
-        if (requiresBattleEnd) {
-            ctx.strokeStyle = '#ffaa00'; // 橙色边框
-        } else {
-            ctx.strokeStyle = '#00ff00'; // 绿色边框
-        }
-
-        ctx.strokeRect(inter.position.x, inter.position.y, inter.size.x, inter.size.y);
-
-        // 绘制文字背景
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(inter.position.x, inter.position.y - 25, inter.size.x, 20);
-
-        // 绘制文字
-        let text = '';
-        let textColor = '#ffffff';
-
-        if (requiresBattleEnd) {
-            text = '传送点 (需击败所有敌人)';
-            textColor = '#ffaa00';
-        } else {
-            text = '传送点 (按E键传送)';
-            textColor = '#00ff00';
-        }
-
-        ctx.fillStyle = textColor;
-        ctx.font = '12px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(
-            text,
-            inter.position.x + inter.size.x / 2,
-            inter.position.y - 10
-        );
-
-        ctx.restore();
-    }
-
-    /**
-     * 获取当前地图状态
-     * @returns {MapManager} 包含地图状态的对象
-     */
-    getMapState() {
-        return MapManager.instance;
-    }
-
-    /**
-     * 恢复地图状态
-     * @param {MapManager} instance 地图状态对象
-     */
-    restoreMapState(instance) {
-        if (instance && instance instanceof MapManager) {
-            MapManager.instance = instance;
-        }
     }
 }
 

@@ -1,0 +1,836 @@
+{
+    "backgrounds": [
+        {
+            "position": {
+                "x": 20,
+                "y": 20
+            },
+            "size": {
+                "x": 1240,
+                "y": 680
+            },
+            "type": "CG2-2"
+        }
+    ],
+    "blocks": [
+        {
+            "position": {
+                "x": 0,
+                "y": 0
+            },
+            "size": {
+                "x": 20,
+                "y": 720
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 20,
+                "y": 0
+            },
+            "size": {
+                "x": 1260,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 1260,
+                "y": 20
+            },
+            "size": {
+                "x": 20,
+                "y": 700
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 20,
+                "y": 700
+            },
+            "size": {
+                "x": 1240,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 460,
+                "y": 540
+            },
+            "size": {
+                "x": 20,
+                "y": 160
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 720,
+                "y": 480
+            },
+            "size": {
+                "x": 20,
+                "y": 140
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 460,
+                "y": 420
+            },
+            "size": {
+                "x": 20,
+                "y": 40
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 720,
+                "y": 380
+            },
+            "size": {
+                "x": 20,
+                "y": 100
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 740,
+                "y": 440
+            },
+            "size": {
+                "x": 520,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 160,
+                "y": 560
+            },
+            "size": {
+                "x": 300,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 20,
+                "y": 420
+            },
+            "size": {
+                "x": 440,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 540,
+                "y": 260
+            },
+            "size": {
+                "x": 20,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 460,
+                "y": 400
+            },
+            "size": {
+                "x": 20,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 640,
+                "y": 600
+            },
+            "size": {
+                "x": 20,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 540,
+                "y": 480
+            },
+            "size": {
+                "x": 20,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 600,
+                "y": 380
+            },
+            "size": {
+                "x": 20,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 100,
+                "y": 300
+            },
+            "size": {
+                "x": 200,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 720,
+                "y": 240
+            },
+            "size": {
+                "x": 20,
+                "y": 60
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 740,
+                "y": 220
+            },
+            "size": {
+                "x": 520,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 20,
+                "y": 120
+            },
+            "size": {
+                "x": 360,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 460,
+                "y": 20
+            },
+            "size": {
+                "x": 20,
+                "y": 120
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 460,
+                "y": 200
+            },
+            "size": {
+                "x": 20,
+                "y": 140
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 360,
+                "y": 140
+            },
+            "size": {
+                "x": 20,
+                "y": 80
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 380,
+                "y": 200
+            },
+            "size": {
+                "x": 80,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 720,
+                "y": 20
+            },
+            "size": {
+                "x": 20,
+                "y": 140
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 560,
+                "y": 120
+            },
+            "size": {
+                "x": 160,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 860,
+                "y": 560
+            },
+            "size": {
+                "x": 260,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 920,
+                "y": 460
+            },
+            "size": {
+                "x": 20,
+                "y": 100
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 780,
+                "y": 520
+            },
+            "size": {
+                "x": 20,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 860,
+                "y": 180
+            },
+            "size": {
+                "x": 80,
+                "y": 40
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 1040,
+                "y": 120
+            },
+            "size": {
+                "x": 100,
+                "y": 100
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 720,
+                "y": 680
+            },
+            "size": {
+                "x": 20,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 920,
+                "y": 340
+            },
+            "size": {
+                "x": 20,
+                "y": 100
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 840,
+                "y": 320
+            },
+            "size": {
+                "x": 260,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 300,
+                "y": 280
+            },
+            "size": {
+                "x": 20,
+                "y": 140
+            },
+            "type": "black"
+        }
+    ],
+    "textures": [
+    ],
+    "interactions": [
+        {
+            "position": {
+                "x": 640,
+                "y": 20
+            },
+            "size": {
+                "x": 60,
+                "y": 100
+            },
+            "tags": [
+                "next_room"
+            ],
+            "events": [
+                {
+                    "event": "next_room",
+                    "payout": {
+                        "id": "2-3"
+                    }
+                }
+            ],
+            "cond": [
+                "battle_end"
+            ]
+        },
+        {
+            "position": {
+                "x": 580,
+                "y": 80
+            },
+            "size": {
+                "x": 40,
+                "y": 40
+            },
+            "events": [
+                {
+                    "event": "chest"
+                }
+            ],
+            "tags":[
+                "chest"
+            ],
+            "cond": [
+                "battle_end"
+            ]
+        },
+        {
+            "position": {
+                "x": 480,
+                "y": 20
+            },
+            "size": {
+                "x": 160,
+                "y": 100
+            },
+            "events": [
+                {
+                    "event": "plot",
+                    "payout": {
+                        "id": "32-2"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ],
+            "cond": [
+                "battle_end"
+            ]
+        },
+        {
+            "position": {
+                "x": 480,
+                "y": 540
+            },
+            "size": {
+                "x": 240,
+                "y": 160
+            },
+            "events": [
+                {
+                    "event": "plot",
+                    "payout": {
+                        "id": "22-1"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ]
+        },
+        {
+            "position": {
+                "x": 480,
+                "y": 140
+            },
+            "size": {
+                "x": 240,
+                "y": 420
+            },
+            "events": [
+                {
+                    "event": "hidden_room"
+                }
+            ],
+            "tags": [
+                "hidden",
+                "autoTrigger"
+            ]
+        },
+        {
+            "position": {
+                "x": 20,
+                "y": 440
+            },
+            "size": {
+                "x": 460,
+                "y": 260
+            },
+            "events": [
+                {
+                    "event": "hidden_room"
+                }
+            ],
+            "tags": [
+                "hidden",
+                "autoTrigger"
+            ]
+        },
+        {
+            "position": {
+                "x": 720,
+                "y": 460
+            },
+            "size": {
+                "x": 540,
+                "y": 240
+            },
+            "events": [
+                {
+                    "event": "hidden_room"
+                }
+            ],
+            "tags": [
+                "hidden",
+                "autoTrigger"
+            ]
+        },
+        {
+            "position": {
+                "x": 720,
+                "y": 240
+            },
+            "size": {
+                "x": 540,
+                "y": 220
+            },
+            "events": [
+                {
+                    "event": "hidden_room"
+                }
+            ],
+            "tags": [
+                "hidden",
+                "autoTrigger"
+            ]
+        },
+        {
+            "position": {
+                "x": 480,
+                "y": 0
+            },
+            "size": {
+                "x": 240,
+                "y": 140
+            },
+            "events": [
+                {
+                    "event": "hidden_room"
+                }
+            ],
+            "tags": [
+                "hidden",
+                "autoTrigger"
+            ]
+        },
+        {
+            "position": {
+                "x": 720,
+                "y": 20
+            },
+            "size": {
+                "x": 540,
+                "y": 220
+            },
+            "events": [
+                {
+                    "event": "hidden_room"
+                }
+            ],
+            "tags": [
+                "hidden",
+                "autoTrigger"
+            ]
+        },
+        {
+            "position": {
+                "x": 20,
+                "y": 20
+            },
+            "size": {
+                "x": 460,
+                "y": 120
+            },
+            "events": [
+                {
+                    "event": "hidden_room"
+                }
+            ],
+            "tags": [
+                "hidden",
+                "autoTrigger"
+            ]
+        },
+        {
+            "position": {
+                "x": 380,
+                "y": 140
+            },
+            "size": {
+                "x": 100,
+                "y": 60
+            },
+            "events": [
+                {
+                    "event": "hidden_room"
+                }
+            ],
+            "tags": [
+                "hidden",
+                "autoTrigger"
+            ]
+        },
+        {
+            "position": {
+                "x": 320,
+                "y": 220
+            },
+            "size": {
+                "x": 160,
+                "y": 200
+            },
+            "events": [
+                {
+                    "event": "hidden_room"
+                }
+            ],
+            "tags": [
+                "hidden",
+                "autoTrigger"
+            ]
+        },
+        {
+            "position": {
+                "x": 20,
+                "y": 140
+            },
+            "size": {
+                "x": 340,
+                "y": 80
+            },
+            "events": [
+                {
+                    "event": "hidden_room"
+                }
+            ],
+            "tags": [
+                "hidden",
+                "autoTrigger"
+            ]
+        },
+        {
+            "position": {
+                "x": 20,
+                "y": 220
+            },
+            "size": {
+                "x": 300,
+                "y": 200
+            },
+            "events": [
+                {
+                    "event": "hidden_room"
+                }
+            ],
+            "tags": [
+                "hidden",
+                "autoTrigger"
+            ]
+        }
+    ],
+    "enemySpawns": [
+        {
+            "x": 1060,
+            "y": 20,
+            "type": "3"
+        },
+        {
+            "x": 500,
+            "y": 220,
+            "type": "2"
+        },
+        {
+            "x": 740,
+            "y": 480,
+            "type": "2"
+        },
+        {
+            "x": 920,
+            "y": 640,
+            "type": "5"
+        },
+        {
+            "x": 1020,
+            "y": 640,
+            "type": "1"
+        },
+        {
+            "x": 980,
+            "y": 520,
+            "type": "2"
+        },
+        {
+            "x": 1020,
+            "y": 500,
+            "type": "5"
+        },
+        {
+            "x": 180,
+            "y": 500,
+            "type": "5"
+        },
+        {
+            "x": 180,
+            "y": 620,
+            "type": "1"
+        },
+        {
+            "x": 260,
+            "y": 620,
+            "type": "1"
+        },
+        {
+            "x": 120,
+            "y": 240,
+            "type": "5"
+        },
+        {
+            "x": 120,
+            "y": 360,
+            "type": "5"
+        },
+        {
+            "x": 180,
+            "y": 360,
+            "type": "2"
+        },
+        {
+            "x": 60,
+            "y": 60,
+            "type": "2"
+        },
+        {
+            "x": 200,
+            "y": 60,
+            "type": "1"
+        },
+        {
+            "x": 760,
+            "y": 160,
+            "type": "5"
+        },
+        {
+            "x": 960,
+            "y": 160,
+            "type": "1"
+        },
+        {
+            "x": 880,
+            "y": 120,
+            "type": "5"
+        },
+        {
+            "x": 1080,
+            "y": 60,
+            "type": "1"
+        },
+        {
+            "x": 1180,
+            "y": 140,
+            "type": "1"
+        },
+        {
+            "x": 920,
+            "y": 260,
+            "type": "1"
+        },
+        {
+            "x": 880,
+            "y": 260,
+            "type": "2"
+        },
+        {
+            "x": 980,
+            "y": 360,
+            "type": "1"
+        },
+        {
+            "x": 800,
+            "y": 380,
+            "type": "1"
+        },
+        {
+            "x": 380,
+            "y": 160,
+            "type": "2"
+        }
+    ],
+    "playerSpawn": {
+        "x": 0,
+        "y": 0
+    }
+}

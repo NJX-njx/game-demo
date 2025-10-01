@@ -6,6 +6,7 @@ export const EventTypes = {
             end: "GAME_BATTLE_END"
         },
         enter: {
+            next_room: "GAME_ENTER_NEXT_ROOM",
             shop: "GAME_ENTER_SHOP"
         },
         finish: "GAME_FINISH"
@@ -33,20 +34,6 @@ export const EventTypes = {
         start: "DIALOG_START",
         end: "DIALOG_END"
     }
-};
-
-export const ItemEvents = {
-    GAIN: "Item_Gain",                          // 获得道具时触发
-    REMOVE: "Item_onRemove",                      // 移除道具时触发
-    ON_CLEAR_STAGE: "onClearStage",             // 通关关卡时触发
-    PLAYER_TAKE_DAMAGE: "Item_PlayerTakeDamage",             // 受到伤害时触发
-    ON_ENTER_SHOP: "onEnterShop",               // 进入商店时触发
-    ON_NEXT_FLOOR: "onNextFloor",               // 进入下一层时触发
-    ON_ACTIVE_USE: "onActiveUse",               // 主动使用道具或技能时触发
-    ON_PARRY: "onParry",                        // 成功格挡时触发
-    ON_DODGE_COUNTER: "onDodgeCounter",         // 闪避反击时触发
-    ON_DASH_CHARGE_TICK: "onDashChargeTick",    // 冲刺/蓄力中每刻触发
-    ON_PROJECTILE_HIT: "onProjectileHit"        // 远程攻击命中时触发
 };
 
 class EventBus {

@@ -1,0 +1,178 @@
+{
+    "playerSpawn": { "x": 120, "y": 540 },
+    "backgrounds": [
+        {
+            "position": {
+                "x": 0,
+                "y": 0
+            },
+            "size": {
+                "x": 240,
+                "y": 620
+            },
+            "type": "white"
+        },
+        {
+            "position": {
+                "x": 240,
+                "y": 100
+            },
+            "size": {
+                "x": 740,
+                "y": 520
+            },
+            "type": "CG4-8"
+        },
+        {
+            "position": {
+                "x": 980,
+                "y": 0
+            },
+            "size": {
+                "x": 300,
+                "y": 720
+            },
+            "type": "white"
+        }
+    ],
+    "blocks": [
+        {
+            "position": {
+                "x": 240,
+                "y": 0
+            },
+            "size": {
+                "x": 940,
+                "y": 80
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 980,
+                "y": 80
+            },
+            "size": {
+                "x": 200,
+                "y": 380
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 100,
+                "y": 0
+            },
+            "size": {
+                "x": 140,
+                "y": 500
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 1180,
+                "y": 0
+            },
+            "size": {
+                "x": 100,
+                "y": 620
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 0,
+                "y": 0
+            },
+            "size": {
+                "x": 100,
+                "y": 720
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 100,
+                "y": 620
+            },
+            "size": {
+                "x": 1180,
+                "y": 100
+            },
+            "type": "black"
+        }
+    ],
+    "textures": [
+        {
+            "position": {
+                "x": 380,
+                "y": 580
+            },
+            "size": {
+                "x": 60,
+                "y": 40
+            },
+            "type": "sign"
+        }
+    ],
+    "interactions": [
+        {
+            "position": {
+                "x": 380,
+                "y": 580
+            },
+            "size": {
+                "x": 60,
+                "y": 40
+            },
+            "events": [
+                {
+                    "event": "plot",
+                    "payout": {
+                        "id": "48-1"
+                    }
+                }
+            ]
+        },
+        {
+            "position": {
+                "x": 1000,
+                "y": 560
+            },
+            "size": {
+                "x": 40,
+                "y": 60
+            },
+            "events": [
+                {
+                    "event": "angel"
+                }
+            ],
+            "tags": [
+                "angel"
+            ]
+        },
+        {
+            "position": {
+                "x": 1100,
+                "y": 520
+            },
+            "size": {
+                "x": 60,
+                "y": 100
+            },
+            "tags": [
+                "next_room"
+            ],
+            "events": [
+                {
+                    "event": "next_room",
+                    "payout": {
+                        "id": "5-1"
+                    }
+                }
+            ]
+        }
+    ]
+}

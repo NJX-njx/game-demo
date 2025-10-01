@@ -12,7 +12,7 @@ export function spawnEnemy(type, position, size) {
         case "balingzhe":
             return new Enemy_balingzhe(position, size);
         default:
-            console.warn(`未知敌人类型: ${type}，使用默认EnemyBase`);
-            return new EnemyBase(type, position, size);
+            console.warn(`未知敌人类型: ${type}，使用默认Enemy1`);
+            return new Enemy_1(position, size);
     }
 }

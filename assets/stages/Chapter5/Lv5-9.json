@@ -1,0 +1,501 @@
+{
+    "backgrounds": [
+        {
+            "position": {
+                "x": 20,
+                "y": 20
+            },
+            "size": {
+                "x": 1240,
+                "y": 680
+            },
+            "type": "CG5-9"
+        }
+    ],
+    "blocks": [
+        {
+            "position": {
+                "x": 0,
+                "y": 0
+            },
+            "size": {
+                "x": 20,
+                "y": 720
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 20,
+                "y": 0
+            },
+            "size": {
+                "x": 1260,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 1260,
+                "y": 20
+            },
+            "size": {
+                "x": 20,
+                "y": 700
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 20,
+                "y": 700
+            },
+            "size": {
+                "x": 1240,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 400,
+                "y": 280
+            },
+            "size": {
+                "x": 40,
+                "y": 420
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 840,
+                "y": 280
+            },
+            "size": {
+                "x": 40,
+                "y": 420
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 340,
+                "y": 180
+            },
+            "size": {
+                "x": 100,
+                "y": 40
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 420,
+                "y": 140
+            },
+            "size": {
+                "x": 60,
+                "y": 40
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 460,
+                "y": 100
+            },
+            "size": {
+                "x": 80,
+                "y": 40
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 840,
+                "y": 180
+            },
+            "size": {
+                "x": 100,
+                "y": 40
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 800,
+                "y": 140
+            },
+            "size": {
+                "x": 60,
+                "y": 40
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 740,
+                "y": 100
+            },
+            "size": {
+                "x": 80,
+                "y": 40
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 520,
+                "y": 60
+            },
+            "size": {
+                "x": 240,
+                "y": 40
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 480,
+                "y": 680
+            },
+            "size": {
+                "x": 320,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 440,
+                "y": 680
+            },
+            "size": {
+                "x": 40,
+                "y": 20
+            },
+            "type": "bounce"
+        },
+        {
+            "position": {
+                "x": 800,
+                "y": 680
+            },
+            "size": {
+                "x": 40,
+                "y": 20
+            },
+            "type": "bounce"
+        },
+        {
+            "position": {
+                "x": 320,
+                "y": 680
+            },
+            "size": {
+                "x": 40,
+                "y": 20
+            },
+            "type": "bounce"
+        },
+        {
+            "position": {
+                "x": 920,
+                "y": 680
+            },
+            "size": {
+                "x": 40,
+                "y": 20
+            },
+            "type": "bounce"
+        },
+        {
+            "position": {
+                "x": 360,
+                "y": 680
+            },
+            "size": {
+                "x": 40,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 880,
+                "y": 680
+            },
+            "size": {
+                "x": 40,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 1120,
+                "y": 640
+            },
+            "size": {
+                "x": 140,
+                "y": 60
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 1060,
+                "y": 380
+            },
+            "size": {
+                "x": 200,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 20,
+                "y": 540
+            },
+            "size": {
+                "x": 200,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 180,
+                "y": 200
+            },
+            "size": {
+                "x": 160,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 940,
+                "y": 200
+            },
+            "size": {
+                "x": 160,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 560,
+                "y": 200
+            },
+            "size": {
+                "x": 160,
+                "y": 20
+            },
+            "type": "black"
+        }
+    ],
+    "textures": [
+    ],
+    "interactions": [
+        {
+            "position": {
+                "x": 700,
+                "y": 580
+            },
+            "size": {
+                "x": 140,
+                "y": 100
+            },
+            "events": [
+                {
+                    "event": "plot",
+                    "payout": {
+                        "id": "59-1"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ]
+        },
+        {
+            "position": {
+                "x": 980,
+                "y": 660
+            },
+            "size": {
+                "x": 40,
+                "y": 40
+            },
+            "events": [
+                {
+                    "event": "chest_boss"
+                }
+            ],
+            "tags":[
+                "chest"
+            ],
+            "cond": [
+                "battle_end"
+            ]
+        },
+        {
+            "position": {
+                "x": 1040,
+                "y": 600
+            },
+            "size": {
+                "x": 60,
+                "y": 100
+            },
+            "tags": [
+                "next_room"
+            ],
+            "events": [
+                {
+                    "event": "next_room",
+                    "payout": {
+                        "id": "5-10"
+                    }
+                }
+            ],
+            "cond": [
+                "battle_end"
+            ]
+        },
+        {
+            "position": {
+                "x": 760,
+                "y": 20
+            },
+            "size": {
+                "x": 60,
+                "y": 100
+            },
+            "tags": [
+                "next_room"
+            ],
+            "events": [
+                {
+                    "event": "next_room",
+                    "payout": {
+                        "id": "5-10"
+                    }
+                }
+            ]
+        },
+        {
+            "position": {
+                "x": 460,
+                "y": 20
+            },
+            "size": {
+                "x": 280,
+                "y": 80
+            },
+            "events": [
+                {
+                    "event": "hidden_room"
+                }
+            ],
+            "tags": [
+                "hidden",
+                "autoTrigger"
+            ]
+        },
+        {
+            "position": {
+                "x": 740,
+                "y": 20
+            },
+            "size": {
+                "x": 80,
+                "y": 120
+            },
+            "events": [
+                {
+                    "event": "hidden_room"
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ]
+        },
+        {
+            "position": {
+                "x": 20,
+                "y": 20
+            },
+            "size": {
+                "x": 1240,
+                "y": 680
+            },
+            "events": [
+                {
+                    "event": "plot",
+                    "payout": {
+                        "id": "59-2"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ],
+            "cond": [
+                "battle_end"
+            ]
+        }
+    ],
+    "enemySpawns": [
+        {
+            "x": 580,
+            "y": 580,
+            "type": "16"
+        },
+        {
+            "x": 620,
+            "y": 100,
+            "type": "18"
+        },
+        {
+            "x": 80,
+            "y": 440,
+            "type": "18"
+        },
+        {
+            "x": 1140,
+            "y": 280,
+            "type": "18"
+        },
+        {
+            "x": 1180,
+            "y": 540,
+            "type": "18"
+        },
+        {
+            "x": 100,
+            "y": 600,
+            "type": "18"
+        },
+        {
+            "x": 260,
+            "y": 100,
+            "type": "18"
+        },
+        {
+            "x": 1000,
+            "y": 100,
+            "type": "18"
+        }
+    ],
+    "playerSpawn": {
+        "x": 740,
+        "y": 620
+    }
+}

@@ -54,6 +54,7 @@ export class Item {
     /** 取消激活效果 */
     deactivate() {
         if (!this._active) return;
+        itemManager.activatedItems.delete(this);
         this._active = false;
 
         AM.removeAllAttrBySource(this.id);
@@ -82,6 +83,13 @@ export class Item {
     canRemove() {
         if (this.hasTag(ItemTags.NO_DROP)) return false;
         if (typeof this.config.canRemove === "function") return this.config.canRemove(this);
+        return true;
+    }
+
+    /** 检查能否交换 */
+    canExchange() {
+        if (this.hasTag(ItemTags.NO_EXCHANGE)) return false;
+        if (typeof this.config.canExchange === "function") return this.config.canExchange(this);
         return true;
     }
 

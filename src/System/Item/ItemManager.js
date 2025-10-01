@@ -1,8 +1,9 @@
 import { Item, itemGenerateHistory } from "./Item";
 import { Slot, SlotTypes } from "./Slot";
-import { ItemTypes, ItemTags, ItemConfigs as Items } from "./ItemConfigs";
+import { ItemTypes, ItemTags, ItemConfigs as Items, ItemConfigs } from "./ItemConfigs";
 import { eventBus as bus, EventTypes as Events } from "../../Manager/EventBus";
 import { inputManager } from "../Input/InputManager";
+
 class ItemManager {
     constructor() {
         if (ItemManager.instance) return ItemManager.instance;
@@ -20,6 +21,9 @@ class ItemManager {
         ];
 
         this.trashSlot = new Slot({ type: SlotTypes.TRUSH });
+
+        // 已经被激活的道具集合
+        this.activatedItems = new Set();
 
         this.selectedIndex = 0; // 当前选中格子
         this.dragging = false;
@@ -41,12 +45,8 @@ class ItemManager {
 
         // 检查格子
         if (!slotB.canAccept(itemA) || !slotA.canAccept(itemB)) return false;
-        if (slotA.type != SlotTypes.INVENTORY && itemB && !itemB.canRemove()) return false;
-        if (slotB.type != SlotTypes.INVENTORY && itemA && !itemA.canRemove()) return false;
 
         // 执行交换
-        if (slotA.type != SlotTypes.INVENTORY && itemB) itemB.deactivate();
-        if (slotB.type != SlotTypes.INVENTORY && itemA) itemA.deactivate();
         slotA.removeItem();
         slotB.removeItem();
         slotA.setItem(itemB);
@@ -73,17 +73,16 @@ class ItemManager {
         if (slotIndex === -1) return null;
 
         const item = new Item(config);
-        item.activate();
 
         this.slots[slotIndex].setItem(item);
         item._slot = this.slots[slotIndex];
         return item;
     }
 
-    /** 移除道具 */
+    /** 移除道具, 不检查 */
     remove(item) {
         item.dispose();
-        item._slot.removeItem();
+        if (item._slot) item._slot.removeItem();
     }
 
     /** 获取某个格子的道具 */
@@ -150,6 +149,40 @@ class ItemManager {
     }
 
     /**
+     * 交换格子中的道具
+     * @param {Slot} slot 
+     * @return {Boolean} 是否成功交换
+     */
+    exchangeItemBySlot(slot) {
+        const currentItem = slot.item;
+        if (!currentItem || !currentItem.canExchange()) return false;
+
+        let newConfig = null;
+
+        if (currentItem.hasTag(ItemTags.FIXED_EXCHANGE) && currentItem.config.exchangeToName) {// 1. 检查是否有特殊交换目标
+            newConfig = Object.values(ItemConfigs).find(cfg => cfg.name === currentItem.config.exchangeToName);
+        }
+        else {// 2. 普通道具随机获取同等级道具
+            newConfig = this.getRandomConfig(currentItem.config.level, { exclude: [currentItem.config.name] });
+        }
+
+        if (!newConfig) {
+            console.warn("没有可交换的道具！");
+            return false;
+        }
+
+        // 3. 移除当前道具
+        this.remove(currentItem);
+
+        // 4. 创建新道具放入原格子
+        const newItem = new Item(newConfig);
+        slot.item = newItem;
+        newItem._slot = slot;
+
+        return true;
+    }
+
+    /**
      * 获取一个随机的道具配置
      * @param {number} level 道具等级
      * @param {Object} options 可选项
@@ -188,6 +221,25 @@ class ItemManager {
     }
 
     update(_) {
+        // 自动激活当前主背包 slots 中的道具；同时取消激活已经不在 slots 中的道具
+        const currentItems = new Set(this.slots.map(s => s.item).filter(Boolean));
+
+        // 激活新进入 slots 的道具
+        for (const item of currentItems) {
+            if (!this.activatedItems.has(item)) {
+                try { item.activate(); } catch (e) { console.warn("Item.activate error", e); }
+                this.activatedItems.add(item);
+            }
+        }
+
+        // 取消激活已经离开 slots 的道具
+        for (const item of Array.from(this.activatedItems)) {
+            if (!currentItems.has(item)) {
+                try { item.deactivate(); } catch (e) { console.warn("Item.deactivate error", e); }
+                this.activatedItems.delete(item);
+            }
+        }
+
         if (inputManager.isFirstDown("N")) {
             itemManager.selectNext();
         }

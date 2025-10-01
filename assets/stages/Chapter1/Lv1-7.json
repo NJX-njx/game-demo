@@ -1,0 +1,193 @@
+{
+    "playerSpawn": { "x": 60, "y": 650 },
+    "enemySpawns": [
+        {
+            "x": 540,
+            "y": 560,
+            "type": "4"
+        }
+    ],
+    "backgrounds": [
+        {
+            "position": {
+                "x": 20,
+                "y": 20
+            },
+            "size": {
+                "x": 1240,
+                "y": 680
+            },
+            "type": "white"
+        }
+    ],
+    "blocks": [
+        {
+            "position": {
+                "x": 0,
+                "y": 0
+            },
+            "size": {
+                "x": 1280,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 0,
+                "y": 20
+            },
+            "size": {
+                "x": 20,
+                "y": 700
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 1260,
+                "y": 20
+            },
+            "size": {
+                "x": 20,
+                "y": 700
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 20,
+                "y": 700
+            },
+            "size": {
+                "x": 1240,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 80,
+                "y": 340
+            },
+            "size": {
+                "x": 460,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 780,
+                "y": 460
+            },
+            "size": {
+                "x": 360,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 680,
+                "y": 160
+            },
+            "size": {
+                "x": 400,
+                "y": 20
+            },
+            "type": "black"
+        }
+    ],
+    "textures": [
+    ],
+    "interactions": [
+        {
+            "position": {
+                "x": 1120,
+                "y": 600
+            },
+            "size": {
+                "x": 60,
+                "y": 100
+            },
+            "tags": [
+                "next_room"
+            ],
+            "events": [
+                {
+                    "event": "next_room",
+                    "payout": {
+                        "id": "1-8"
+                    }
+                }
+            ],
+            "cond": [
+                "battle_end"
+            ]
+        },
+        {
+            "position": {
+                "x": 1020,
+                "y": 660
+            },
+            "size": {
+                "x": 40,
+                "y": 40
+            },
+            "events": [
+                {
+                    "event": "chest_boss"
+                }
+            ],
+            "tags":[
+                "chest"
+            ],
+            "cond": [
+                "battle_end"
+            ]
+        },
+        {
+            "position": {
+                "x": 0,
+                "y": 0
+            },
+            "size": {
+                "x": 1240,
+                "y": 720
+            },
+            "events": [
+                {
+                    "event": "plot",
+                    "payout": {
+                        "id": "17-1"
+                    }
+                }
+            ]
+        },
+        {
+            "position": {
+                "x": 20,
+                "y": 0
+            },
+            "size": {
+                "x": 1240,
+                "y": 720
+            },
+            "events": [
+                {
+                    "event": "plot",
+                    "payout": {
+                        "id": "17-2"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ],
+            "cond": [
+                "battle_end"
+            ]
+        }
+    ]
+}

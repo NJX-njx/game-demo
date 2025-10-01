@@ -5,15 +5,15 @@ import { Cooldown } from "../../Utils/Cooldown";
 import { itemManager } from "./ItemManager";
 
 export const ItemTags = {
-    NO_EXCHANGE: "noExcgange",  //不可交换
-    NO_DROP: "noDrop",          //不可丢弃
-    NO_RANDOM: "noRandom",      //不随机掉落
-    SPECIAL_EXCHANGE: "specialExchange", //特殊交换
-    ADD_SLOTS: "addSlots", //添加格子
+    NO_EXCHANGE: "noExchange",       //不可交换
+    NO_DROP: "noDrop",               //不可丢弃
+    NO_RANDOM: "noRandom",           //不随机掉落
+    FIXED_EXCHANGE: "fixedExchange", //固定交换结果，须同时指定exchangeToName
+    ADD_SLOTS: "addSlots",           //添加格子
 
-    UNIQUE_GLOBAL: "uniqueGlobal",  // 全局唯一，本局只能获得一个
-    UNIQUE_SINGLE: "uniqueSingle",  // 同时只能持有一个
-    MULTIPLE: "multiple"          // 可同时获得多个
+    UNIQUE_GLOBAL: "uniqueGlobal",   // 全局唯一，本局只能获得一个
+    UNIQUE_SINGLE: "uniqueSingle",   // 同时只能持有一个
+    MULTIPLE: "multiple"             // 可同时获得多个
 }
 
 export const ItemTypes = {
@@ -65,7 +65,7 @@ export const ItemConfigs = {
                 },
                 maxCalls: 1
             },
-            {   // 通关时：隐藏结局//TODO:
+            {   // TODO:通关时：隐藏结局
                 event: Events.game.finish,
                 handler: (ctx) => {
                     ctx.unlockEnding?.("hidden_path_friendship", { desc: "使探索开启不同的方向" });
@@ -73,9 +73,7 @@ export const ItemConfigs = {
                 maxCalls: 1
             }
         ],
-        onAcquire(item) {//TODO:
-            // // 获得时：触发剧情
-            // bus.emit("STORY_TRIGGER", { storyId: "find_key", item });
+        onAcquire(item) {//TODO:获得时：触发剧情
         },
         state: {
             healTimer: new Cooldown(1000)
@@ -106,16 +104,14 @@ export const ItemConfigs = {
                     }
                 }
             },
-            {   // 通关时：触发成就“替我感受来世的温暖”
+            {   // TODO:通关时：触发成就“替我感受来世的温暖”
                 event: Events.game.finish,
-                handler: (ctx) => {//TODO:
+                handler: (ctx) => {
                 },
                 maxCalls: 1
             }
         ],
-        onAcquire(item) {//TODO:
-            // 获得时：
-            // 触发剧情
+        onAcquire(item) {//TODO:获得时：触发剧情
         }
     },
     sn思念: {
@@ -149,23 +145,23 @@ export const ItemConfigs = {
                 }
             }
         ],
-        onAcquire(item) {//TODO:
-            // 获得时：触发剧情
+        onAcquire(item) {//TODO:获得时：触发剧情
         }
     },
-    ds胆识: { //TODO: 交换时必定获得“决心”
+    ds胆识: {
         name: "胆识",
         level: 0,
         type: ItemTypes.ENDING,
-        tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_DROP, ItemTags.NO_RANDOM, ItemTags.SPECIAL_EXCHANGE],
+        tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_DROP, ItemTags.NO_RANDOM, ItemTags.FIXED_EXCHANGE],
+        exchangeToName: "决心",
         effects: {
             [Attrs.enemy.DMG_DEC]: -15,
             [Attrs.boss.HP]: 0.45
         },
         hooks: (item) => [
-            {   // 通关时：触发隐藏结局（描述：使探索开启不同的方向）
+            {   // TODO:通关时：触发隐藏结局（描述：使探索开启不同的方向）
                 event: Events.game.finish,
-                handler: (ctx) => {//TODO:
+                handler: (ctx) => {
                 },
                 maxCalls: 1
             }
@@ -184,9 +180,9 @@ export const ItemConfigs = {
         hooks: (item) => [
             // {//TODO:触发闪避反击和弹反时：受到的伤害提高60%（DMG%），持续5秒
             // },
-            {   // 通关时：触发隐藏结局（描述：使探索开启不同的方向）
+            {   // TODO:通关时：触发隐藏结局（描述：使探索开启不同的方向）
                 event: Events.game.finish,
-                handler: (ctx) => {//TODO:
+                handler: (ctx) => {
                 },
                 maxCalls: 1
             }
@@ -196,11 +192,12 @@ export const ItemConfigs = {
             player.state.hp = player.state.hp_max
         }
     },
-    yy犹疑: {//TODO:交换时必定获得“观望”
+    yy犹疑: {
         name: "犹疑",
         level: 0,
         type: ItemTypes.ENDING,
-        tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_DROP, ItemTags.NO_RANDOM, ItemTags.SPECIAL_EXCHANGE],
+        tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_DROP, ItemTags.NO_RANDOM, ItemTags.FIXED_EXCHANGE],
+        exchangeToName: "观望",
         effects: {
             [Attrs.player.SPD]: -0.4,
             [Attrs.player.ATK]: -0.2
@@ -215,19 +212,19 @@ export const ItemConfigs = {
             [Attrs.player.DASH_CHARGE]: 0.15
         }
     },
-    hq好奇: { // TODO:交换时必定获得“珍惜”
+    hq好奇: {
         name: "好奇",
         level: 1,
         type: ItemTypes.NORMAL,
-        tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_DROP, ItemTags.NO_EXCHANGE, ItemTags.SPECIAL_EXCHANGE],
+        tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_EXCHANGE, ItemTags.FIXED_EXCHANGE],
+        exchangeToName: "珍惜",
         effects: {
             [Attrs.player.TAKE_DMG]: 0.3
         },
         hooks: (item) => [
-            {   // 在进入下一个商店前，不可丢弃，不可交换
-                event: Events.game.enter.shop,
+            {   // 在进入下一个房间前，不可交换
+                event: Events.game.enter.next_room,
                 handler: () => {
-                    item.removeTag(ItemTags.NO_DROP);
                     item.removeTag(ItemTags.NO_EXCHANGE);
                 }
             }
@@ -236,15 +233,16 @@ export const ItemConfigs = {
             // TODO: 获得10灵魂碎片
         }
     },
-    zx珍惜: {// TODO: 交换时必定获得“朗诵”
+    zx珍惜: {
         name: "珍惜",
         level: 1,
         type: ItemTypes.NORMAL,
-        tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_EXCHANGE, ItemTags.SPECIAL_EXCHANGE, ItemTags.NO_RANDOM],
+        tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_EXCHANGE, ItemTags.NO_RANDOM, ItemTags.FIXED_EXCHANGE],
+        exchangeToName: "朗诵",
         effects: {},
         hooks: (item) => [
-            {   // 在进入下一个商店前，不可交换
-                event: Events.game.enter.shop,
+            {   // 在进入下一个房间前，不可交换
+                event: Events.game.enter.next_room,
                 handler: () => {
                     item.removeTag(ItemTags.NO_EXCHANGE);
                 }
@@ -252,8 +250,7 @@ export const ItemConfigs = {
         ],
         onAcquire(item) {
             // TODO: 获得15灵魂碎片
-        },
-        onExchange(item) { }
+        }
     },
     ls朗诵: {
         name: "朗诵",
@@ -292,29 +289,15 @@ export const ItemConfigs = {
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
     },
-    dg祷告: {// TODO:交换时必定获得“虔诚”
+    dg祷告: {
         name: "祷告",
         level: 1,
         type: ItemTypes.NORMAL,
-        tags: [ItemTags.UNIQUE_SINGLE, ItemTags.SPECIAL_EXCHANGE],
+        tags: [ItemTags.UNIQUE_SINGLE, ItemTags.FIXED_EXCHANGE],
+        exchangeToName: "虔诚",
         effects: {
             [Attrs.player.LOS]: -0.3
         },
     },
 
-}
-
-// ------------------------
-// 交换逻辑（示例）
-// ------------------------
-export function handleExchange(fromId, ctx) {
-    const map = {
-        guts: "resolve",
-        hesitate: "watch",
-        curious: "cherish",
-        cherish: "recite",
-        pray: "piety", // 祷告 -> 虔诚（未在本文件实现，留给第2批）
-    };
-    const toId = map[fromId];
-    if (toId) ctx.exchangeTo?.(toId);
 }

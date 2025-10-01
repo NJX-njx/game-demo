@@ -1,0 +1,192 @@
+{
+    "backgrounds": [
+        {
+            "position": {
+                "x": 20,
+                "y": 400
+            },
+            "size": {
+                "x": 1240,
+                "y": 120
+            },
+            "type": "white"
+        }
+    ],
+    "blocks": [
+        {
+            "position": {
+                "x": 0,
+                "y": 0
+            },
+            "size": {
+                "x": 20,
+                "y": 720
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 20,
+                "y": 0
+            },
+            "size": {
+                "x": 1260,
+                "y": 400
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 1260,
+                "y": 400
+            },
+            "size": {
+                "x": 20,
+                "y": 320
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 20,
+                "y": 520
+            },
+            "size": {
+                "x": 1240,
+                "y": 200
+            },
+            "type": "black"
+        }
+    ],
+    "textures": [
+        {
+            "position": {
+                "x": 200,
+                "y": 440
+            },
+            "size": {
+                "x": 20,
+                "y": 40
+            },
+            "type": "torch"
+        },
+        {
+            "position": {
+                "x": 500,
+                "y": 440
+            },
+            "size": {
+                "x": 20,
+                "y": 40
+            },
+            "type": "torch"
+        },
+        {
+            "position": {
+                "x": 800,
+                "y": 440
+            },
+            "size": {
+                "x": 20,
+                "y": 40
+            },
+            "type": "torch"
+        },
+        {
+            "position": {
+                "x": 1060,
+                "y": 440
+            },
+            "size": {
+                "x": 20,
+                "y": 40
+            },
+            "type": "torch"
+        }
+    ],
+    "interactions": [
+        {
+            "position": {
+                "x": 20,
+                "y": 400
+            },
+            "size": {
+                "x": 120,
+                "y": 120
+            },
+            "events": [
+                {
+                    "event": "plot",
+                    "payout": {
+                        "id": "61-1"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ]
+        },
+        {
+            "position": {
+                "x": 260,
+                "y": 460
+            },
+            "size": {
+                "x": 40,
+                "y": 60
+            },
+            "events": [
+                {
+                    "event": "angel"
+                }
+            ],
+            "tags": [
+                "angel"
+            ]
+        },
+        {
+            "position": {
+                "x": 360,
+                "y": 460
+            },
+            "size": {
+                "x": 40,
+                "y": 60
+            },
+            "events": [
+                {
+                    "event": "demon"
+                }
+            ],
+            "tags": [
+                "demon"
+            ]
+        },
+        {
+            "position": {
+                "x": 1120,
+                "y": 420
+            },
+            "size": {
+                "x": 60,
+                "y": 100
+            },
+            "tags": [
+                "next_room"
+            ],
+            "events": [
+                {
+                    "event": "next_room",
+                    "payout": {
+                        "id": "6-2"
+                    }
+                }
+            ]
+        }
+    ],
+    "enemySpawns": [],
+    "playerSpawn": {
+        "x": 60,
+        "y": 460
+    }
+}

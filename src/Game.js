@@ -82,7 +82,7 @@ class Game {
             bus.on({
                 event: Events.game.tick,
                 handler: ({ deltaTime }) => {
-                    mapManager.update(deltaTime);
+                    interactionManager.update(deltaTime);
                 },
                 priority: 0.8
             });
@@ -114,16 +114,10 @@ class Game {
             handler: () => this.stop()
         });
 
-        // 监听交互点触发事件
-        bus.on({
-            event: Events.interaction.trigger,
-            handler: ({ interaction }) => interactionManager.handleInteraction(interaction)
-        });
-
         bus.on({
             event: Events.dialog.start,
             handler: () => {
-                this.stopUpdaet();
+                this.stopUpdate();
             },
             priority: 1
         });
@@ -147,11 +141,10 @@ class Game {
         }
 
         //TODO:测试用
-        mapManager.loadRoom(0, 3);
+        mapManager.loadRoom(0, 1);
         itemManager.tryAcquire(Items.xq休憩);
         itemManager.tryAcquire(Items.yy友谊);
         itemManager.tryAcquire(Items.ls朗诵);
-        window.itemManager = itemManager;
     }
 
     draw() {
@@ -284,7 +277,7 @@ class Game {
         requestAnimationFrame(this.loop);
     }
 
-    stopUpdaet() {
+    stopUpdate() {
         this.isStopUpdate = true;
     }
 
@@ -295,7 +288,7 @@ class Game {
     pause() {
         if (this.isPaused) return;
         this.isPaused = true;
-        this.stopUpdaet();
+        this.stopUpdate();
         uiManager.switchScreen("pauseMenu");
     }
 
@@ -315,7 +308,7 @@ class Game {
     stop() {
         if (this.isStop) return;
         this.isStop = true;
-        this.stopUpdaet();
+        this.stopUpdate();
     }
 
     saveGame() {

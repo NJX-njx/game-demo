@@ -1,0 +1,418 @@
+{
+    "backgrounds": [
+        {
+            "position": {
+                "x": 20,
+                "y": 20
+            },
+            "size": {
+                "x": 1240,
+                "y": 680
+            },
+            "type": "CG3-6"
+        }
+    ],
+    "blocks": [
+        {
+            "position": {
+                "x": 0,
+                "y": 0
+            },
+            "size": {
+                "x": 20,
+                "y": 720
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 1260,
+                "y": 0
+            },
+            "size": {
+                "x": 20,
+                "y": 720
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 20,
+                "y": 0
+            },
+            "size": {
+                "x": 1240,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 20,
+                "y": 700
+            },
+            "size": {
+                "x": 1240,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 20,
+                "y": 120
+            },
+            "size": {
+                "x": 140,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 1080,
+                "y": 120
+            },
+            "size": {
+                "x": 180,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 880,
+                "y": 120
+            },
+            "size": {
+                "x": 100,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 820,
+                "y": 120
+            },
+            "size": {
+                "x": 60,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 140,
+                "y": 580
+            },
+            "size": {
+                "x": 80,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 280,
+                "y": 580
+            },
+            "size": {
+                "x": 80,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 260,
+                "y": 580
+            },
+            "size": {
+                "x": 20,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 880,
+                "y": 580
+            },
+            "size": {
+                "x": 100,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 1020,
+                "y": 580
+            },
+            "size": {
+                "x": 80,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 860,
+                "y": 680
+            },
+            "size": {
+                "x": 20,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 360,
+                "y": 680
+            },
+            "size": {
+                "x": 20,
+                "y": 20
+            },
+            "type": "black"
+        },
+        {
+            "position": {
+                "x": 220,
+                "y": 580
+            },
+            "size": {
+                "x": 40,
+                "y": 20
+            },
+            "type": "bounce"
+        },
+        {
+            "position": {
+                "x": 980,
+                "y": 580
+            },
+            "size": {
+                "x": 40,
+                "y": 20
+            },
+            "type": "bounce"
+        },
+        {
+            "position": {
+                "x": 800,
+                "y": 60
+            },
+            "size": {
+                "x": 20,
+                "y": 80
+            },
+            "type": "black"
+        }
+    ],
+    "textures": [
+        {
+            "position": {
+                "x": 320,
+                "y": 600
+            },
+            "size": {
+                "x": 40,
+                "y": 100
+            },
+            "type": "cage"
+        },
+        {
+            "position": {
+                "x": 880,
+                "y": 600
+            },
+            "size": {
+                "x": 40,
+                "y": 100
+            },
+            "type": "cage"
+        }
+    ],
+    "interactions": [
+        {
+            "position": {
+                "x": 900,
+                "y": 80
+            },
+            "size": {
+                "x": 40,
+                "y": 40
+            },
+            "events": [
+                {
+                    "event": "chest"
+                }
+            ],
+            "tags":[
+                "chest"
+            ],
+            "cond": [
+                "battle_end"
+            ]
+        },
+        {
+            "position": {
+                "x": 1100,
+                "y": 60
+            },
+            "size": {
+                "x": 40,
+                "y": 60
+            },
+            "events": [
+                {
+                    "event": "angel"
+                }
+            ],
+            "tags": [
+                "angel"
+            ],
+            "cond": [
+                "battle_end"
+            ]
+        },
+        {
+            "position": {
+                "x": 1160,
+                "y": 20
+            },
+            "size": {
+                "x": 60,
+                "y": 100
+            },
+            "tags": [
+                "next_room"
+            ],
+            "events": [
+                {
+                    "event": "next_room",
+                    "payout": {
+                        "id": "3-7"
+                    }
+                }
+            ],
+            "cond": [
+                "battle_end"
+            ]
+        },
+        {
+            "position": {
+                "x": 160,
+                "y": 20
+            },
+            "size": {
+                "x": 1100,
+                "y": 680
+            },
+            "events": [
+                {
+                    "event": "plot",
+                    "payout": {
+                        "id": "37-2"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ],
+            "cond": [
+                "battle_end"
+            ]
+        },
+        {
+            "position": {
+                "x": 20,
+                "y": 20
+            },
+            "size": {
+                "x": 140,
+                "y": 100
+            },
+            "events": [
+                {
+                    "event": "plot",
+                    "payout": {
+                        "id": "37-1"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ]
+        }
+    ],
+    "enemySpawns": [
+        {
+            "x": 840,
+            "y": 20,
+            "type": "3"
+        },
+        {
+            "x": 520,
+            "y": 620,
+            "type": "8"
+        },
+        {
+            "x": 180,
+            "y": 620,
+            "type": "8"
+        },
+        {
+            "x": 980,
+            "y": 620,
+            "type": "8"
+        },
+        {
+            "x": 1080,
+            "y": 620,
+            "type": "8"
+        },
+        {
+            "x": 120,
+            "y": 620,
+            "type": "8"
+        },
+        {
+            "x": 620,
+            "y": 600,
+            "type": "9"
+        },
+        {
+            "x": 1140,
+            "y": 620,
+            "type": "9"
+        },
+        {
+            "x": 60,
+            "y": 620,
+            "type": "9"
+        },
+        {
+            "x": 200,
+            "y": 460,
+            "type": "9"
+        },
+        {
+            "x": 960,
+            "y": 480,
+            "type": "9"
+        },
+        {
+            "x": 980,
+            "y": 60,
+            "type": "2"
+        }
+    ],
+    "playerSpawn": {
+        "x": 40,
+        "y": 60
+    }
+}
