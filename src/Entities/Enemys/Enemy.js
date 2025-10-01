@@ -1,4 +1,3 @@
-import { EnemyBase } from "./EnemyBase";
 import { Enemy_1 } from "./Enemy_1";
 import { Enemy_2 } from "./Enemy_2";
 import { Enemy_balingzhe } from "./Enemy_balingzhe";

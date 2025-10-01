@@ -96,6 +96,7 @@ export class Entity {
      */
     constructor(position, size, velocity = new Vector()) {
         this.type = "";
+        this.size = size;        // 实体的尺寸
         this.velocity = velocity;  // 实体的速度
         // 只负责实体本体的物理碰撞盒，攻击/受击判定可独立扩展
         this.hitbox = new Hitbox(position, size);

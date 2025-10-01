@@ -9,7 +9,6 @@ import { MeleeAttack } from "../../System/Attack/MeleeAttack";
 export class EnemyBase extends Entity {
     constructor(type, position, size = new Vector(50, 50), velocity = new Vector()) {
         super(position, size, velocity);
-        this.size = size;
         this.type = "enemy" + type;
         this.enemytype = type;
         this.facing = 1;
@@ -48,14 +47,23 @@ export class EnemyBase extends Entity {
         this._unbind_list = [];
     }
 
-    takeDamage(dmg) {
+    takeDamage(dmg, attackType = null, attacker = null) {
         this.state.hp -= dmg;
+        bus.emit(Events.enemy.takeDamage, { attackType, attacker, damage: dmg, victim: this });
         if (this.state.hp <= 0) {
-            bus.emit(Events.enemy.die);
-            this._unbind_list.forEach(unbind => unbind());
-            const idx = game.enemies.indexOf(this);
-            if (idx !== -1) game.enemies.splice(idx, 1);
+            this.handleDeath();
         }
+    }
+
+    /**
+     * 统一的死亡处理函数。
+     * - 触发死亡事件。
+     */
+    handleDeath() {
+        bus.emit(Events.enemy.die, { attackType, attacker, damage: dmg, victim: this });
+        this._unbind_list.forEach(unbind => unbind());
+        const idx = game.enemies.indexOf(this);
+        if (idx !== -1) game.enemies.splice(idx, 1);
     }
 
     update(deltaTime) {
@@ -91,8 +99,8 @@ export class EnemyBase extends Entity {
         this.state.attack.damage = finalDmg;
 
         if (this.attack.type === "melee") {
-            const meleeST = AM.getAttrSum(Attrs.enemy.MeteeStartupTime);
-            const meleeRT = AM.getAttrSum(Attrs.enemy.MeteeRecoveryTime);
+            const meleeST = AM.getAttrSum(Attrs.enemy.MeleeStartupTime);
+            const meleeRT = AM.getAttrSum(Attrs.enemy.MeleeRecoveryTime);
             this.state.attack.startupTime = this.baseState.attack.StartupTime + meleeST;
             this.state.attack.recoveryTime = this.baseState.attack.RecoveryTime + meleeRT;
         } else if (this.attack.type === "ranged") {

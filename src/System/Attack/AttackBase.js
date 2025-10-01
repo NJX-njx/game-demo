@@ -134,10 +134,12 @@ export class AttackBase {
         if (this.owner.dealDamageEvent) {
             finalDamage = bus.emitReduce(
                 this.owner.dealDamageEvent,
-                { baseDamage: finalDamage },
+                { baseDamage: finalDamage, attackType: this.type, attacker: this.owner, target },
                 (_, next) => next
             ).baseDamage;
         }
+
+        finalDamage = Math.max(finalDamage, 0);
 
         target.takeDamage(finalDamage, this.type, this.owner);
     }

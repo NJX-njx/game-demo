@@ -95,6 +95,19 @@ class ItemManager {
         return this.slots.map(slot => slot.item);
     }
 
+    /**
+     * 统计当前持有某道具的数量（按道具 name 匹配）。
+     * @param {string} name 道具名称
+     * @returns {number} 持有数量，若未持有返回 0
+     */
+    countItem(name) {
+        let count = 0;
+        for (const slot of this.slots) {
+            if (slot.item && slot.item.name === name) count++;
+        }
+        return count;
+    }
+
     /** 切换当前选中格子（循环切换） */
     selectNext() {
         this.selectedIndex = (this.selectedIndex + 1) % this.slots.length;

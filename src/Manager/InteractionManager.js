@@ -6,6 +6,7 @@ import { textureManager } from "./TextureManager";
 import { inputManager } from "../System/Input/InputManager";
 import { Hitbox } from "../Utils/Hitbox";
 import { Vector } from "../Utils/Vector";
+import { eventBus, EventTypes } from "./EventBus";
 
 export class Event {
     constructor(config) {
@@ -199,7 +200,7 @@ class InteractionManager {
                     case 'chest':
                     case 'chest_boss':
                     case 'chest_end':
-                        this.handleChestEvent(evName, evData);
+                        this.handleChestEvent(ev, interaction);
                         break;
                     case 'hidden_room':
                         this.handleHiddenRoomEvent(ev, interaction);
@@ -250,11 +251,12 @@ class InteractionManager {
 
     /**
      * 处理宝箱事件
-     * @param {string} event - 事件名称
-     * @param {Object} data - 交互点数据
+     * @param {Event} event - 事件
+     * @param {Interaction} inter - 交互点实例
      */
-    handleChestEvent(event, data) {
-        console.log('宝箱事件触发:', event, data);
+    handleChestEvent(event, inter) {
+        console.log('宝箱事件触发:', event, inter);
+        eventBus.emit(EventTypes.game.open_chest, { interaction: inter });
         // TODO: 实现宝箱系统
     }
 

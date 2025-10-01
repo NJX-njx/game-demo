@@ -7,15 +7,17 @@ export const AttributeTypes = {
         SPD: "PLAYER_SPD",
         HEAL: "PLAYER_HEAL",
         DMG: "PLAYER_DMG",
-        LOS: "PLAYER_LOS",//受到的生命流失效果
         TAKE_DMG: "PLAYER_TAKE_DAMAGE",//受到的伤害
         DASH_CHARGE: "PLAYER_DASH_CHARGE",//冲刺充能加速
+        MeleeDmg: "PLAYER_MeleeDmg",
+        RangedDmg: "PLAYER_RangedDmg",
         AttackStartupTime: "PLAYER_AttackStartupTime",
         AttackRecoveryTime: "PLAYER_AttackRecoveryTime",
-        MeteeStartupTime: "PLAYER_MeteeStartupTime",
-        MeteeRecoveryTime: "PLAYER_MeteeRecoveryTime",
+        MeleeStartupTime: "PLAYER_MeleeStartupTime",
+        MeleeRecoveryTime: "PLAYER_MeleeRecoveryTime",
         RangedStartupTime: "PLAYER_RangedStartupTime",
-        RangedRecoveryTime: "PLAYER_RangedRecoveryTime"
+        RangedRecoveryTime: "PLAYER_RangedRecoveryTime",
+        BlockDamageReduction: "PLAYER_Block_Damage_Reduction"
     },
     enemy: {
         ATK: "ENEMY_ATK",
@@ -24,8 +26,8 @@ export const AttributeTypes = {
         DMG_DEC: "ENEMY_DMG_DEC",
         AttackStartupTime: "ENEMY_AttackStartupTime",
         AttackRecoveryTime: "ENEMY_AttackRecoveryTime",
-        MeteeStartupTime: "ENEMY_MeteeStartupTime",
-        MeteeRecoveryTime: "ENEMY_MeteeRecoveryTime",
+        MeleeStartupTime: "ENEMY_MeleeStartupTime",
+        MeleeRecoveryTime: "ENEMY_MeleeRecoveryTime",
         RangedStartupTime: "ENEMY_RangedStartupTime",
         RangedRecoveryTime: "ENEMY_RangedRecoveryTime"
     },
@@ -34,8 +36,8 @@ export const AttributeTypes = {
         HP: "BOSS_HP",
         AttackStartupTime: "BOSS_AttackStartupTime",
         AttackRecoveryTime: "BOSS_AttackRecoveryTime",
-        MeteeStartupTime: "BOSS_MeteeStartupTime",
-        MeteeRecoveryTime: "BOSS_MeteeRecoveryTime",
+        MeleeStartupTime: "BOSS_MeleeStartupTime",
+        MeleeRecoveryTime: "BOSS_MeleeRecoveryTime",
         RangedStartupTime: "BOSS_RangedStartupTime",
         RangedRecoveryTime: "BOSS_RangedRecoveryTime"
     }

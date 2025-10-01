@@ -11,6 +11,7 @@ import { inputManager } from "../System/Input/InputManager";
 import { eventBus as bus, EventTypes as Events } from "../Manager/EventBus";
 import { attributeManager as AM, AttributeTypes as Attrs } from "../Manager/AttributeManager";
 import { drawSprite } from "../Utils/canvas";
+import { Decoy } from "./Decoy";
 
 class Player_Animation {
     static Framerate = {
@@ -73,29 +74,15 @@ class Player_Animation {
 }
 
 class Player extends Entity {
-    static getSaveData() {
-        return {
-            position: this.instance.hitbox.position,
-            state: this.instance.state,
-            timestamp: new Date().toISOString()
-        };
-    }
-
-    static loadSaveData(data) {
-        if (!this.instance) return;
-        this.instance.hitbox.position = data.position;
-        this.instance.state = data.state;
-    }
-
     constructor(size = new Vector(50, 50)) {
         if (Player.instance) return Player.instance;
         super(new Vector(), size, new Vector());
         Player.instance = this
-        this.size = size;
         this.type = "player";
         this.jumping.type = "player";
         this.baseState = {
             hp_max: 100,                //血量上限
+            MaxSpeed: 6,                //最大移动速度
             attack: {
                 atk: 10,                 //基础攻击
                 MeleeStartupTime: 50,    //攻击前摇
@@ -108,7 +95,7 @@ class Player extends Entity {
             block: {
                 parryWindow: 200,           // 弹反窗口时间（毫秒）
                 recoveryTime: 300,          // 后摇时间（毫秒）
-                damageReduction: 0.5,       // 格挡伤害减免系数
+                damageReduction: 0.7,       // 格挡伤害减免系数
                 parryDamageMultiplier: 1.5, // 弹反伤害倍数
             },
         }
@@ -187,6 +174,7 @@ class Player extends Entity {
     }
 
     update(deltaTime) {
+        if (this._decoy) this._decoy.update(deltaTime);
         this.updateState();
         bus.emit(Events.player.hpPercent, this.state.hp / this.state.hp_max);
 
@@ -254,22 +242,30 @@ class Player extends Entity {
     // 更新状态
     updateState() {
         const hp = AM.getAttrSum(Attrs.player.HP);
+        const spd = Math.min(AM.getAttrSum(Attrs.player.SPD), 1);
         const atk = AM.getAttrSum(Attrs.player.ATK);
         const dmg = AM.getAttrSum(Attrs.player.DMG);
-        const meleeST = AM.getAttrSum(Attrs.player.MeteeStartupTime);
-        const meleeRT = AM.getAttrSum(Attrs.player.MeteeRecoveryTime);
+        const Melee_dmg = AM.getAttrSum(Attrs.player.MeleeDmg);
+        const Ranged_dmg = AM.getAttrSum(Attrs.player.RangedDmg);
+        const ST = AM.getAttrSum(Attrs.player.AttackStartupTime);
+        const RT = AM.getAttrSum(Attrs.player.AttackRecoveryTime);
+        const meleeST = AM.getAttrSum(Attrs.player.MeleeStartupTime);
+        const meleeRT = AM.getAttrSum(Attrs.player.MeleeRecoveryTime);
         const rangedST = AM.getAttrSum(Attrs.player.RangedStartupTime);
         const rangedRT = AM.getAttrSum(Attrs.player.RangedRecoveryTime);
         const dash_charge = AM.getAttrSum(Attrs.player.DASH_CHARGE);
+
         this.state.hp_max = this.baseState.hp_max * (1 + hp);
         this.state.hp = Math.min(this.state.hp, this.state.hp_max);
+        this.MaxSpeed = this.baseState.MaxSpeed * (1 + spd);
+
         this.state.attack.atk = this.baseState.attack.atk * (1 + atk);
-        this.state.attack.damage.melee = this.state.attack.atk * (1 + dmg);
-        this.state.attack.damage.ranged = this.state.attack.atk * (1 + dmg);
-        this.state.attack.startupTime.melee = this.baseState.attack.MeleeStartupTime + meleeST;
-        this.state.attack.startupTime.ranged = this.baseState.attack.RangedStartupTime + rangedST;
-        this.state.attack.recoveryTime.melee = this.baseState.attack.MeleeRecoveryTime + meleeRT;
-        this.state.attack.recoveryTime.ranged = this.baseState.attack.RangedRecoveryTime + rangedRT;
+        this.state.attack.damage.melee = this.state.attack.atk * (1 + dmg) * (1 + Melee_dmg);
+        this.state.attack.damage.ranged = this.state.attack.atk * (1 + dmg) * (1 + Ranged_dmg);
+        this.state.attack.startupTime.melee = this.baseState.attack.MeleeStartupTime + meleeST + ST;
+        this.state.attack.startupTime.ranged = this.baseState.attack.RangedStartupTime + rangedST + ST;
+        this.state.attack.recoveryTime.melee = this.baseState.attack.MeleeRecoveryTime + meleeRT + RT;
+        this.state.attack.recoveryTime.ranged = this.baseState.attack.RangedRecoveryTime + rangedRT + RT;
         Player_Animation.Framerate["melee"] = Player_Animation.Frames["melee"] / ((this.state.attack.startupTime.melee + this.state.attack.recoveryTime.melee) / 1000);
         Player_Animation.Framerate["ranged"] = Player_Animation.Frames["ranged"] / ((this.state.attack.startupTime.ranged + this.state.attack.recoveryTime.ranged) / 1000);
 
@@ -399,6 +395,7 @@ class Player extends Entity {
         // 执行弹反攻击
         this.block.performParry = () => {
             console.log("执行弹反攻击！");
+            bus.emit(Events.player.parry);
 
             // 立即触发一次无前后摇的近战攻击
             const originalStartupTime = this.state.attack.startupTime.melee;
@@ -431,6 +428,7 @@ class Player extends Entity {
     // 检查攻击方向是否在格挡范围内
     isAttackFromFront(attacker) {
         if (!attacker || !attacker.hitbox) return false;
+        if (false) return true;//TODO://持有冷静时免疫所有方向伤害
 
         const attackerCenterX = attacker.hitbox.getCenter().x;
         const playerCenterX = this.hitbox.getCenter().x;
@@ -457,6 +455,7 @@ class Player extends Entity {
 
     // 受击判定
     takeDamage(dmg, attackType, attacker = null) {
+        if (this._decoy) return;
         let finalDmg = bus.emitReduce(
             Events.player.takeDamage,
             { baseDamage: dmg },
@@ -469,14 +468,43 @@ class Player extends Entity {
             console.log(`格挡成功，伤害减免至: ${finalDmg}`);
         }
 
+        finalDmg *= (1 + AM.getAttrSum(Attrs.player.TAKE_DMG));
+
+        finalDmg = Math.max(0, Math.floor(finalDmg));
+
         this.state.hp -= finalDmg;
-        if (this.state.hp <= 0) {
-            // -----判定阻止死亡-----
+        bus.emit(Events.player.afterTakeDamage, { attackType, attacker, damage: finalDmg, victim: this });
+        // 统一的死亡处理
+        this.checkAndHandleDeath();
+    }
+
+    /**
+     * 生命流失（直接扣血），不经过 HEAL 属性或治疗事件的加成计算。
+     * 常用于持续性伤害 / 状态扣血效果。
+     * @param {number} amount - 扣除的生命值（基数，直接减）
+     * @param {string|null} source - 来源（可选）
+     */
+    takeLifeLoss(amount, source = null) {
+        if (this._decoy) return;
+        const finalAmount = Math.max(0, amount);
+        this.state.hp = Math.max(0, this.state.hp - finalAmount);
+
+        try { bus.emit(Events.player.afterTakeDamage, { attackType: 'life_loss', attacker: source, damage: finalAmount, victim: this }); } catch (e) { }
+
+        // 统一的死亡处理
+        this.checkAndHandleDeath();
+    }
+
+    /**
+     * 统一的死亡判定与处理函数。
+     * - 当 hp <= 0 时触发可中断的致命伤事件（Events.player.fatelDmg），如果没有被中断，则触发死亡事件。
+     */
+    checkAndHandleDeath() {
+        if (this.state.hp < 0)
             if (!bus.emitInterruptible(Events.player.fatelDmg)) {
                 bus.emit(Events.player.die);
                 alert("你死了");
             }
-        }
     }
 
     /**
@@ -500,6 +528,14 @@ class Player extends Entity {
 
     setPosition(position) {
         this.hitbox.position = position;
+    }
+
+    /**
+     * 创建替身：替身会出现在玩家当前位置，存在指定时间或被攻击后消失。
+     * @param {number} durationMs 存在时长（毫秒）
+     */
+    createDecoy(durationMs = 4000) {
+        this._decoy = new Decoy(this.hitbox.position.copy(), this.size.copy(), this, durationMs, this.animation.getFrame());
     }
 
     draw(ctx) {
@@ -531,6 +567,9 @@ class Player extends Entity {
 
         // 绘制冲刺UI
         this.drawDashUI(ctx);
+        if (player._decoy) {
+            player._decoy.draw(ctx);
+        }
     }
 
     drawBoxs(ctx) {

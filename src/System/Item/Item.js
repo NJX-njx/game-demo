@@ -41,13 +41,13 @@ export class Item {
             }
         }
 
-        if (typeof this.config.onActivate === "function") {
-            this.config.onActivate(this);
-        }
-
         if (typeof this.config.onAcquire === "function" && !this._init) {
             this.config.onAcquire(this);
             this._init = true;
+        }
+
+        if (typeof this.config.onActivate === "function") {
+            this.config.onActivate(this);
         }
     }
 
@@ -60,8 +60,9 @@ export class Item {
         AM.removeAllAttrBySource(this.id);
         bus.offBySource(this.id);
 
-        if (this.hasTag(ItemTags.ADD_SLOTS))
-            itemManager.removeSlotsBySource(this.id);
+        if (typeof this.config.onDeactivate === "function") {
+            this.config.onDeactivate(this);
+        }
     }
 
     /** 添加标签 */

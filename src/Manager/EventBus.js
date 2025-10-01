@@ -9,7 +9,8 @@ export const EventTypes = {
             next_room: "GAME_ENTER_NEXT_ROOM",
             shop: "GAME_ENTER_SHOP"
         },
-        finish: "GAME_FINISH"
+        finish: "GAME_FINISH",
+        open_chest: "GAME_OPEN_CHEST"
     },
     item: {
         gain: "ITEM_GAIN",
@@ -19,12 +20,16 @@ export const EventTypes = {
         die: "PLAYER_DIE",
         hpPercent: "PLAYER_HP_PERCENT",
         heal: "PLAYER_HEAL",
-        dealDamage: "PLAYER_DEAL_DAMAGE", // 造成伤害
-        takeDamage: "PLAYER_TAKE_DAMAGE", // 受到伤害
+        dodge: "PLAYER_DODGE",
+        parry: "PLAYER_PARRY",
+        dealDamage: "PLAYER_DEAL_DAMAGE", // 造成伤害 payload: { baseDamage, attackType, attacker, target }
+        takeDamage: "PLAYER_TAKE_DAMAGE", // 受到伤害 payload: { baseDamage }
+        afterTakeDamage: "PLAYER_AFTER_TAKE_DAMAGE", // 受到伤害后
         fatelDmg: "PLAYER_FATEL_DAMAGE" // 受到致命伤
     },
     enemy: {
-        die: "ENEMY_DIE"
+        die: "ENEMY_DIE",               // 敌人死亡 payload: { attackType, attacker, damage, victim }
+        takeDamage: "ENEMY_TAKE_DAMAGE" // 受到伤害 payload: { attackType, attacker, damage, victim }
     },
     boss: {},
     interaction: {
@@ -72,6 +77,7 @@ class EventBus {
     _checkEvent(event) {
         const exists = this.validEvents.has(event);
         if (!exists) console.warn(`[EventBus] 事件 "${event}" 不存在`);
+        return exists;
     }
 
     /**
@@ -85,8 +91,9 @@ class EventBus {
      * @param {string} [options.source] - 来源
      * @returns {Function} - 注销函数
      */
-    on({ event, handler, priority = 0, maxCalls = Infinity, onDispose = null, source = null }) {
-        this._checkEvent(event);
+    on(options) {
+        const { event, handler, priority = 0, maxCalls = Infinity, onDispose = null, source = null } = options;
+        if (!this._checkEvent(event)) console.warn(`[EventBus] 注册未知事件 "${event}" options: "${JSON.stringify(options)}"`);
         if (!this.listeners.has(event)) this.listeners.set(event, []);
 
         const arr = this.listeners.get(event);
