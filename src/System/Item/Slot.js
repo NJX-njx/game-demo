@@ -1,7 +1,8 @@
+import { Item } from "./Item";
 export const SlotTypes = {
     INVENTORY: "INVENTORY",   // 玩家背包格子
     PICKUP: "PICKUP",         // 临时拾取格子
-    DRAG: "DRAG",             // 拖拽交换格子
+    EXCHANGE: "EXCHANGE",     // 拖拽交换格子
     TRUSH: "TRUSH"            // 垃圾桶格子
 };
 
@@ -14,10 +15,15 @@ export class Slot {
         this._source = _source;
     }
 
-    /** 判断是否可以放入道具 */
+    /** 
+     * 判断是否可以放入道具
+     * @param {Item} item - 待放入的道具实例
+     * @returns {boolean} 是否可以放入
+     */
     canAccept(item) {
         if (!item) return true;
         if (this.type === SlotTypes.PICKUP) return false; // 临时拾取格子不允许放入物品
+        if (this.type === SlotTypes.EXCHANGE && !item.canExchange()) return false;
         if (this.type === SlotTypes.TRUSH && !item.canRemove()) return false;
         if (this.itemType && this.itemType !== item.type) return false;
         if (this.maxLevel < item.level) return false;

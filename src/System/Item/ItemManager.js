@@ -85,6 +85,15 @@ class ItemManager {
         if (item._slot) item._slot.removeItem();
     }
 
+    /** 按 name 移除道具 */
+    removeItemByName(name) {
+        for (const slot of this.slots) {
+            if (slot.item && slot.item.name === name) {
+                this.remove(slot.item);
+            }
+        }
+    }
+
     /** 获取某个格子的道具 */
     getAt(slotIndex) {
         return this.slots[slotIndex]?.item || null;
@@ -180,7 +189,7 @@ class ItemManager {
         }
 
         if (!newConfig) {
-            console.warn("没有可交换的道具！");
+            console.warn("没有可交换的道具！", currentItem);
             return false;
         }
 

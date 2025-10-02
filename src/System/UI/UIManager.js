@@ -2,6 +2,7 @@ import { itemBar } from "./Screens/ItemBarSeen";
 import { itemManager } from "../Item/ItemManager";
 import { pauseMenu } from "./Screens/PauseMenu";
 import { soundSettings } from "./Screens/SoundSettings";
+import { exchangeScreen } from "./Screens/ExchangeScreen";
 
 class UIManager {
     static instance;
@@ -150,3 +151,4 @@ const canvas = document.getElementById('ui-canvas');
 uiManager.addScreen(itemBar, true);
 uiManager.addScreen(pauseMenu);
 uiManager.addScreen(soundSettings);
+uiManager.addScreen(exchangeScreen);

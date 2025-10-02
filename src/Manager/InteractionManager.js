@@ -7,6 +7,9 @@ import { inputManager } from "../System/Input/InputManager";
 import { Hitbox } from "../Utils/Hitbox";
 import { Vector } from "../Utils/Vector";
 import { eventBus, EventTypes } from "./EventBus";
+import { uiManager } from "../System/UI/UIManager";
+import { itemManager } from "../System/Item/ItemManager";
+import { exchangeScreen } from "../System/UI/Screens/ExchangeScreen";
 
 export class Event {
     constructor(config) {
@@ -141,8 +144,9 @@ class InteractionManager {
                 // 检查玩家是否与交互点重叠及交互点是否已触发过
                 if (inter.triggered || !player.hitbox.checkHit(inter) || !this.checkConds(inter.cond)) continue;
 
-                if (inter.autoTrigger || inputManager.isKeyDown('E')) {// 自动触发或手动交互：E 键
-                    inter.triggered = true;
+                if (inter.autoTrigger || inputManager.isFirstDown('E')) {// 自动触发或手动交互：E 键
+                    if (!(inter.type.has('demon') || inter.type.has('angel')))
+                        inter.triggered = true;
                     console.log('🎮 交互点触发:', inter);
                     this.handleInteraction(inter);
                     break; // 每帧只触发一个交互点
@@ -194,8 +198,10 @@ class InteractionManager {
                         break;
                     case 'npc':
                     case 'angel':
-                    case 'demon':
                         this.handleNPCEvent(evName, evData);
+                        break;
+                    case 'demon':
+                        this.handleDemonEvent(ev, interaction);
                         break;
                     case 'chest':
                     case 'chest_boss':
@@ -247,6 +253,22 @@ class InteractionManager {
     handleNPCEvent(event, data) {
         console.log('NPC事件触发:', event, data);
         // TODO: 实现NPC对话系统
+    }
+
+    /**
+     * 处理恶魔事件
+     * @param {Event} event 
+     * @param {Interaction} inter 
+     */
+    handleDemonEvent(event, inter) {
+        console.log('恶魔事件触发:', event, inter);
+        if (!inter.times) {
+            inter.times = itemManager.countItem('惊讶') === 0 ? 2 : 4;
+            itemManager.removeItemByName('惊讶');
+        }
+
+        exchangeScreen._interaction = inter;
+        uiManager.switchScreen('exchange');
     }
 
     /**

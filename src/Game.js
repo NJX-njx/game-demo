@@ -231,12 +231,7 @@ class Game {
             inputManager.update();
 
             if (inputManager.isFirstDown("Esc")) {
-                // 优先让 UI 回退一层（若有界面打开）
-                if (uiManager.isUIOpen()) {
-                    uiManager.goBack();
-                    // 回退后若没有 UI 再切换暂停
-                    if (!uiManager.isUIOpen()) this.resume();
-                } else {
+                if (!this.popUI()) {
                     this.pause();
                 }
             }
@@ -282,6 +277,7 @@ class Game {
     }
 
     resumeUpdate() {
+        this.isPaused = false;
         this.isStopUpdate = false;
     }
 
@@ -303,6 +299,18 @@ class Game {
             this.resume();
         else
             this.pause();
+    }
+
+    popUI() {
+        // 优先让 UI 回退一层（若有界面打开）
+        if (uiManager.isUIOpen()) {
+            uiManager.goBack();
+            // 回退后若没有 UI 再切换暂停
+            if (!uiManager.isUIOpen())
+                this.resumeUpdate();
+            return true;
+        }
+        return false;
     }
 
     stop() {

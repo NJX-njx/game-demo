@@ -419,9 +419,6 @@ class Player extends Entity {
                 this.state.attack.recoveryTime.melee = originalRecoveryTime;
                 this.state.attack.damage.melee = originalDamage;
             }, 50); // 短暂延迟确保攻击完成
-
-            // 播放弹反音效
-            soundManager.playSound('player', 'parry');
         }
     }
 

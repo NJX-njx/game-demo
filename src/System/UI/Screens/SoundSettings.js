@@ -2,7 +2,7 @@ import { UIScreen } from "../base/UIScreen";
 import { UIButton } from "../Elements/UIButton";
 import { UISlider } from "../Elements/UISlider";
 import { soundManager } from "../../../Manager/SoundManager";
-import { uiManager } from "../UIManager";
+import { game } from "../../../Game";
 
 /**
  * 基于 Canvas 的声音设置界面
@@ -22,7 +22,7 @@ export class SoundSettings extends UIScreen {
 
         // 关闭按钮
         const btnW = 140, btnH = 42;
-        this.closeButton = new UIButton(this.cx + this.panelW / 2 - btnW - 20, this.cy + this.panelH / 2 - btnH - 20, btnW, btnH, '关闭', () => uiManager.goBack());
+        this.closeButton = new UIButton(this.cx + this.panelW / 2 - btnW - 20, this.cy + this.panelH / 2 - btnH - 20, btnW, btnH, '关闭', () => game.popUI());
         this.addElement(this.closeButton);
 
         // 三个滑块

@@ -255,7 +255,6 @@ export const ItemConfigs = {
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_EXCHANGE, ItemTags.NO_RANDOM, ItemTags.FIXED_EXCHANGE],
         exchangeToName: "朗诵",
-        effects: {},
         hooks: (item) => [
             {   // 在进入下一个房间前，不可交换
                 event: Events.game.enter.next_room,
@@ -274,7 +273,7 @@ export const ItemConfigs = {
         level: 1,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_RANDOM],
-        onActive(item) {
+        onActivate(item) {
             itemManager.addSlots(2, { maxLevel: 3, type: ItemTypes.NORMAL }, item.id);
         },
         onDeactivate(item) {
@@ -305,14 +304,14 @@ export const ItemConfigs = {
         ]
     },
 
-    jy惊讶: {// 【12】【1级】“惊讶” //TODO:下次进入商店时：恶魔处额外展示2个物品
+    jy惊讶: { // 【12】【1级】“惊讶” 与恶魔交互时：额外增加两次交换次数
         name: "惊讶",
         level: 1,
         type: ItemTypes.NORMAL,
-        tags: [ItemTags.UNIQUE_SINGLE],
+        tags: [ItemTags.UNIQUE_SINGLE]
     },
 
-    dg祷告: {// 【13】【1级】“祷告” BOSS的生命上限降低25%； 交换时获得“虔诚”
+    dg祷告: { // 【13】【1级】“祷告” BOSS的生命上限降低25%； 交换时获得“虔诚”
         name: "祷告",
         level: 1,
         type: ItemTypes.NORMAL,
@@ -321,6 +320,14 @@ export const ItemConfigs = {
         effects: {
             [Attrs.boss.HP]: -0.25
         },
+        hooks: (item) => [
+            {   // 在进入下一个房间前，不可交换
+                event: Events.game.enter.next_room,
+                handler: () => {
+                    item.removeTag(ItemTags.NO_EXCHANGE);
+                }
+            }
+        ]
     },
 
     qy祈愿: { // 【14】【1级】“祈愿” 近战攻击击败敌人时：受到的伤害降低25%，持续10秒；并立即回复8%生命
@@ -450,7 +457,7 @@ export const ItemConfigs = {
         ],
         onDeactivate(item) {
             AM.removeAllAttrBySource(item.id + '_hpPercent');
-        },
+        }
     },
 
     gx共情: { // 【20】【2级】“共情” 近战攻击的攻击范围扩大
@@ -583,9 +590,7 @@ export const ItemConfigs = {
         ]
     },
 
-    al爱恋: { // 【28】【2级】“爱恋”
-        //随机获得以下效果之一：攻击力+45%；生命上限+30%；受到的伤害降低20固定值（DMG），但不低于原本的10%。该效果在进入新的房间时刷新。
-        //同时携带“友谊”时，可同时获取2个效果。此时通关游戏将完成成就“来世的我们”
+    al爱恋: { // 【28】【2级】“爱恋” 随机获得以下效果之一：攻击力+45%；生命上限+30%；受到的伤害降低20固定值（DMG），但不低于原本的10%。该效果在进入新的房间时刷新。同时携带“友谊”时，可同时获取2个效果。此时通关游戏将完成成就“来世的我们”
         name: "爱恋",
         level: 2,
         type: ItemTypes.NORMAL,
@@ -803,12 +808,12 @@ export const ItemConfigs = {
         hooks: (item) => [
             {
                 event: Events.player.takeDamage,
-                handler: () => {
+                handler: (payload) => {
                     if (item.state.dlTimer.ready() && player.state.hp / player.state.hp_max < 0.3) {
                         item.state.dlTimer.start();
                         AM.addAttr(Attrs.player.MeleeDmg, 1.0, item.id, null, 1); // 造成双倍伤害
                         player.block.performParry(); // 视为弹反
-                        return { baseDamage: 0 }; // 视为未受伤害
+                        return { ...payload, baseDamage: 0 }; // 视为未受伤害
                     }
                 }
             }
