@@ -31,18 +31,6 @@ export class ItemBarScreen extends UIScreen {
         }
 
         super.draw(ctx);
-
-        // 绘制拖拽道具
-        if (itemManager.dragging) {
-            ctx.save();
-            ctx.globalAlpha = 0.8;
-            ctx.fillStyle = "white";
-            ctx.font = "16px bold sans-serif";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText(itemManager.draggingItem.name, mouseManager.position.x, mouseManager.position.y);
-            ctx.restore();
-        }
     }
 }
 

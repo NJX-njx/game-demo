@@ -31,7 +31,7 @@ class ExchangeScreen extends UIScreen {
         const btnY = slotY + slotSize + 20;
 
         this.exchangeBtn = new UIButton(cw / 2 - btnW - 10, btnY, btnW, btnH, '交换', () => {
-            if (!this.exchangeSlot.item) return;
+            if (!this.exchangeSlot.item || !this.exchangeSlot.item.canExchange()) return;
             if (!this._interaction || this._interaction.times === 0) return;
             this._interaction.times--;
             const ok = itemManager.exchangeItemBySlot(this.exchangeSlot);

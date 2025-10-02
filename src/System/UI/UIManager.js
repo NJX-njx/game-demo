@@ -1,8 +1,10 @@
 import { itemBar } from "./Screens/ItemBarSeen";
 import { itemManager } from "../Item/ItemManager";
+import { mouseManager } from "../Input/MouseManager";
 import { pauseMenu } from "./Screens/PauseMenu";
 import { soundSettings } from "./Screens/SoundSettings";
 import { exchangeScreen } from "./Screens/ExchangeScreen";
+import { textureManager } from "../../Manager/TextureManager";
 
 class UIManager {
     static instance;
@@ -15,6 +17,7 @@ class UIManager {
         this.currentScreen = null;      // 当前操作界面
         this.persistentScreens = new Set(); // 一直显示的界面
         this._history = []; // 已打开的界面历史栈
+        this._tooltip = null; // 临时 tooltip 信息，由元素注册，统一在 draw 完成后绘制在最上层
     }
 
     /**
@@ -102,6 +105,9 @@ class UIManager {
      * - currentScreen 绘制
      */
     draw(ctx) {
+        // 清空上次的 tooltip，元素在绘制时可通过 uiManager.setTooltip(...) 注册新的 tooltip
+        this._tooltip = null;
+
         // 绘制 persistent 屏幕
         for (let name of this.persistentScreens) {
             const screen = this.screens[name];
@@ -112,7 +118,99 @@ class UIManager {
         if (this.currentScreen && !this.persistentScreens.has(this.currentScreen.name)) {
             if (this.currentScreen.visible) this.currentScreen.draw(ctx);
         }
+
+        // 在最上层绘制 tooltip（若有）以避免被其他元素遮挡
+        if (this._tooltip) {
+            try {
+                const tip = this._tooltip;
+                const padding = tip.padding || 8;
+                const lineHeight = tip.lineHeight || 18;
+                const boxWidth = tip.width || Math.min(300, ctx.canvas.width - 20);
+                let tx = tip.x || 12;
+                let ty = tip.y || 12;
+
+                // 支持传入 rawText 或 lines。若提供 rawText，则自动换行成 lines
+                let lines = tip.lines || [];
+                if (!lines || lines.length === 0) {
+                    const raw = tip.rawText || '';
+                    // 简单的按空格和字符拆分换行，以适配 canvas.measureText
+                    const words = raw.split(/(\s+)/); // 保留空格分隔符
+                    let current = '';
+                    for (const w of words) {
+                        const test = current + w;
+                        const width = ctx.measureText(test).width;
+                        if (width + padding * 2 > boxWidth && current.length > 0) {
+                            lines.push(current.trim());
+                            // 如果单个单词本身过长（宽度超过 boxWidth），需要按字符拆分
+                            if (ctx.measureText(w).width + padding * 2 > boxWidth) {
+                                let part = '';
+                                for (const ch of w) {
+                                    const t = part + ch;
+                                    if (ctx.measureText(t).width + padding * 2 > boxWidth) {
+                                        lines.push(part);
+                                        part = ch;
+                                    } else {
+                                        part = t;
+                                    }
+                                }
+                                if (part) lines.push(part.trim());
+                                current = '';
+                                continue;
+                            }
+                            current = w;
+                        } else {
+                            current = test;
+                        }
+                    }
+                    if (current && current.trim().length > 0) lines.push(current.trim());
+                }
+
+                const boxHeight = lines.length * lineHeight + padding * 2;
+                if (tx + boxWidth > ctx.canvas.width) tx = Math.max(8, ctx.canvas.width - boxWidth - 8);
+                if (ty + boxHeight > ctx.canvas.height) ty = Math.max(8, ctx.canvas.height - boxHeight - 8);
+                if (tx + boxWidth > ctx.canvas.width) tx = Math.max(8, ctx.canvas.width - boxWidth - 8);
+                if (ty + boxHeight > ctx.canvas.height) ty = Math.max(8, ctx.canvas.height - boxHeight - 8);
+
+                ctx.save();
+                ctx.globalAlpha = 0.95;
+                ctx.fillStyle = 'rgba(10,10,10,0.95)';
+                ctx.fillRect(tx, ty, boxWidth, boxHeight);
+                ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+                ctx.strokeRect(tx, ty, boxWidth, boxHeight);
+                ctx.fillStyle = 'white';
+                ctx.font = tip.font || '14px sans-serif';
+                ctx.textAlign = 'left';
+                for (let i = 0; i < lines.length; i++) {
+                    ctx.fillText(lines[i], tx + padding, ty + padding + (i + 0.5) * lineHeight);
+                }
+                ctx.restore();
+            } catch (e) { console.warn('tooltip draw error', e); }
+        }
+
+        // 在最上层绘制正在拖拽的道具预览，避免被 UI 元素遮挡
+        try {
+            if (itemManager.dragging && itemManager.draggingItem) {
+                const draggingItem = itemManager.draggingItem;
+                const pos = mouseManager.position;
+                const tex = textureManager.getTexture('item', draggingItem.name);
+                ctx.save();
+                ctx.globalAlpha = 0.95;
+                if (tex) {
+                    const size = 48;
+                    ctx.drawImage(tex, pos.x - size / 2, pos.y - size / 2, size, size);
+                } else {
+                    ctx.fillStyle = 'white';
+                    ctx.font = '16px bold sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(draggingItem.name || '', pos.x, pos.y);
+                }
+                ctx.restore();
+            }
+        } catch (e) { /* ignore */ }
     }
+
+    setTooltip(tip) { this._tooltip = tip; }
 
     /**
      * 事件处理

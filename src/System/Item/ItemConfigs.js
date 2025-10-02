@@ -23,6 +23,7 @@ export const ItemTypes = {
 export const ItemConfigs = {
     yy友谊: { // 【1】【1级】“友谊” 生命+25%（HP%），攻击+25%（DMG%），BOSS攻击+25%（ATK%），BOSS生命+30%（HP%）， 当生命低于25%时：每秒回复1%生命；受到致命伤害时：立即回复所有生命，战斗结束后失去，获得“悲怆”；通关时：隐藏结局
         name: "友谊",
+        description: "【1】【1级】友谊：生命+25%、攻击+25%、BOSS攻击+25%、BOSS生命+30%。生命低于25%时每秒回复1%生命；受到致命伤害时立即回复所有生命，战斗结束后失去并获得‘悲怆’。",
         level: 1,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_EXCHANGE, ItemTags.NO_DROP, ItemTags.NO_RANDOM],
@@ -81,6 +82,7 @@ export const ItemConfigs = {
 
     bc悲怆: { // 【2】【1级】“悲怆” 生命-60%（HP%），击败敌人时：生命恢复8%，生命上限提高8%；叠满10层时：战斗结束后，失去该物品，获得“思念”；携带该物品通关时：触发成就“替我感受来世的温暖”
         name: "悲怆",
+        description: "【2】【1级】悲怆：击败敌人时，生命恢复8%，生命上限提高8%。叠满10层时，战斗结束后，失去该物品，获得“思念”。",
         level: 1,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_EXCHANGE, ItemTags.NO_DROP, ItemTags.NO_RANDOM],
@@ -117,6 +119,7 @@ export const ItemConfigs = {
 
     sn思念: { // 【3】【1级】“思念” 生命+20%（HP%），造成伤害时，随机触发一种：造成的伤害提升15%；下次受到的伤害降低30%；恢复1%生命；携带该物品通关时：触发成就“替我感受来世的温暖”
         name: "思念",
+        description: "【3】【1级】思念：生命+20%。造成伤害时随机触发：伤害提升15%、下次受到的伤害降低30%、恢复1%生命。",
         level: 1,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_RANDOM],
@@ -151,6 +154,7 @@ export const ItemConfigs = {
 
     ds胆识: { // 【4】【0级】“胆识” 敌人伤害降低15，BOSS生命提高45%（HP%）， 交换时获得“决心”；通关时：隐藏结局
         name: "胆识",
+        description: "【4】【0级】胆识：敌人伤害降低15，BOSS生命提高45%。交换时获得‘决心’。使探索开启不同的方向。",
         level: 0,
         type: ItemTypes.ENDING,
         tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_DROP, ItemTags.NO_RANDOM, ItemTags.FIXED_EXCHANGE],
@@ -171,6 +175,7 @@ export const ItemConfigs = {
 
     js决心: { // 【5】【0级】“决心” 敌人伤害降低10，攻击+35%（ATK%），生命-20%（HP%），交换时获得“胆识”；触发闪避反击和弹反时：受到的伤害提高60%（DMG%），持续5秒；获得时：获得10灵魂碎片，立即回复所有生命；通关时：隐藏结局；
         name: "决心",
+        description: "【5】【0级】决心：攻击+35%，生命-20%。触发闪避反击/弹反时受到伤害提高60%，持续5秒。获得时恢复满血并获得10灵魂碎片。使探索开启不同的方向。",
         level: 0,
         type: ItemTypes.ENDING,
         tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_DROP, ItemTags.NO_EXCHANGE, ItemTags.NO_RANDOM],
@@ -207,6 +212,7 @@ export const ItemConfigs = {
 
     yy犹疑: { // 【6】【0级】“犹疑” 移动速度-40%（SPD%），攻击-20%（ATK%），交换时获得“观望”
         name: "犹疑",
+        description: "【6】【0级】犹疑：移动速度-40%，攻击-20%。交换时获得‘观望’。使探索开启不同的方向。",
         level: 0,
         type: ItemTypes.ENDING,
         tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_DROP, ItemTags.NO_RANDOM, ItemTags.FIXED_EXCHANGE],
@@ -219,6 +225,7 @@ export const ItemConfigs = {
 
     gw观望: { // 【7】【0级】“观望” 突进的充能速度加快15%
         name: "观望",
+        description: "【7】【0级】观望：突进充能速度加快15%。使探索开启不同的方向。",
         level: 0,
         type: ItemTypes.ENDING,
         tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_DROP, ItemTags.NO_EXCHANGE, ItemTags.NO_RANDOM],
@@ -229,6 +236,7 @@ export const ItemConfigs = {
 
     hq好奇: { // 【8】【1级】“好奇” 受到的伤害提高30%（TAKE_DMG%），交换时获得“珍惜”；获得时：获得10灵魂碎片
         name: "好奇",
+        description: "【8】【1级】好奇：获得时，获得10灵魂碎片。受到的伤害提高30%。交换时获得‘珍惜’。进入下一个房间前不可交换。",
         level: 1,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_EXCHANGE, ItemTags.FIXED_EXCHANGE],
@@ -251,6 +259,7 @@ export const ItemConfigs = {
 
     zx珍惜: { // 【9】【1级】“珍惜” 交换时获得“朗诵”；获得时：获得15灵魂碎片
         name: "珍惜",
+        description: "【9】【1级】珍惜：获得时，获得15灵魂碎片。交换时获得‘朗诵’。进入下一个房间前不可交换。",
         level: 1,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_EXCHANGE, ItemTags.NO_RANDOM, ItemTags.FIXED_EXCHANGE],
@@ -270,6 +279,7 @@ export const ItemConfigs = {
 
     ls朗诵: { // 【10】【1级】“朗诵” 获得2个额外格子（可容纳3级及以下道具）
         name: "朗诵",
+        description: "【10】【1级】朗诵：获得2个额外背包格（可容纳3级及以下道具）。",
         level: 1,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_GLOBAL, ItemTags.NO_RANDOM],
@@ -288,6 +298,7 @@ export const ItemConfigs = {
 
     xq休憩: { // 【11】【1级】“休憩” 使用时：回复40%生命，消耗道具
         name: "休憩",
+        description: "【11】【1级】休憩：使用时回复40%生命并消耗该道具。该道具可重复获得。",
         level: 1,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.MULTIPLE],
@@ -306,6 +317,7 @@ export const ItemConfigs = {
 
     jy惊讶: { // 【12】【1级】“惊讶” 与恶魔交互时：额外增加两次交换次数
         name: "惊讶",
+        description: "【12】【1级】惊讶：与恶魔交互时额外增加两次交换次数。",
         level: 1,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE]
@@ -313,6 +325,7 @@ export const ItemConfigs = {
 
     dg祷告: { // 【13】【1级】“祷告” BOSS的生命上限降低25%； 交换时获得“虔诚”
         name: "祷告",
+        description: "【13】【1级】祷告：BOSS生命上限降低25%。交换时获得‘虔诚’。进入下一个房间前不可交换。",
         level: 1,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE, ItemTags.FIXED_EXCHANGE],
@@ -332,6 +345,7 @@ export const ItemConfigs = {
 
     qy祈愿: { // 【14】【1级】“祈愿” 近战攻击击败敌人时：受到的伤害降低25%，持续10秒；并立即回复8%生命
         name: "祈愿",
+        description: "【14】【1级】祈愿：近战击败敌人时，受到伤害降低25%，持续10秒，并立即回复8%生命。",
         level: 1,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -352,6 +366,7 @@ export const ItemConfigs = {
 
     gm光芒: { // 【15】【1级】“光芒” 远程攻击造成的伤害提高25%（extra）
         name: "光芒",
+        description: "【15】【1级】光芒：远程攻击造成的伤害提高25%。",
         level: 1,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -362,6 +377,7 @@ export const ItemConfigs = {
 
     gz酣醉: { // 【16】【1级】“酣醉” 受到伤害时，30%概率视为被闪避；若触发，则下一次攻击伤害降低100%
         name: "酣醉",
+        description: "【16】【1级】酣醉：受到伤害时有30%概率视为闪避；若触发，则下一次攻击伤害降低100%。",
         level: 1,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -389,6 +405,7 @@ export const ItemConfigs = {
 
     my梦呓: { // 【17】【1级】“梦呓” 突进消耗完最后一段突进段数后，附加特殊状态：下一次突进向相反的方向突进，但突进距离增加，无敌帧延长，当次闪避反击造成的伤害提高80%
         name: "梦呓",
+        description: "【17】【1级】梦呓：消耗完最后一段突进后，下一次突进将向相反的方向进行。但增加距离且延长无敌帧，闪避反击造成的伤害提高80%。",
         level: 1,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -411,6 +428,7 @@ export const ItemConfigs = {
 
     bl暴力: { // 【18】【1级】“暴力” 受到的伤害提高40%（DMG%）弹反造成的伤害提高120%（extra）
         name: "暴力",
+        description: "【18】【1级】暴力：受到的伤害提高40%；弹反造成的伤害提高120%。",
         level: 1,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -432,6 +450,7 @@ export const ItemConfigs = {
 
     wz畏缩: { // 【19】【1级】“畏缩” 敌人伤害降低10，移动速度-25%（SPD%），攻击-25%（ATK%）；当生命低于50%时：效果翻倍
         name: "畏缩",
+        description: "【19】【1级】畏缩：敌人伤害降低10，自身的移动速度-25%，攻击-25%。生命低于一半时效果翻倍。",
         level: 1,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -462,6 +481,7 @@ export const ItemConfigs = {
 
     gx共情: { // 【20】【2级】“共情” 近战攻击的攻击范围扩大
         name: "共情",
+        description: "【20】【2级】共情：近战攻击判定范围扩大。",
         level: 2,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -486,6 +506,7 @@ export const ItemConfigs = {
 
     qc虔诚: { // 【21】【2级】“虔诚” BOSS的生命上限降低40%
         name: "虔诚",
+        description: "【21】【2级】虔诚：BOSS生命上限降低40%。",
         level: 2,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -496,6 +517,7 @@ export const ItemConfigs = {
 
     fn愤怒: { // 【22】【2级】“愤怒” 触发弹反时，2秒内，远程攻击前摇-300，后摇-400
         name: "愤怒",
+        description: "【22】【2级】愤怒：触发弹反时，2秒内远程攻击前摇减少300，后摇减少400。",
         level: 2,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -512,6 +534,7 @@ export const ItemConfigs = {
 
     gl鼓励: { // 【23】【2级】“鼓励” 触发闪避反击时，2秒内，近战攻击造成的伤害提高150%
         name: "鼓励",
+        description: "【23】【2级】鼓励：触发闪避反击时，2秒内近战伤害提高150%。",
         level: 2,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -525,14 +548,15 @@ export const ItemConfigs = {
         ]
     },
 
-    qs求生: { // 【24】【2级】“求生” 受到伤害时，3秒内，受到的伤害降低70%（DMG%）
+    qs求生: { // 【24】【2级】“求生” 受到伤害后，3秒内，受到的伤害降低70%（DMG%）
         name: "求生",
+        description: "【24】【2级】求生：受到伤害后，3秒内受到的伤害降低70%。",
         level: 2,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
         hooks: (item) => [
             {
-                event: Events.player.takeDamage,
+                event: Events.player.afterTakeDamage,
                 handler: () => {
                     AM.addAttr(Attrs.player.TAKE_DMG, -0.7, item.id, 3000, 1);
                 }
@@ -542,6 +566,7 @@ export const ItemConfigs = {
 
     cm沉默: { // 【25】【2级】“沉默” 生命上限+40%，攻击力-20%。可重复获取。
         name: "沉默",
+        description: "【25】【2级】沉默：生命上限+40%，攻击力-20%。可重复获得。",
         level: 2,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.MULTIPLE, ItemTags.FIXED_EXCHANGE],
@@ -554,6 +579,7 @@ export const ItemConfigs = {
 
     wh卫护: { // 【26】【2级】“卫护” 生命上限-15%，攻击力+30%。可重复获取。持有多于一件时，攻击力额外+18%。
         name: "卫护",
+        description: "【26】【2级】卫护：生命上限-15%，攻击力+30%。可重复获得；持有多件时攻击力额外+18%。",
         level: 2,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.MULTIPLE, ItemTags.FIXED_EXCHANGE],
@@ -575,6 +601,7 @@ export const ItemConfigs = {
 
     hj呼救: { // 【27】【2级】“呼救” 每10秒仅一次，受到伤害后，若生命值比例低于40%，恢复12%生命。
         name: "呼救",
+        description: "【27】【2级】呼救：每10秒一次，受伤后若生命低于40%则恢复12%生命。",
         level: 2,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -592,6 +619,7 @@ export const ItemConfigs = {
 
     al爱恋: { // 【28】【2级】“爱恋” 随机获得以下效果之一：攻击力+45%；生命上限+30%；受到的伤害降低20固定值（DMG），但不低于原本的10%。该效果在进入新的房间时刷新。同时携带“友谊”时，可同时获取2个效果。此时通关游戏将完成成就“来世的我们”
         name: "爱恋",
+        description: "【28】【2级】爱恋：随机获得以下效果之一：攻击力+45%、生命上限+30%、受到的伤害降低20；进入新房间时刷新；携带‘友谊’时可同时获得两个效果。",
         level: 2,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -624,6 +652,7 @@ export const ItemConfigs = {
 
     gj告解: { // 【29】【2级】“告解” 仅3次，打开常规宝箱时，获得的物品改为二选一。次数耗尽时丢弃之。
         name: "告解",
+        description: "【29】【2级】告解：仅3次，打开普通宝箱时物品改为二选一；次数耗尽后丢弃。",
         level: 2,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -643,8 +672,9 @@ export const ItemConfigs = {
         }
     },
 
-    am安眠: { // 【30】【2级】“安眠” 进入下一个房间时，恢复25%生命值。生命值高于70%时，造成的伤害提高20%（DMG%）
+    am安眠: { // 【30】【2级】“安眠” 进入新的房间时，恢复25%生命值。生命值高于70%时，造成的伤害提高20%（DMG%）
         name: "安眠",
+        description: "【30】【2级】安眠：进入新的房间时恢复25%生命；生命高于70%时造成伤害提高20%。",
         level: 2,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -671,6 +701,7 @@ export const ItemConfigs = {
 
     kp看破: { // 【31】【2级】“看破” 生命值低于80%时，基于当前生命值比例，造成的伤害提高（DMG%）。每低1%生命值，伤害提高1.5%。
         name: "看破",
+        description: "【31】【2级】看破：生命低于80%时按比例提高伤害，每降低1%生命提高1.5%伤害。",
         level: 2,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -692,6 +723,7 @@ export const ItemConfigs = {
 
     zn执念: { // 【32】【2级】“执念” 仅一次，主动使用时，立即眩晕全场敌人10秒，并使我方造成的伤害提高80%（DMG%）。使用后丢弃之。
         name: "执念",
+        description: "【32】【2级】执念：一次性使用，立刻眩晕全场敌人10秒并提高我方伤害80%，使用后丢弃。",
         level: 2,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -711,6 +743,7 @@ export const ItemConfigs = {
 
     jj焦急: { // 【33】【2级】“焦急” 每秒流失1%生命值。攻击命中时，立即恢复3%生命值。
         name: "焦急",
+        description: "【33】【2级】焦急：每秒流失1%生命；攻击命中时恢复3%生命。",
         level: 2,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -738,6 +771,7 @@ export const ItemConfigs = {
 
     qx清醒: { // 【34】【3级】“清醒” 生命上限+150%。生命值高于40%时，受到的治疗效果降低70%（Heal%），生命值高于70%时，受到的治疗效果降低90%（Heal%）。
         name: "清醒",
+        description: "【34】【3级】清醒：生命上限+150%。生命大于40%时治疗效果降低70%，大于70%时降低90%。",
         level: 3,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -767,6 +801,7 @@ export const ItemConfigs = {
 
     ks宽恕: { // 【35】【3级】“宽恕” 触发闪避反击时，5秒内，攻击力提高40%（ATK%），该效果可叠加3层，持续时间刷新时，刷新全部层数的时间。
         name: "宽恕",
+        description: "【35】【3级】宽恕：触发闪避反击时5秒内攻击力提高40%，可叠加3层，可刷新持续时间。",
         level: 3,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -783,6 +818,7 @@ export const ItemConfigs = {
 
     xc雪耻: { // 【36】【3级】“雪耻” 攻击命中当前生命值低于我方已流失生命值150%的敌人时，立即斩杀之，并恢复自身3%生命值。
         name: "雪耻",
+        description: "【36】【3级】雪耻：攻击命中当前生命值低于我方已流失生命值150%的敌人时，立即斩杀之，并恢复自身3%生命值。",
         level: 3,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -802,6 +838,7 @@ export const ItemConfigs = {
 
     dl对垒: { // 【37】【3级】“对垒” 每30秒仅一次，受到伤害时，若生命值低于30%，视为将其弹反，并造成双倍伤害（extra）。
         name: "对垒",
+        description: "【37】【3级】对垒：每30秒一次，受伤时若生命低于30%则视为弹反并造成双倍伤害。",
         level: 3,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -825,6 +862,7 @@ export const ItemConfigs = {
 
     yd引渡: { // 【38】【3级】“引渡” 对生命值比例高于自身的敌人造成的伤害提高60%。
         name: "引渡",
+        description: "【38】【3级】引渡：对生命比例高于自身的敌人造成的伤害提高60%。",
         level: 3,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -843,6 +881,7 @@ export const ItemConfigs = {
 
     cb慈悲: { // 【39】【3级】“慈悲” 攻击命中生命值低于24%的敌人时，立即斩杀之，且下次造成的伤害提高100%（extra）。
         name: "慈悲",
+        description: "【39】【3级】慈悲：攻击命中生命值低于24%的敌人时，立即斩杀之，并使下一次造成伤害提高100%。",
         level: 3,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -867,6 +906,7 @@ export const ItemConfigs = {
 
     gc歌唱: { // 【40】【3级】“歌唱” 每20秒仅一次，主动使用时，突进的充能时间缩减50%，持续4秒。
         name: "歌唱",
+        description: "【40】【3级】歌唱：每20秒一次，主动使用可使突进充能缩短50%，持续4秒。",
         level: 3,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -888,6 +928,7 @@ export const ItemConfigs = {
 
     xy信仰: { // 【41】【3级】“信仰” 每有一个物品空位，生命值+20%，攻击力+15%。
         name: "信仰",
+        description: "【41】【3级】信仰：每有一个空背包格，生命值+20%、攻击力+15%。",
         level: 3,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -906,6 +947,7 @@ export const ItemConfigs = {
 
     lt利他: { // 【42】【3级】“利他” 每20秒仅一次，主动使用时：在自身所在位置放置一个最多存在4秒的替身。在替身被攻击前，自身获得无敌、霸体、不可选中。
         name: "利他",
+        description: "【42】【3级】利他：每20秒一次，主动使用在当前位置放置存在最多4秒的替身；替身在被攻击前自身获得无敌和霸体。",
         level: 3,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -927,6 +969,7 @@ export const ItemConfigs = {
 
     bl辩论: { // 【43】【3级】“辩论” 携带该物品时，弹反判定大幅延长，且造成的伤害提高50%（extra）
         name: "辩论",
+        description: "【43】【3级】辩论：弹反判定大幅延长，且造成的伤害提高50%。",
         level: 3,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
@@ -944,6 +987,7 @@ export const ItemConfigs = {
 
     ww无畏: { // 【44】【3级】“无畏” 连续造成5次伤害而不受击后，攻击力+20%（ATK%）；每额外造成一次伤害，攻击力再+20%（ATK%），最多叠加至120%。
         name: "无畏",
+        description: "【44】【3级】无畏：连续造成5次伤害而不受击后，攻击力+20%；每额外造成一次伤害，攻击力再+20%，最多叠加至120%。",
         level: 3,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],

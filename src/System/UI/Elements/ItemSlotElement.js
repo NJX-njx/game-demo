@@ -1,6 +1,9 @@
 import { UIElement } from "../base/UIElement";
 import { itemManager } from "../../Item/ItemManager";
 import { SlotTypes } from "../../Item/Slot";
+import { mouseManager } from "../../Input/MouseManager";
+import { uiManager } from "../UIManager";
+import { textureManager } from "../../../Manager/TextureManager";
 
 export class ItemSlotElement extends UIElement {
     constructor(slot, x, y, size) {
@@ -28,18 +31,57 @@ export class ItemSlotElement extends UIElement {
         }
         ctx.strokeRect(this.x, this.y, this.width, this.height);
 
-        // 道具名称
-        let name = "空"
+        // 道具图标或名称
         if (this.slot.item && this.slot !== itemManager.draggingFrom) {
-            name = this.slot.item.name;
+            const item = this.slot.item;
+            const tex = textureManager.getTexture('item', item.name);
+            if (tex) {
+                // 绘制图标，适配格子大小并留少量 padding
+                const pad = Math.max(4, Math.floor(this.width * 0.08));
+                const iw = this.width - pad * 2;
+                const ih = this.height - pad * 2;
+                ctx.drawImage(tex, this.x + pad, this.y + pad, iw, ih);
+            } else {
+                // 回退为名称显示
+                ctx.fillStyle = "white";
+                ctx.font = `${Math.min(this.width / 3, 14)}px sans-serif`;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(item.name, this.x + this.width / 2, this.y + this.height / 2);
+            }
         } else if (this.slot.type === SlotTypes.TRUSH) {
-            name = "垃圾桶"
+            ctx.fillStyle = "white";
+            ctx.font = `${Math.min(this.width / 3, 14)}px sans-serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("垃圾桶", this.x + this.width / 2, this.y + this.height / 2);
+        } else {
+            ctx.fillStyle = "white";
+            ctx.font = `${Math.min(this.width / 3, 14)}px sans-serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("空", this.x + this.width / 2, this.y + this.height / 2);
         }
-        ctx.fillStyle = "white";
-        ctx.font = `${Math.min(this.width / 3, 14)}px sans-serif`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(name, this.x + this.width / 2, this.y + this.height / 2);
+
+        // 如果鼠标悬停且槽内有物品，注册 tooltip 到 uiManager 以便顶层绘制
+        if (this.hovering && this.slot.item) {
+            try {
+                const lines = this.slot.item.getDescription ? this.slot.item.getDescription() : [this.slot.item.name];
+                const padding = 8;
+                const lineHeight = 18;
+                const maxWidth = Math.max(...lines.map(l => ctx.measureText(l).width)) + padding * 2;
+                const boxWidth = Math.min(maxWidth, 300);
+
+                let tx = mouseManager.x + 12;
+                let ty = mouseManager.y + 12;
+
+                // 使用 rawText 让 UIManager 在顶层负责按 width 自动换行
+                const rawText = lines.join('\n');
+                uiManager.setTooltip({ x: tx, y: ty, rawText, width: boxWidth, padding, lineHeight, font: '14px sans-serif' });
+            } catch (e) {
+                // ignore
+            }
+        }
     }
 
     handleEvent(event) {
