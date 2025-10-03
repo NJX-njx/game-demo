@@ -51,7 +51,7 @@ export class EnemyBase extends Entity {
         this.state.hp -= dmg;
         bus.emit(Events.enemy.takeDamage, { attackType, attacker, damage: dmg, victim: this });
         if (this.state.hp <= 0) {
-            this.handleDeath();
+            this.handleDeath(attackType, attacker, dmg);
         }
     }
 
@@ -59,7 +59,7 @@ export class EnemyBase extends Entity {
      * 统一的死亡处理函数。
      * - 触发死亡事件。
      */
-    handleDeath() {
+    handleDeath(attackType = null, attacker = null, dmg = 0) {
         bus.emit(Events.enemy.die, { attackType, attacker, damage: dmg, victim: this });
         this._unbind_list.forEach(unbind => unbind());
         const idx = game.enemies.indexOf(this);
@@ -115,6 +115,7 @@ export class EnemyBase extends Entity {
     }
 
     draw(ctx) {
+        ctx.save();
         const frameTexture = this.animation.getFrame();
         if (frameTexture) {
             drawSprite(ctx, frameTexture, this.hitbox.position.x, this.hitbox.position.y, this.size.x, this.size.y, this.facing);
@@ -131,5 +132,6 @@ export class EnemyBase extends Entity {
         ctx.fillRect(hpBarX, hpBarY, hpBarWidth * (this.state.hp / this.state.hp_max), hpBarHeight);
         ctx.strokeStyle = 'black';
         ctx.strokeRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
+        ctx.restore();
     }
 }

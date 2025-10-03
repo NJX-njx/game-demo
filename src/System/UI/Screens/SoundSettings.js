@@ -9,7 +9,7 @@ import { game } from "../../../Game";
  */
 export class SoundSettings extends UIScreen {
     constructor() {
-        super("soundSettings");
+        super("soundSettings", { blocksGame: true });
         this.visible = false;
 
         // 布局参数（以 1440x720 设计稿为基准）

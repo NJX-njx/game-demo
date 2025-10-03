@@ -11,6 +11,8 @@ export class UIButton extends UIElement {
     draw(ctx) {
         if (!this.visible) return;
 
+        ctx.save();
+
         // 背景
         ctx.fillStyle = this.hover ? "rgba(3,102,241,0.8)" : "rgba(30,41,59,0.9)";
         ctx.strokeStyle = "rgba(3,102,241,0.5)";
@@ -33,6 +35,8 @@ export class UIButton extends UIElement {
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(this.text, this.x + this.width / 2, this.y + this.height / 2);
+
+        ctx.restore();
     }
 
     handleEvent(event) {

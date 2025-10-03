@@ -21,6 +21,8 @@ import { mouseManager } from "./System/Input/MouseManager";
 import { keyboardManager } from "./System/Input/KeyboardManager";
 import { inputManager } from "./System/Input/InputManager";
 import { itemGenerateHistory } from "./System/Item/Item";
+import { talentManager } from "./System/Talent/TalentManager";
+import { TalentConfigs } from "./System/Talent/TalentConfigs";
 
 class Debug {
     constructor() {
@@ -45,7 +47,8 @@ class Debug {
             eventBus,
             inputManager,
             mouseManager,
-            keyboardManager
+            keyboardManager,
+            talentManager
         };
 
         // 常用静态配置 / 常量
@@ -57,6 +60,7 @@ class Debug {
             EventTypes,
             SlotTypes,
             AttributeTypes,
+            TalentConfigs,
             EnemyAnimationConfigs,
             canvas_game,
             canvas_ui,

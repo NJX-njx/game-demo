@@ -18,4 +18,7 @@ export class Cooldown {
     set(sec = 0) {
         this.cd = sec;
     }
+    setTimeLeft(sec = 0) {
+        this.t = sec;
+    }
 }

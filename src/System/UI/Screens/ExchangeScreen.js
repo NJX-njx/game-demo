@@ -7,7 +7,7 @@ import { game } from "../../../Game";
 
 class ExchangeScreen extends UIScreen {
     constructor() {
-        super('exchange');
+        super('exchange', { blocksGame: true });
 
         // 交换用的临时格子，类型为 EXCHANGE
         this.exchangeSlot = new Slot({ type: SlotTypes.EXCHANGE });
@@ -50,7 +50,6 @@ class ExchangeScreen extends UIScreen {
 
     show() {
         super.show();
-        game.stopUpdate();
     }
 
     hide() {
@@ -79,6 +78,7 @@ class ExchangeScreen extends UIScreen {
 
     draw(ctx) {
         if (!this.visible) return;
+        ctx.save();
         // 遮罩
         ctx.fillStyle = "rgba(30,41,59,0.8)";
         ctx.fillRect(80, 0, 1280, ctx.canvas.height);
@@ -90,6 +90,8 @@ class ExchangeScreen extends UIScreen {
             ctx.textAlign = 'center';
             ctx.fillText(`剩余交换次数: ${this._interaction.times}`, ctx.canvas.width / 2, 60);
         }
+
+        ctx.restore();
 
         super.draw(ctx);
     }

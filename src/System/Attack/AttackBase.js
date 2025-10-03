@@ -1,7 +1,19 @@
 import { soundManager } from "../../Manager/SoundManager";
-import { eventBus as bus } from "../../Manager/EventBus";
+import { eventBus as bus, EventTypes as Events } from "../../Manager/EventBus";
+import { Entity } from "../../Entities/Entity";
+import { player } from "../../Entities/Player";
 
 export class AttackBase {
+    /**
+     * 攻击基础类
+     * @param {Entity} owner 发出者
+     * @param {String} type 攻击类型
+     * @param {Object} options 攻击选项
+     * @param {Function} options.getDamage 获取伤害值的函数，默认从 owner.state.attack.damage[type] 读取
+     * @param {Function} options.getStartupTime 获取前摇时间的函数，默认从 owner.state.attack.startupTime[type] 读取
+     * @param {Function} options.getRecoveryTime 获取后摇时间的函数，默认从 owner.state.attack.recoveryTime[type] 读取
+     * @param {Function} options.getTargets 获取目标实体列表的函数，默认调用 owner.attack.targetSelector()
+     */
     constructor(owner, type, options = { getDamage: null, getStartupTime: null, getRecoveryTime: null, getTargets: null }) {
         this.owner = owner;
         this.type = type;
@@ -131,9 +143,9 @@ export class AttackBase {
 
         let finalDamage = damage;
 
-        if (this.owner.dealDamageEvent) {
+        if (this.owner === player) {
             finalDamage = bus.emitReduce(
-                this.owner.dealDamageEvent,
+                Events.player.dealDamage,
                 { baseDamage: finalDamage, attackType: this.type, attacker: this.owner, target },
                 (_, next) => next
             ).baseDamage;

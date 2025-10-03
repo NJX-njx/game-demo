@@ -17,6 +17,8 @@ export class ItemSlotElement extends UIElement {
     draw(ctx) {
         if (!this.visible) return;
 
+        ctx.save();
+
         // 背景
         ctx.fillStyle = "rgba(50,50,50,0.7)";
         ctx.fillRect(this.x, this.y, this.width, this.height);
@@ -82,6 +84,8 @@ export class ItemSlotElement extends UIElement {
                 // ignore
             }
         }
+
+        ctx.restore();
     }
 
     handleEvent(event) {

@@ -5,7 +5,7 @@ import { uiManager } from "../UIManager";
 
 class PauseMenu extends UIScreen {
     constructor() {
-        super("pauseMenu");
+        super("pauseMenu", { blocksGame: true });
 
         // 居中
         this.menuWidth = 300;
@@ -24,19 +24,24 @@ class PauseMenu extends UIScreen {
             uiManager.closeAll();
             game.resume();
         }));
-        this.addElement(new UIButton(cx - buttonWidth / 2, startY + (buttonHeight + gap), buttonWidth, buttonHeight, "音效设置", () => {
+        this.addElement(new UIButton(cx - buttonWidth / 2, startY + (buttonHeight + gap), buttonWidth, buttonHeight, "天赋树", () => {
+            uiManager.switchScreen("talentTree");
+        }));
+        this.addElement(new UIButton(cx - buttonWidth / 2, startY + 2 * (buttonHeight + gap), buttonWidth, buttonHeight, "音效设置", () => {
             uiManager.switchScreen("soundSettings");
         }));
-        this.addElement(new UIButton(cx - buttonWidth / 2, startY + 2 * (buttonHeight + gap), buttonWidth, buttonHeight, "存档", () => {
+        this.addElement(new UIButton(cx - buttonWidth / 2, startY + 3 * (buttonHeight + gap), buttonWidth, buttonHeight, "存档", () => {
             game.saveGame();
         }));
-        this.addElement(new UIButton(cx - buttonWidth / 2, startY + 3 * (buttonHeight + gap), buttonWidth, buttonHeight, "返回主菜单", () => {
+        this.addElement(new UIButton(cx - buttonWidth / 2, startY + 4 * (buttonHeight + gap), buttonWidth, buttonHeight, "返回主菜单", () => {
             window.location.href = "menu.html";
         }));
     }
 
     draw(ctx) {
         if (!this.visible) return;
+
+        ctx.save();
 
         // 遮罩
         ctx.fillStyle = "rgba(30,41,59,0.8)";
@@ -47,6 +52,8 @@ class PauseMenu extends UIScreen {
         ctx.font = "20px Inter";
         ctx.textAlign = "center";
         ctx.fillText("暂停菜单", ctx.canvas.width / 2, ctx.canvas.height / 2 - 100);
+
+        ctx.restore();
 
         // 按钮
         super.draw(ctx);

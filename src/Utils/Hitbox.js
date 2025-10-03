@@ -1,3 +1,5 @@
+import { Vector } from "./Vector";
+
 export class Hitbox {
     /**
      * @param {Vector} position
@@ -87,6 +89,91 @@ export class Hitbox {
         let newLeftup = new Vector(Math.max(this.position.x, other.position.x), Math.max(this.position.y, other.position.y));
         let newRightdown = new Vector(Math.min(this.position.x + this.size.x, other.position.x + other.size.x), Math.min(this.position.y + this.size.y, other.position.y + other.size.y));
         return createHitbox(newLeftup, newRightdown);
+    }
+
+
+    /**
+     * 检查线段 (p1 -> p2) 是否与当前 hitbox 相交。
+     * - 若任一点在矩形内部则视为相交。
+     * - 否则检测线段是否与矩形任一边相交。
+     * @param {{x:number,y:number}} p1
+     * @param {{x:number,y:number}} p2
+     * @returns {boolean}
+     */
+    checkSegmentHit(p1, p2) {
+        // 若任一点在矩形内部，则相交
+        if (this.contains(p1) || this.contains(p2)) return true;
+
+        // 边界点
+        const tl = this.getTopLeft();
+        const br = this.getBottomRight();
+        const tr = new Vector(br.x, tl.y);
+        const bl = new Vector(tl.x, br.y);
+
+        // 段段相交检测（排除端点包含情况已由 contains 处理）
+        const segIntersects = (a, b, c, d) => {
+            // orientation
+            const orient = (p, q, r) => {
+                return (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+            };
+            const onSegment = (p, q, r) => {
+                return q.x >= Math.min(p.x, r.x) && q.x <= Math.max(p.x, r.x) &&
+                    q.y >= Math.min(p.y, r.y) && q.y <= Math.max(p.y, r.y);
+            };
+
+            const o1 = orient(a, b, c);
+            const o2 = orient(a, b, d);
+            const o3 = orient(c, d, a);
+            const o4 = orient(c, d, b);
+
+            if (o1 === 0 && onSegment(a, c, b)) return true;
+            if (o2 === 0 && onSegment(a, d, b)) return true;
+            if (o3 === 0 && onSegment(c, a, d)) return true;
+            if (o4 === 0 && onSegment(c, b, d)) return true;
+
+            return (o1 > 0) !== (o2 > 0) && (o3 > 0) !== (o4 > 0);
+        };
+
+        // 矩形四条边
+        const edges = [
+            [tl, tr],
+            [tr, br],
+            [br, bl],
+            [bl, tl]
+        ];
+
+        for (let [c, d] of edges) {
+            if (segIntersects(p1, p2, c, d)) return true;
+        }
+
+        return false;
+    }
+
+    checkMovingHit(other, startPosition, endPosition) {
+        const delta = endPosition.subVector(startPosition);
+
+        const startBox = new Hitbox(startPosition, this.size);
+        if (startBox.checkHit(other)) return true;
+
+        const endBox = new Hitbox(endPosition, this.size);
+        if (endBox.checkHit(other)) return true;
+
+        const corners = [
+            startPosition,
+            new Vector(startPosition.x + this.size.x, startPosition.y),
+            new Vector(startPosition.x + this.size.x, startPosition.y + this.size.y),
+            new Vector(startPosition.x, startPosition.y + this.size.y)
+        ];
+
+        for (let i = 0; i < corners.length; i++) {
+            const from = corners[i];
+            const to = corners[i].addVector(delta);
+            if (other.checkSegmentHit(from, to)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 const createHitbox = (leftUp, rightDown) => {

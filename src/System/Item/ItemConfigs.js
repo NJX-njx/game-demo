@@ -192,7 +192,7 @@ export const ItemConfigs = {
                 }
             },
             {
-                event: Events.player.dodge,
+                event: Events.player.dodge_attack,
                 handler: (payload) => {
                     AM.addAttr(Attrs.player.TAKE_DMG, 0.6, item.id, 5000, 1);
                 }
@@ -540,7 +540,7 @@ export const ItemConfigs = {
         tags: [ItemTags.UNIQUE_SINGLE],
         hooks: (item) => [
             {
-                event: Events.player.dodge,
+                event: Events.player.dodge_attack,
                 handler: () => {
                     AM.addAttr(Attrs.player.MeleeDmg, 1.5, item.id, 2000, 1);
                 }
@@ -807,7 +807,7 @@ export const ItemConfigs = {
         tags: [ItemTags.UNIQUE_SINGLE],
         hooks: (item) => [
             {
-                event: Events.player.dodge,
+                event: Events.player.dodge_attack,
                 handler: () => {
                     AM.addAttr(Attrs.player.ATK, 0.4, item.id, 5000, 3);
                     AM.refreshAttrDuration(Attrs.player.ATK, item.id);
@@ -916,7 +916,7 @@ export const ItemConfigs = {
                 handler: ({ usedItem }) => {
                     if (usedItem === item && item.state.gcTimer.ready()) {
                         item.state.gcTimer.start();
-                        AM.addAttr(Attrs.player.DASH_CHARGE, -0.5, item.id, 4000);
+                        AM.addAttr(Attrs.player.DASH_CHARGE, 0.5, item.id, 4000);
                     }
                 }
             }

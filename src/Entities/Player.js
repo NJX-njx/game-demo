@@ -12,6 +12,7 @@ import { eventBus as bus, EventTypes as Events } from "../Manager/EventBus";
 import { attributeManager as AM, AttributeTypes as Attrs } from "../Manager/AttributeManager";
 import { drawSprite } from "../Utils/canvas";
 import { Decoy } from "./Decoy";
+import { talentManager } from "../System/Talent/TalentManager";
 
 class Player_Animation {
     static Framerate = {
@@ -91,6 +92,7 @@ class Player extends Entity {
                 RangedRecoveryTime: 700, //攻击后摇
             },
             dash_cooldownTime: 600,     //冲刺冷却
+            dash_durationTime: 200,     //冲刺持续时间
             dash_maxCount: 1,           //冲刺段数
             block: {
                 parryWindow: 200,           // 弹反窗口时间（毫秒）
@@ -123,21 +125,207 @@ class Player extends Entity {
                 damageReduction: this.baseState.block.damageReduction,
                 parryDamageMultiplier: this.baseState.block.parryDamageMultiplier,
             },
-        }
-        this.attack = {
-            melee: new MeleeAttack(this, { getTargets: () => game.enemies }),
-            ranged: new RangedAttack(this, { getTargets: () => game.enemies })
+            unlock: {
+                melee: false,
+                ranged: false,
+                dash: false,
+                block: false,
+                dodge: false,
+                parry: false
+            }
         }
 
         this.facing = 1;
         this.moving = false;
         this.animation = new Player_Animation();
+        // 当前武器：'melee' 或 'ranged'，初始为近战
+        this.currentWeapon = 'melee';
+        const getDamage = (type) => {
+            let dmg = this.state.attack.damage[type];
+
+            // 处理闪避反击倍率
+            let mult = 1;
+            if (this.dodge.isDodge) {
+                this.dodge.stopDodgeWindow();
+                // 触发闪避反击事件，供其他系统响应
+                bus.emit(Events.player.dodge_attack);
+                mult = talentManager.hasTalentLevel('愉悦', 1) ? 3 : 2;
+            }
+
+            return dmg * mult;
+        };
+        const getSpeed = () => {
+            let speed = 12;
+            if (talentManager.hasTalentLevel('凝神', 1)) speed *= 4;
+            return speed;
+        };
+        this.attack = {
+            melee: new MeleeAttack(this, { getTargets: () => game.enemies, getDamage: getDamage.bind(this, 'melee') }),
+            ranged: new RangedAttack(this, { getTargets: () => game.enemies, getDamage: getDamage.bind(this, 'ranged'), getSpeed: getSpeed.bind(this) })
+        }
+
         // 冲刺
-        this.initDash();
+        this.dash = {
+            isDashing: false,
+            dashSpeed: 15,
+            dashDir: { x: 1, y: 0 },
+
+            dashDurationCooldown: new Duration(this.baseState.dash_durationTime),  // 冲刺持续时间
+            dashCooldown: new Cooldown(this.baseState.dash_cooldownTime),          // 恢复一段冲刺的冷却时间
+
+            dashMaxCount: this.baseState.dash_maxCount,         // 最大段数
+            dashCount: 0,                                       // 当前可用段数
+            isCountingDash: false, // 用于检测是否刚触地以启动冲刺段数恢复计时器
+
+            trigger: () => {
+                if (this.dash.isDashing || this.dash.dashCount <= 0) return;
+
+                // --- 冲刺输入检测 ---
+                let dx = 0, dy = 0;
+                if (inputManager.isKeysDown(['A', 'Left'])) dx -= 1;
+                if (inputManager.isKeysDown(['D', 'Right'])) dx += 1;
+                if (inputManager.isKeysDown(['W', 'Up'])) dy -= 1;
+                if (inputManager.isKeysDown(['S', 'Down'])) dy += 1;
+
+                if (dx === 0 && dy === 0) dx = this.facing;
+                let len = Math.sqrt(dx * dx + dy * dy);
+                if (len === 0) len = 1;
+
+                this.dash.dashDir = { x: dx / len, y: dy / len };
+                this.dash.isDashing = true;
+                this.dash.dashDurationCooldown.start();
+                this.dash.dashCount--;
+                this.dash.isCountingDash = true;
+                soundManager.playSound('player', 'dash');
+            },
+            update: (deltaTime) => {
+                // --- 冲刺段数恢复逻辑 ---
+                if (this.isOnGround()) {
+                    this.dash.isCountingDash = true;
+                }
+                if (this.dash.isCountingDash && this.dash.dashCount < this.dash.dashMaxCount) {
+                    this.dash.dashCooldown.tick(deltaTime);
+                    if (this.dash.dashCooldown.ready()) {
+                        this.dash.dashCount++;
+                        this.dash.dashCooldown.start();
+                    }
+                }
+
+                // --- 冲刺状态 ---
+                if (this.dash.isDashing) {
+                    this.dash.dashDurationCooldown.tick(deltaTime);
+                    this.velocity.x = this.dash.dashSpeed * this.dash.dashDir.x;
+                    this.velocity.y = this.dash.dashSpeed * this.dash.dashDir.y;
+                    if (this.dash.dashDurationCooldown.finished()) {
+                        this.dash.isDashing = false;
+                        this.jumping.jumpVelocity = -this.velocity.y;
+                    }
+                }
+            },
+            refreshDashCount: () => {
+                this.dash.dashCount = this.dash.dashMaxCount;
+                this.dash.dashCooldown.start();
+            }
+        };
+
+        // 闪避反击
+        this.dodge = {
+            isDodge: false, // 是否处于闪避状态
+            duration: new Duration(1000), // 闪避反击窗口持续时间（毫秒）
+            update: (deltaTime) => {
+                // 更新闪避反击窗口计时
+                this.dodge.duration.tick(deltaTime);
+                if (this.dodge.duration.finished()) {
+                    this.dodge.isDodge = false;
+                }
+            },
+            startDodgeWindow: () => {
+                this.dodge.duration.start();
+                this.dodge.isDodge = true;
+            },
+            stopDodgeWindow: () => {
+                this.dodge.duration.reset();
+                this.dodge.isDodge = false;
+            }
+        };
+
         // 格挡
-        this.initBlock();
+        this.block = {
+            isBlocking: false,// 是否正在格挡
+            isParrying: false,// 是否在弹反窗口内
+            blockCooldown: new Cooldown(this.state.block.recoveryTime), // 格挡冷却
+            parryDuration: new Duration(this.state.block.parryWindow),  // 弹反窗口
+
+            trigger: () => {
+                if (!this.state.unlock.block) return;
+                if (this.block.isBlocking || !this.block.blockCooldown.ready()) return;
+
+                this.block.isBlocking = true;
+                if (this.state.unlock.parry) {
+                    this.block.isParrying = true;
+                    this.block.parryDuration.start();
+                }
+
+                this.dodge.duration.reset(); // 取消闪避反击窗口
+
+                console.log(`开始格挡 - 进入弹反窗口 (${this.state.block.parryWindow}ms)`);
+            },
+
+            stop: () => {
+                if (this.block.isBlocking) {
+                    this.block.isBlocking = false;
+                    this.block.isParrying = false;
+                    this.block.blockCooldown.start();
+                    console.log("停止格挡 - 进入后摇");
+                }
+            },
+
+            update: (deltaTime) => {
+                this.block.blockCooldown.tick(deltaTime);
+
+                if (this.block.isParrying) {
+                    this.block.parryDuration.tick(deltaTime);
+                    if (this.block.parryDuration.finished()) {
+                        this.block.isParrying = false;
+                        console.log(`弹反窗口结束`);
+                    }
+                }
+            },
+
+            performParry: () => {
+                console.log("执行弹反攻击！");
+                bus.emit(Events.player.parry);
+
+                // 立即触发一次无前后摇的近战攻击
+                const originalStartupTime = this.state.attack.startupTime.melee;
+                const originalRecoveryTime = this.state.attack.recoveryTime.melee;
+
+                // 临时设置无前后摇
+                this.state.attack.startupTime.melee = 0;
+                this.state.attack.recoveryTime.melee = 0;
+
+                // 临时增加伤害
+                const originalDamage = this.state.attack.damage.melee;
+                this.state.attack.damage.melee *= this.state.block.parryDamageMultiplier;
+
+                this.attack.melee.reset();
+                // 触发攻击
+                this.attack.melee.trigger();
+
+                // 恢复原始值
+                setTimeout(() => {
+                    this.state.attack.startupTime.melee = originalStartupTime;
+                    this.state.attack.recoveryTime.melee = originalRecoveryTime;
+                    this.state.attack.damage.melee = originalDamage;
+                }, 50); // 短暂延迟确保攻击完成
+            }
+        };
+
         // 受击
         this.hurtBox = this.hitbox;
+
+        this.invinDuration = new Duration(0); // 受击后无敌时间
+
         this.controllerX = () => {
             if (this.blockMove) return 0;
             let moveLeft = inputManager.isKeysDown(["A", "Left"]);
@@ -157,7 +345,6 @@ class Player extends Entity {
                 this.jumping.jumpBuffer.start();
             return inputManager.isHeld("Space");
         }
-        this.dealDamageEvent = Events.player.dealDamage;
 
         // 对话事件：取消正在进行的动作并重置必要状态
         bus.on({
@@ -178,19 +365,34 @@ class Player extends Entity {
         this.updateState();
         bus.emit(Events.player.hpPercent, this.state.hp / this.state.hp_max);
 
-        // 攻击逻辑
-        if (inputManager.isKeyDown('J')) this.attack.melee.trigger();
-        if (inputManager.isKeyDown('L')) this.attack.ranged.trigger();
-        // 冲刺逻辑
-        if (inputManager.isKeyDown('K')) this.dash.trigger();
-        // 格挡和弹反逻辑
-        if (inputManager.isKeyDown('U')) this.block.trigger();
+        // 攻击与操作逻辑（按键映射：F 切换武器，J 攻击，K 突进，L 格挡＆弹反）
+        // 切换武器（需先解锁远程：天赋名 '你须抵抗'）
+        if (inputManager.isFirstDown('F')) {
+            if (this.currentWeapon === 'melee' && this.state.unlock.ranged) {
+                this.currentWeapon = 'ranged';
+                console.log('切换武器为', this.currentWeapon);
+            } else if (this.currentWeapon === 'ranged' && this.state.unlock.melee) {
+                this.currentWeapon = 'melee';
+                console.log('切换武器为', this.currentWeapon);
+            }
+        }
+
+        // 攻击（J）
+        if (inputManager.isKeyDown('J')) {
+            if (this.currentWeapon === 'melee' && this.state.unlock.melee) this.attack.melee.trigger();
+            else if (this.currentWeapon === 'ranged' && this.state.unlock.ranged) this.attack.ranged.trigger();
+        }
+        // 突进（K）
+        if (inputManager.isKeyDown('K') && this.state.unlock.dash) this.dash.trigger();
+        // 格挡＆弹反（L）
+        if (inputManager.isKeyDown('L') && this.state.unlock.block) this.block.trigger();
         else this.block.stop();
 
         this.attack.melee.update(deltaTime);
         this.attack.ranged.update(deltaTime);
         this.dash.update(deltaTime);
         this.block.update(deltaTime);
+        this.dodge.update(deltaTime);
 
         // 移动与跳跃
         const deltaFrame = 60 * deltaTime / 1000;
@@ -235,7 +437,7 @@ class Player extends Entity {
             this.velocity.x = this.updateX(deltaTime, cmd_X);
         }
         let side = this.rigidMove(deltaTime);
-        if (side & 1) this.velocity.x = 0, this.dash.isDashing = 0;
+        if (side & 1) this.velocity.x = 0;
         if (side & 2) this.velocity.y = this.jumping.jumpVelocity = 0;
     }
 
@@ -254,6 +456,8 @@ class Player extends Entity {
         const rangedST = AM.getAttrSum(Attrs.player.RangedStartupTime);
         const rangedRT = AM.getAttrSum(Attrs.player.RangedRecoveryTime);
         const dash_charge = AM.getAttrSum(Attrs.player.DASH_CHARGE);
+        const dash_duration = AM.getAttrSum(Attrs.player.DASH_DURATION);
+        const block_dmg_reduction = AM.getAttrSum(Attrs.player.BlockDamageReduction);
 
         this.state.hp_max = this.baseState.hp_max * (1 + hp);
         this.state.hp = Math.min(this.state.hp, this.state.hp_max);
@@ -269,163 +473,23 @@ class Player extends Entity {
         Player_Animation.Framerate["melee"] = Player_Animation.Frames["melee"] / ((this.state.attack.startupTime.melee + this.state.attack.recoveryTime.melee) / 1000);
         Player_Animation.Framerate["ranged"] = Player_Animation.Frames["ranged"] / ((this.state.attack.startupTime.ranged + this.state.attack.recoveryTime.ranged) / 1000);
 
-        this.dash.dashCooldownTime = this.baseState.dash_cooldownTime * (1 - dash_charge);
-        this.dash.dashCooldown.set(this.dash.dashCooldownTime);
+        const dashCooldownTime = this.baseState.dash_cooldownTime * (1 - dash_charge);
+        this.dash.dashCooldown.set(dashCooldownTime);
+        const dashDurationTime = this.baseState.dash_durationTime + dash_duration;
+        this.dash.dashDurationCooldown.set(dashDurationTime);
 
         this.state.block.parryWindow = this.baseState.block.parryWindow;
         this.block.parryDuration.set(this.state.block.parryWindow);
         this.state.block.recoveryTime = this.baseState.block.recoveryTime;
         this.block.blockCooldown.set(this.state.block.recoveryTime);
-        this.state.block.damageReduction = this.baseState.block.damageReduction;
+        this.state.block.damageReduction = this.baseState.block.damageReduction + block_dmg_reduction;
         this.state.block.parryDamageMultiplier = this.baseState.block.parryDamageMultiplier;
-    }
-
-    // 冲刺初始化
-    initDash() {
-        this.dash = {
-            isDashing: false,
-            dashDuration: 200,       // 冲刺持续时间
-            dashCooldownTime: this.baseState.dash_cooldownTime,   // 恢复一段冲刺的冷却时间
-            dashSpeed: 15,
-            dashDir: { x: 1, y: 0 },
-
-            dashDurationCooldown: null,
-            dashCooldown: null,
-
-            dashMaxCount: this.baseState.dash_maxCount,         // 最大段数
-            dashCount: 0,                                       // 当前可用段数
-
-            trigger: null,
-            update: null
-        };
-
-        this.dash.dashDurationCooldown = new Cooldown(this.dash.dashDuration);
-        this.dash.dashCooldown = new Cooldown(this.dash.dashCooldownTime);
-
-        this.dash.trigger = () => {
-            if (this.dash.isDashing || this.dash.dashCount <= 0) return;
-
-            // --- 冲刺输入检测 ---
-            let dx = 0, dy = 0;
-            if (inputManager.isKeysDown(['A', 'Left'])) dx -= 1;
-            if (inputManager.isKeysDown(['D', 'Right'])) dx += 1;
-            if (inputManager.isKeysDown(['W', 'Up'])) dy -= 1;
-            if (inputManager.isKeysDown(['S', 'Down'])) dy += 1;
-
-            if (dx === 0 && dy === 0) dx = this.facing;
-            let len = Math.sqrt(dx * dx + dy * dy);
-            if (len === 0) len = 1;
-
-            this.dash.dashDir = { x: dx / len, y: dy / len };
-            this.dash.isDashing = true;
-            this.dash.dashDurationCooldown.start();
-            this.dash.dashCount--;
-            soundManager.playSound('player', 'dash');
-        }
-
-        this.dash.update = (deltaTime) => {
-            // --- 冲刺段数恢复逻辑 ---
-            if (this.isOnGround()) {
-                this.dash.dashCooldown.tick(deltaTime);
-                if (this.dash.dashCooldown.ready() && this.dash.dashCount < this.dash.dashMaxCount) {
-                    this.dash.dashCount++;
-                    this.dash.dashCooldown.start();
-                }
-            }
-
-            // --- 冲刺状态 ---
-            if (this.dash.isDashing) {
-                this.dash.dashDurationCooldown.tick(deltaTime);
-                this.velocity.x = this.dash.dashSpeed * this.dash.dashDir.x;
-                this.velocity.y = this.dash.dashSpeed * this.dash.dashDir.y;
-                if (this.dash.dashDurationCooldown.ready()) {
-                    this.dash.isDashing = false;
-                    this.jumping.jumpVelocity = -this.velocity.y;
-                }
-            }
-        };
-    }
-
-    initBlock() {
-        this.block = {
-            isBlocking: false,// 是否正在格挡
-            isParrying: false,// 是否在弹反窗口内
-            blockCooldown: null,
-            parryDuration: null,
-
-            trigger: null,
-            stop: null,
-            update: null,
-
-            performParry: null, // 执行弹反攻击
-        }
-        // 格挡系统相关状态
-        this.block.blockCooldown = new Cooldown(this.state.block.recoveryTime); // 格挡冷却
-        this.block.parryDuration = new Duration(this.state.block.parryWindow);  // 弹反窗口
-
-        this.block.trigger = () => {
-            if (this.block.isBlocking || !this.block.blockCooldown.ready()) return;
-            this.block.isBlocking = true;
-            this.block.isParrying = true;
-            this.block.parryDuration.start();
-            console.log(`开始格挡 - 进入弹反窗口 (${this.state.block.parryWindow}ms)`);
-        }
-
-        this.block.stop = () => {
-            if (this.block.isBlocking) {
-                this.block.isBlocking = false;
-                this.block.isParrying = false;
-                this.block.blockCooldown.start();
-                console.log("停止格挡 - 进入后摇");
-            }
-        }
-
-        this.block.update = (deltaTime) => {
-            this.block.blockCooldown.tick(deltaTime);
-
-            if (this.block.isParrying) {
-                this.block.parryDuration.tick(deltaTime);
-                if (this.block.parryDuration.finished()) {
-                    this.block.isParrying = false;
-                    console.log(`弹反窗口结束`);
-                }
-            }
-        }
-
-        // 执行弹反攻击
-        this.block.performParry = () => {
-            console.log("执行弹反攻击！");
-            bus.emit(Events.player.parry);
-
-            // 立即触发一次无前后摇的近战攻击
-            const originalStartupTime = this.state.attack.startupTime.melee;
-            const originalRecoveryTime = this.state.attack.recoveryTime.melee;
-
-            // 临时设置无前后摇
-            this.state.attack.startupTime.melee = 0;
-            this.state.attack.recoveryTime.melee = 0;
-
-            // 临时增加伤害
-            const originalDamage = this.state.attack.damage.melee;
-            this.state.attack.damage.melee *= this.state.block.parryDamageMultiplier;
-
-            this.attack.melee.reset();
-            // 触发攻击
-            this.attack.melee.trigger();
-
-            // 恢复原始值
-            setTimeout(() => {
-                this.state.attack.startupTime.melee = originalStartupTime;
-                this.state.attack.recoveryTime.melee = originalRecoveryTime;
-                this.state.attack.damage.melee = originalDamage;
-            }, 50); // 短暂延迟确保攻击完成
-        }
     }
 
     // 检查攻击方向是否在格挡范围内
     isAttackFromFront(attacker) {
         if (!attacker || !attacker.hitbox) return false;
-        if (false) return true;//TODO://持有冷静时免疫所有方向伤害
+        if (talentManager.hasTalentLevel('冷静', 1)) return true; // 持有冷静时格挡所有方向伤害
 
         const attackerCenterX = attacker.hitbox.getCenter().x;
         const playerCenterX = this.hitbox.getCenter().x;
@@ -441,7 +505,13 @@ class Player extends Entity {
 
     // 返回当前是否可受击
     beforeTakeDamage(dmg, attackType = null, attacker = null) {
-        if (this.dash.isDashing === true) return false;
+        if (!this.invinDuration.finished()) return false;
+        if (this.dash.isDashing === true) {
+            bus.emit(Events.player.dodge);
+            console.log("闪避成功！");
+            if (this.state.unlock.dodge) this.dodge.startDodgeWindow();
+            return false;
+        };
         if (this.block.isParrying && attacker && this.isAttackFromFront(attacker)) {// 弹反：完全免疫伤害并触发弹反攻击
             this.block.performParry(attacker);
             console.log("弹反成功！");
@@ -539,6 +609,8 @@ class Player extends Entity {
         const currentTexture = this.animation.getFrame();
         if (!currentTexture) return;
 
+        ctx.save();
+
         const drawX = this.hitbox.position.x;
         const drawY = this.hitbox.position.y;
         let drawWidth = this.size.x;
@@ -562,6 +634,8 @@ class Player extends Entity {
             drawSprite(ctx, currentTexture, drawX, drawY, drawWidth, drawHeight, this.facing);
         }
 
+        ctx.restore();
+
         // 绘制冲刺UI
         this.drawDashUI(ctx);
         if (player._decoy) {
@@ -570,6 +644,7 @@ class Player extends Entity {
     }
 
     drawBoxs(ctx) {
+        ctx.save();
         // 绘制敌人自身盒子
         ctx.strokeStyle = this.isInvulnerable ? '#cccccc' : '#00aaff';
         ctx.strokeRect(this.hitbox.position.x, this.hitbox.position.y, this.hitbox.size.x, this.hitbox.size.y);
@@ -586,6 +661,8 @@ class Player extends Entity {
     }
 
     drawDashUI(ctx) {
+        if (!this.state.unlock.dash) return;
+        ctx.save();
         const max = this.dash.dashMaxCount;
         const current = this.dash.dashCount;
 
@@ -600,6 +677,7 @@ class Player extends Entity {
             ctx.strokeStyle = "black";
             ctx.strokeRect(startX + i * (size + gap), y, size, size);
         }
+        ctx.restore();
     }
 }
 

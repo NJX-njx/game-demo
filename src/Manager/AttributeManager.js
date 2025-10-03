@@ -9,6 +9,7 @@ export const AttributeTypes = {
         DMG: "PLAYER_DMG",
         TAKE_DMG: "PLAYER_TAKE_DAMAGE",//受到的伤害
         DASH_CHARGE: "PLAYER_DASH_CHARGE",//冲刺充能加速
+        DASH_DURATION: "PLAYER_DASH_DURATION",//冲刺持续时间
         MeleeDmg: "PLAYER_MeleeDmg",
         RangedDmg: "PLAYER_RangedDmg",
         AttackStartupTime: "PLAYER_AttackStartupTime",

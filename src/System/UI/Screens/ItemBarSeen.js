@@ -32,6 +32,17 @@ export class ItemBarScreen extends UIScreen {
 
         super.draw(ctx);
     }
+
+    clearHoverState() {
+        if (this.trashSlot) {
+            this.trashSlot.hovering = false;
+        }
+        for (const element of this.elements) {
+            if (element && typeof element === "object" && "hovering" in element) {
+                element.hovering = false;
+            }
+        }
+    }
 }
 
 export const itemBar = new ItemBarScreen();

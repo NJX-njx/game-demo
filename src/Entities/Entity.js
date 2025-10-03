@@ -1,8 +1,8 @@
 import { Hitbox } from "../Utils/Hitbox";
 import { Vector } from "../Utils/Vector";
-import { Cooldown } from "../Utils/Cooldown"
 import { soundManager } from "../Manager/SoundManager";
 import { mapManager } from "../Manager/MapManager";
+import { Duration } from "../Utils/Duration";
 class Jumping {
     /**
      * 跳跃系统
@@ -17,7 +17,7 @@ class Jumping {
         this.maxJump = maxJump;
         this.gravity = gravity;
         this.coyoteTime = coyoteTime;
-        this.jumpBuffer = new Cooldown(jumpBufferTime)
+        this.jumpBuffer = new Duration(jumpBufferTime);
         this.jumpBufferTime = jumpBufferTime;
 
         this.isJumping = false;
@@ -53,7 +53,7 @@ class Jumping {
                 this.times = 1;
 
             // 如果跳跃缓冲器大于0，落地后立即跳跃
-            if (!this.jumpBuffer.ready()) {
+            if (!this.jumpBuffer.finished()) {
                 this.startJump();
             }
         } else {
@@ -62,8 +62,11 @@ class Jumping {
             this.coyoteTimer = Math.max(this.coyoteTimer - deltaTime, 0);
 
             // 当仍有coyote时间且已经按下空格时跳跃
-            if (!this.isJumping && !this.jumpBuffer.ready() && this.coyoteTimer > 0) {
+            if (!this.isJumping && !this.jumpBuffer.finished() && this.coyoteTimer > 0) {
                 this.startJump();
+            }
+            if (isSpaceHeld) {
+                this.jumpBuffer.start();
             }
         }
         if (this.isJumping) {
@@ -71,7 +74,6 @@ class Jumping {
             if (!this.isFalling && isSpaceHeld && this.chargeTime < this.maxJump * this.times) {
                 this.chargeTime += deltaTime;
                 this.jumpVelocity = Math.min(this.baseJump + (this.chargeTime / this.maxJump * this.times) * (this.maxJump * this.times - this.baseJump), this.maxJump * this.times);
-                //蓄力跳
             } else {
                 this.isFalling = true;
                 this.updateFalling(deltaTime);
@@ -97,6 +99,7 @@ export class Entity {
     constructor(position, size, velocity = new Vector()) {
         this.type = "";
         this.size = size;        // 实体的尺寸
+        /** @type {Vector} */
         this.velocity = velocity;  // 实体的速度
         // 只负责实体本体的物理碰撞盒，攻击/受击判定可独立扩展
         this.hitbox = new Hitbox(position, size);
@@ -134,26 +137,101 @@ export class Entity {
         let move = this.velocity.scale(deltaTime).round();
         let flag = 0;
         // 获取地图方块碰撞盒
-        let blocks = mapManager.getBlockHitboxes();
+        const blocks = mapManager.getBlockHitboxes();
 
-        // X方向
-        for (let i = 0; i < Math.abs(move.x); ++i) {
-            this.hitbox.position.x += Math.sign(move.x);
-            if (this.hitbox.checkHits(blocks, () => {
-                this.hitbox.position.x -= Math.sign(move.x);
-            })) {
-                flag |= 1;
-                break;
+        // // X方向
+        // for (let i = 0; i < Math.abs(move.x); ++i) {
+        //     this.hitbox.position.x += Math.sign(move.x);
+        //     if (this.hitbox.checkHits(blocks, () => {
+        //         this.hitbox.position.x -= Math.sign(move.x);
+        //     })) {
+        //         flag |= 1;
+        //         break;
+        //     }
+        // }
+        // // Y方向
+        // for (let i = 0; i < Math.abs(move.y); ++i) {
+        //     this.hitbox.position.y += Math.sign(move.y);
+        //     if (this.hitbox.checkHits(blocks, () => {
+        //         this.hitbox.position.y -= Math.sign(move.y);
+        //     })) {
+        //         flag |= 2;
+        //         break;
+        //     }
+        // }
+
+        // 使用 Bresenham 风格的主轴优先步进，按斜率分配次轴步进。
+        // 优点：斜向移动不会一律优先同时移动 x/y（避免 45° 偏置），而是根据 dx/dy 比例决定何时进行次轴步进。
+        // 同时在碰撞时尝试滑动（先尝试主轴，如果被阻挡再尝试次轴），以获得平滑的碰撞滑动行为。
+        const absX = Math.abs(move.x);
+        const absY = Math.abs(move.y);
+        const sx = Math.sign(move.x);
+        const sy = Math.sign(move.y);
+
+        if (absX === 0 && absY === 0) return 0;
+
+        if (absX >= absY) {
+            // X 为主轴
+            let err = absX / 2;
+            for (let i = 0; i < absX; ++i) {
+                // 先尝试沿主轴移动一格
+                this.hitbox.position.x += sx;
+                if (this.hitbox.checkHits(blocks, () => { })) {
+                    // 主轴被阻挡：回退并尝试沿次轴移动（滑动）
+                    this.hitbox.position.x -= sx;
+                    flag |= 1;
+                    // 如果还需要在这个步骤上移动次轴（由误差决定），尝试次轴移动
+                    err -= absY;
+                    if (err < 0) {
+                        this.hitbox.position.y += sy;
+                        if (this.hitbox.checkHits(blocks, () => { this.hitbox.position.y -= sy; })) {
+                            // 次轴也被阻挡
+                            flag |= 2;
+                        }
+                        err += absX;
+                    }
+                } else {
+                    // 主轴移动成功
+                    err -= absY;
+                    if (err < 0) {
+                        // 需要执行次轴步进
+                        this.hitbox.position.y += sy;
+                        if (this.hitbox.checkHits(blocks, () => { this.hitbox.position.y -= sy; })) {
+                            // 次轴被阻挡，回退次轴移动但保留主轴移动（滑动效果）
+                            flag |= 2;
+                        } else {
+                            // 次轴也成功
+                        }
+                        err += absX;
+                    }
+                }
             }
-        }
-        // Y方向
-        for (let i = 0; i < Math.abs(move.y); ++i) {
-            this.hitbox.position.y += Math.sign(move.y);
-            if (this.hitbox.checkHits(blocks, () => {
-                this.hitbox.position.y -= Math.sign(move.y);
-            })) {
-                flag |= 2;
-                break;
+        } else {
+            // Y 为主轴，逻辑对称
+            let err = absY / 2;
+            for (let i = 0; i < absY; ++i) {
+                this.hitbox.position.y += sy;
+                if (this.hitbox.checkHits(blocks, () => { })) {
+                    this.hitbox.position.y -= sy;
+                    flag |= 2;
+                    err -= absX;
+                    if (err < 0) {
+                        this.hitbox.position.x += sx;
+                        if (this.hitbox.checkHits(blocks, () => { this.hitbox.position.x -= sx; })) {
+                            flag |= 1;
+                        }
+                        err += absY;
+                    }
+                } else {
+                    err -= absX;
+                    if (err < 0) {
+                        this.hitbox.position.x += sx;
+                        if (this.hitbox.checkHits(blocks, () => { this.hitbox.position.x -= sx; })) {
+                            flag |= 1;
+                        }
+                        err += absY;
+                    }
+                }
             }
         }
         return flag;
@@ -223,7 +301,9 @@ export class Entity {
     }
 
     draw(ctx) {
+        ctx.save();
         ctx.fillStyle = `rgba(221, 100, 0, 1)`;
         ctx.fillRect(this.hitbox.position.x, this.hitbox.position.y, this.hitbox.size.x, this.hitbox.size.y);
+        ctx.restore();
     }
 }

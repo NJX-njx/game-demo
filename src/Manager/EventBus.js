@@ -20,8 +20,10 @@ export const EventTypes = {
         die: "PLAYER_DIE",
         hpPercent: "PLAYER_HP_PERCENT",
         heal: "PLAYER_HEAL",
-        dodge: "PLAYER_DODGE",
-        parry: "PLAYER_PARRY",
+        dash: "PLAYER_DASH",//冲刺开始
+        dodge: "PLAYER_DODGE",//闪避
+        dodge_attack: "PLAYER_DODGE_ATTACK",//闪避反击
+        parry: "PLAYER_PARRY",//弹反
         dealDamage: "PLAYER_DEAL_DAMAGE", // 造成伤害 payload: { baseDamage, attackType, attacker, target }
         takeDamage: "PLAYER_TAKE_DAMAGE", // 受到伤害 payload: { baseDamage }
         afterTakeDamage: "PLAYER_AFTER_TAKE_DAMAGE", // 受到伤害后
@@ -38,6 +40,10 @@ export const EventTypes = {
     dialog: {
         start: "DIALOG_START",
         end: "DIALOG_END"
+    },
+    talent: {
+        unlock: "TALENT_UNLOCK",              // 解锁或升级天赋 payload: { key, name, level, talent }
+        fragmentsChange: "TALENT_FRAGMENTS_CHANGE" // 灵魂碎片数量变化 payload: { fragments }
     }
 };
 

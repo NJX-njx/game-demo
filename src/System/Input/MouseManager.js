@@ -47,11 +47,13 @@ class MouseManager {
     }
 
     draw(ctx) {
+        ctx.save();
         ctx.drawImage(
             textureManager.getTexture("cursor"),
             12, 9, 16, 22,
             this.x - 4, this.y - 5, 16, 22
         );
+        ctx.restore();
     }
 
     get position() {
@@ -60,7 +62,7 @@ class MouseManager {
 
     // 窗口切出
     onBlur() {
-        if (!game.isPaused) {
+        if (!game.isPaused && !game.isStopUpdate) {
             game.pause();
             console.log("游戏已自动暂停（窗口失去焦点）");
         }

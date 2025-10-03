@@ -1,8 +1,9 @@
 export class UIScreen {
-    constructor(name) {
+    constructor(name, options = {}) {
         this.name = name;
         this.elements = [];
         this.visible = false;
+        this.blocksGame = !!options.blocksGame;
     }
 
     addElement(el) { this.elements.push(el); }

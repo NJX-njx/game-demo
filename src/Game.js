@@ -164,6 +164,7 @@ class Game {
 
     // 调整后的竖版血条绘制方法（含下移+垂直对齐文字显示）
     drawVerticalHpBar(ctx) {
+        ctx.save();
         const config = {
             x: 35,          // 调整水平位置，给文字留出空间
             y: 200,         // 血条顶部Y坐标（进一步下移，给文字留出空间）
@@ -209,6 +210,7 @@ class Game {
         const fgY = config.y + (config.totalHeight - currentHeight);
         ctx.fillStyle = config.fgColor;
         ctx.fillRect(config.x, fgY, config.width, currentHeight);
+        ctx.restore();
     }
 
     start() {
@@ -233,6 +235,14 @@ class Game {
             if (inputManager.isFirstDown("Esc")) {
                 if (!this.popUI()) {
                     this.pause();
+                }
+            }
+
+            if (inputManager.isFirstDown("T")) {
+                if (uiManager.currentScreen && uiManager.currentScreen.name === "talentTree") {
+                    this.popUI();
+                } else {
+                    uiManager.switchScreen("talentTree");
                 }
             }
 
