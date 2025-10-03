@@ -135,16 +135,30 @@ class Game {
         const selectedSlot = Math.max(1, parseInt(selectedSlotRaw || '1', 10) || 1);
         this.currentSlotId = selectedSlot;
         let loaded = false;
-        try { loaded = await Game.loadGame(selectedSlot); } catch (_) { loaded = false; }
-        if (!loaded) {
-            await mapManager.loadRoom(0, 1);
+        
+        // 检查是否有选中的存档槽位
+        if (selectedSlotRaw) {
+            try { 
+                loaded = await this.loadGame(selectedSlot);
+                console.log('存档加载结果:', loaded);
+            } catch (e) { 
+                console.error('存档加载失败:', e);
+                loaded = false; 
+            }
         }
-
-        //TODO:测试用
-        mapManager.loadRoom(0, 1);
-        itemManager.tryAcquire(Items.xq休憩);
-        itemManager.tryAcquire(Items.yy友谊);
-        itemManager.tryAcquire(Items.ls朗诵);
+        
+        // 如果没有成功加载存档，则开始新游戏
+        if (!loaded) {
+            console.log('开始新游戏，加载默认房间');
+            await mapManager.loadRoom(0, 1);
+            
+            // 测试用的初始道具（仅新游戏时）
+            itemManager.tryAcquire(Items.xq休憩);
+            itemManager.tryAcquire(Items.yy友谊);
+            itemManager.tryAcquire(Items.ls朗诵);
+        } else {
+            console.log('成功加载存档，跳过默认初始化');
+        }
     }
 
     draw() {
@@ -331,11 +345,13 @@ class Game {
 
     saveGame() {
         const slotToSave = this.currentSlotId && this.currentSlotId > 0 ? this.currentSlotId : 1;
-        saveManager.save(slotToSave);
+        const ctx = { player, mapManager, itemManager };
+        saveManager.save(slotToSave, ctx);
     }
 
     async loadGame(slotId = 1) {
-        return await saveManager.load(slotId);
+        const ctx = { player, mapManager, itemManager };
+        return await saveManager.load(slotId, ctx);
     }
 }
 

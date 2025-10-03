@@ -26,7 +26,7 @@
                 开始游戏
             </button>
             <button id="show-saves" class="btn save-btn">
-                读取存档
+                存档管理
             </button>
             <button id="show-achievements" class="btn achievement-btn">
                 查看成就
@@ -47,16 +47,9 @@
                 <button id="close-save-panel" class="close-btn">×</button>
             </div>
 
-            <!-- 存档列表容器（JS动态填充） -->
-            <div id="save-list" class="save-list">
-                <div class="save-slot">
-                    <div class="save-preview"></div>
-                    <div class="save-info">
-                        <div class="save-time">2025-09-10 15:30</div>
-                        <div class="save-location">第1层 - 房间3</div>
-                    </div>
-                    <button class="load-save-btn">加载</button>
-                </div>
+            <!-- 存档槽位网格容器（JS动态填充） -->
+            <div id="save-list" class="save-grid">
+                <!-- 8个存档槽位将由JavaScript动态生成 -->
             </div>
 
             <!-- 面板底部提示 -->

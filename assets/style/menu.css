@@ -88,6 +88,17 @@ body {
     transform: scale(1.05);
 }
 
+.save-btn {
+    background-color: #1e293b;
+    color: #f8fafc;
+    border: 1px solid rgba(34, 197, 94, 0.5);
+}
+
+.save-btn:hover {
+    background-color: rgba(30, 41, 59, 0.8);
+    transform: scale(1.05);
+}
+
 .achievement-btn {
     background-color: #1e293b;
     color: #f8fafc;
@@ -397,37 +408,99 @@ body {
 /* ==============================================
    8. 存档系统样式
    ============================================== */
-.save-list {
+.save-grid {
     flex: 1;
     overflow-y: auto;
     padding: 16px;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 12px;
 }
 
+@media (min-width: 768px) {
+    .save-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
 .save-slot {
-    display: flex;
-    align-items: center;
     background: rgba(30, 41, 59, 0.5);
     border-radius: 8px;
     padding: 12px;
     border: 1px solid rgba(3, 102, 241, 0.3);
     transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    min-height: 120px;
+    position: relative;
 }
 
 .save-slot:hover {
     background: rgba(30, 41, 59, 0.7);
     border-color: rgba(3, 102, 241, 0.6);
+    transform: translateY(-2px);
+}
+
+.save-slot.empty {
+    border-style: dashed;
+    border-color: rgba(248, 250, 252, 0.2);
+    background: rgba(30, 41, 59, 0.2);
+}
+
+.save-slot.empty:hover {
+    border-color: rgba(248, 250, 252, 0.4);
+    background: rgba(30, 41, 59, 0.3);
+}
+
+.save-slot-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.save-slot-number {
+    font-size: 12px;
+    color: rgba(3, 102, 241, 0.8);
+    font-weight: bold;
+}
+
+.save-slot-status {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    background: rgba(3, 102, 241, 0.2);
+    color: rgba(3, 102, 241, 0.8);
+}
+
+.save-slot.empty .save-slot-status {
+    background: rgba(248, 250, 252, 0.1);
+    color: rgba(248, 250, 252, 0.4);
+}
+
+.save-slot-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 .save-preview {
-    width: 80px;
-    height: 60px;
+    width: 100%;
+    height: 40px;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 4px;
-    margin-right: 12px;
+    margin-bottom: 8px;
     overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.save-preview.empty {
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(248, 250, 252, 0.3);
+    font-size: 12px;
 }
 
 .save-info {
@@ -435,37 +508,95 @@ body {
 }
 
 .save-time {
-    font-size: 14px;
+    font-size: 11px;
     color: rgba(248, 250, 252, 0.6);
+    margin-bottom: 2px;
 }
 
 .save-location {
-    font-size: 16px;
+    font-size: 13px;
     color: #f8fafc;
-    margin-top: 4px;
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+
+.save-hp {
+    font-size: 11px;
+    color: rgba(34, 197, 94, 0.8);
+}
+
+.save-slot-actions {
+    display: flex;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.load-save-btn, .delete-save-btn {
+    flex: 1;
+    border: none;
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 11px;
+    font-weight: 500;
 }
 
 .load-save-btn {
     background: rgba(3, 102, 241, 0.8);
-    border: none;
     color: white;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.3s;
 }
 
 .load-save-btn:hover {
     background: rgba(3, 102, 241, 1);
 }
 
+.load-save-btn:disabled {
+    background: rgba(248, 250, 252, 0.2);
+    color: rgba(248, 250, 252, 0.4);
+    cursor: not-allowed;
+}
+
+.delete-save-btn {
+    background: rgba(239, 68, 68, 0.8);
+    color: white;
+}
+
+.delete-save-btn:hover {
+    background: rgba(239, 68, 68, 1);
+}
+
+.delete-save-btn:disabled {
+    background: rgba(248, 250, 252, 0.2);
+    color: rgba(248, 250, 252, 0.4);
+    cursor: not-allowed;
+}
+
 .no-saves {
-    width: 100%;
-    height: 200px;
+    grid-column: 1 / -1;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     color: rgba(248, 250, 252, 0.6);
+    padding: 40px;
+    text-align: center;
+}
+
+.no-saves-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.no-saves-text {
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.no-saves-hint {
+    font-size: 14px;
+    color: rgba(248, 250, 252, 0.4);
 }
 
 /* ==============================================
