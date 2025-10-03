@@ -48,4 +48,27 @@ export class RangedAttack extends AttackBase {
             }
         );
     }
+
+    /**
+     * 统一伤害处理逻辑：触发事件 → 应用伤害
+     */
+    applyDamage(target, damage, projectile = null) {
+        if (target.beforeTakeDamage && !target.beforeTakeDamage(damage, this.type, this.owner, projectile))
+            return;
+
+        let finalDamage = damage;
+
+        if (this.owner === player) {
+            finalDamage = bus.emitReduce(
+                Events.player.dealDamage,
+                { baseDamage: finalDamage, attackType: this.type, attacker: this.owner, target },
+                (_, next) => next
+            ).baseDamage;
+        }
+
+        finalDamage = Math.max(finalDamage, 0);
+
+        target.takeDamage(finalDamage, this.type, this.owner, projectile);
+    }
+
 }

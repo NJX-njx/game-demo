@@ -1,7 +1,9 @@
 import { player } from "../../Entities/Player";
+import { game } from "../../Game";
 import { attributeManager as AM, AttributeTypes as Attrs } from "../../Manager/AttributeManager";
 import { eventBus as bus, EventTypes as Events } from "../../Manager/EventBus";
 import { Cooldown } from "../../Utils/Cooldown";
+import { Duration } from "../../Utils/Duration";
 import { talentManager } from "./TalentManager";
 
 /**
@@ -105,8 +107,7 @@ export const TalentConfigs = {
         description: "“不要让威胁靠近。”\n近战攻击范围扩大。",
         prerequisites: [{ name: '你须抵抗', level: 1 }],
         maxLevel: 1,
-        costs: [5],
-        // TODO: 实现近战范围扩大
+        costs: [5]
     },
 
     fs放松: { // 触发闪避时：恢复1.5%生命。闪避反击时：额外再恢复1.5%生命。
@@ -174,7 +175,7 @@ export const TalentConfigs = {
         hooks: (talent, level) => [
             {   //弹反后获得短暂无敌
                 event: Events.player.parry,
-                handler: () => {
+                handler: (payload) => {
                     if (player.invinDuration.remaining() > 300) return;
                     player.invinDuration.start(300);
                 }
@@ -182,14 +183,13 @@ export const TalentConfigs = {
         ]
     },
 
-    rl热烈: { // 弹反时对周围造成伤害并击飞非boss敌人
+    rl热烈: { // 弹反远程攻击时对周围敌人造成伤害
         name: "热烈",
-        description: "“你的心要火热，你的心要诚挚，连无情的命运都会垂青于你。”\n弹反时对周围造成伤害并击飞非boss敌人。",
+        description: "“你的心要火热，你的心要诚挚，连无情的命运都会垂青于你。”\n弹反远程攻击时对周围敌人造成伤害。",
         prerequisites: [{ name: '你须破解', level: 1 }],
         excludes: ['聪慧'],
         maxLevel: 1,
-        costs: [5],
-        // TODO: 实现弹反范围伤害与击飞
+        costs: [5]
     },
 
     wq顽强: { // 触发弹反时立即刷新所有突进段数
@@ -202,7 +202,7 @@ export const TalentConfigs = {
         hooks: (talent, level) => [
             {   //弹反时刷新突进段数
                 event: Events.player.parry,
-                handler: () => {
+                handler: (payload) => {
                     player.dash.refreshDashCount();
                 }
             }
@@ -236,7 +236,7 @@ export const TalentConfigs = {
         name: "隐忍",
         description: "“在低谷时被羞辱，仍能不动声色，这亦是一种复仇的智慧。”\n受到的伤害降低15%。",
         prerequisites: [{ name: '你须明察', level: 1 }],
-        excludes: ['理智'], //TODO: 和“排斥”排斥
+        excludes: ['理智'],
         maxLevel: 1,
         costs: [5],
         effects: (level) => {
@@ -332,7 +332,24 @@ export const TalentConfigs = {
         excludes: ['专注'],
         maxLevel: 1,
         costs: [4],
-        // TODO: 实现远程二连发与伤害降低
+        effects: (level) => {
+            return {
+                [Attrs.player.RangedDmg]: -0.2
+            }
+        },
+        hooks: (talent, level) => [
+            // {   //TODO:远程二连发
+            //     event: Events.player.ranged_attack,
+            //     handler: (payload) => {
+            //         const { attackType, attacker } = payload;
+            //         if (attacker === player && attackType === 'ranged') {
+            //             setTimeout(() => {
+            //                 bus.emit(Events.player.ranged_attack, payload);
+            //             }, 100);
+            //         }
+            //     }
+            // }
+        ]
     },
 
     zz专注: { // 远程攻击的前摇增大（+500），造成的伤害提高150%且可以穿透
@@ -459,6 +476,33 @@ export const TalentConfigs = {
         }
     },
 
+    an安宁: { // 进入房间后受到的前2次伤害将被免除
+        name: "安宁",
+        description: "你当为自己而活，因而问心无愧。”\n进入房间后受到的前2次伤害将被免除。",
+        prerequisites: [{ name: '善思', level: 1 }, { name: '机敏', level: 1 }],
+        excludes: ['一心'],
+        maxLevel: 1,
+        costs: [5],
+        hooks: (talent, level) => [
+            {   //受击时检查是否免疫
+                event: Events.player.takeDamage,
+                handler: (payload) => {
+                    if (talent.state.damage_immune_count > 0) {
+                        talent.state.damage_immune_count -= 1;
+                        return { ...payload, baseDamage: 0 }; // 视为未受伤害
+                    }
+                },
+            },
+            {
+                event: Events.game.enter.next_room,
+                handler: () => {
+                    talent.state.damage_immune_count = 2;
+                }
+            }
+
+        ]
+    },
+
     ch憧憬: { // 弹反后10秒内受到的伤害降低40%
         name: "憧憬",
         description: "“她也曾想象独自一人身处繁花锦簇。”\n弹反后10秒内受到的伤害降低40%。",
@@ -469,7 +513,7 @@ export const TalentConfigs = {
         hooks: (talent, level) => [
             {   //弹反后获得减伤效果
                 event: Events.player.parry,
-                handler: () => {
+                handler: (payload) => {
                     AM.addAttr(Attrs.player.TAKE_DMG, -0.4, talent.name, 10000);
                 }
             }
@@ -486,49 +530,105 @@ export const TalentConfigs = {
         hooks: (talent, level) => [
             {//弹反后恢复生命
                 event: Events.player.parry,
-                handler: () => {
+                handler: (payload) => {
                     player.takeHeal(player.state.hp_max * 0.03, talent.name);
                 }
             }
         ]
     },
 
-    zl自律: { // TODO:弹反后1.5秒内受击将视为再次弹反（每5秒最多触发3次）
+    zl自律: { // 弹反后1.5秒内受击将视为再次弹反（每5秒最多触发3次）
         name: "自律",
         description: "“闻鸡起舞，早起晚归，正如曾经的每一个岁月，但目的已然不同。”\n条件触发，弹反后1.5秒内受击将视为再次弹反（每5秒最多触发3次）。",
         prerequisites: [{ name: '渴盼', level: 1 }],
         excludes: ['不屈'],
         maxLevel: 1,
         costs: [5],
-        // hooks: (talent, level) => [
-        //     {//弹反后再次弹反判定
-        //         event: Events.player.parry,
-        //         handler: () => {
-        //             //启动1.5秒计时器
+        hooks: (talent, level) => [
+            {
+                event: Events.game.tick,
+                handler: ({ deltaTime }) => {
+                    talent.state.parry_timer.tick(deltaTime);
+                },
+                priority: 1
+            },
+            {   //弹反后获得短暂的“再次弹反”状态
+                event: Events.player.parry,
+                handler: (payload) => {//无论是否就绪，都刷新状态计时
+                    talent.state.parry_timer.start();
+                }
+            },
+            {   //受击时检查是否处于“再次弹反”状态，如果是且计数器小于3，则触发弹反，弹反计数器+1
+                event: Events.player.takeDamage,
+                handler: (payload) => {
+                    // 只有在弹反窗口内（parry_timer 未就绪）且计数未达上限时触发
+                    if (talent.state.parry_timer.finished()) return;
+                    if (AM.getAttrStackCount(Attrs.other.talent, talent.name) >= 3) return;
+                    AM.addAttr(Attrs.other.talent, 1, talent.name, 5000, 3); // 增加弹反计数，持续5秒
 
-        //         }
-        //     }
-        // ]
+                    const { baseDamage, attackType, attacker, projectile } = payload;
+                    player.block.performParry({ attackType, damage: baseDamage, attacker, projectile });
+
+                    // 将本次受击视为弹反：视为未受到该次伤害
+                    return { ...payload, baseDamage: 0 };
+                }
+            }
+        ],
+        state: {
+            parry_timer: new Duration(1500),
+        }
     },
 
-    bq不屈: { // TODO: 受到致命伤害时保命（每30秒最多触发1次）,受到致命伤时触发特殊效果（未完）
+
+    bq不屈: { // 受到致命伤害时取消之（每30秒最多触发1次）
         name: "不屈",
-        description: "“只要意志不灭，便无人能真正将我击倒。”\n条件触发，每30秒仅1次，受到致命伤时触发特殊效果（未完）。",
+        description: "“只要意志不灭，便无人能真正将我击倒。”\n条件触发，每30秒仅1次，受到致命伤时取消之。",
         prerequisites: [{ name: '渴盼', level: 1 }],
         excludes: ['自律'],
         maxLevel: 1,
         costs: [5],
-        // TODO: 实现死亡触发保命效果
+        hooks: (talent, level) => [
+            {
+                event: Events.game.tick,
+                handler: ({ deltaTime }) => {
+                    talent.state.zlTimer.tick(deltaTime);
+                },
+                priority: 1
+            },
+            {   //受击时检查是否致命
+                event: Events.player.fatelDmg,
+                handler: (payload) => {
+                    const { hpBefore } = payload;
+                    if (talent.state.zlTimer.ready()) {
+                        talent.state.zlTimer.start();
+                        player.state.hp = hpBefore;
+                        return true;
+                    }
+                },
+            }
+        ],
+        state: {
+            zlTimer: new Cooldown(30000)
+        }
     },
 
-    gq关切: { // TODO: 生命值低于25%时：受到的环境伤害和生命流失-100%
+    gq关切: { // 攻击命中敌人时，若自身的生命值低于36%，则恢复3%的生命值。
         name: "关切",
-        description: "“它将视野拂过女孩心中的漫山遍野，眼里充满了慈爱与关心”\n条件触发，生命值低于25%时：受到的环境伤害和生命流失-100%。",
+        description: "“它将视野拂过女孩心中的漫山遍野，眼里充满了慈爱与关心”\n攻击命中敌人时，若自身的生命值低于36%，则恢复3%的生命值",
         prerequisites: [{ name: '戒备', level: 1 }],
         excludes: ['浪漫'],
         maxLevel: 1,
         costs: [5],
-        // TODO: 实现环境伤害与生命流失抵消
+        hooks: (talent, level) => [
+            {   //攻击命中敌人时检查生命值并恢复
+                event: Events.player.dealDamage,
+                handler: (payload) => {
+                    if (player.state.hp / player.state.hp_max < 0.36) {
+                        player.takeHeal(player.state.hp_max * 0.03, talent.name);
+                    }
+                }
+            }
+        ]
     },
 
     lm浪漫: { // 生命值低于40%时恢复30%生命，30秒仅触发1次
@@ -541,8 +641,8 @@ export const TalentConfigs = {
         hooks: (talent, level) => [
             {   //每帧检查冷却
                 event: Events.game.tick,
-                handler: () => {
-                    talent.state.cooldown.tick();
+                handler: ({ deltaTime }) => {
+                    talent.state.cooldown.tick(deltaTime);
                 }
             },
             {   //检查触发恢复
@@ -583,20 +683,52 @@ export const TalentConfigs = {
         ]
     },
 
-    wyza我应自爱: { // 突进段数+1，突进对路径上的敌人也造成普攻伤害
+    wyza我应自爱: { // 突进段数+1，突进时对路径上的首个碰撞到的敌人造成近战普攻伤害
         name: "我应自爱",
-        description: "“我的每一步，皆是为自己而踏。我的剑与盾，只为守护我所珍视的一切——包括我自己。”\n突进段数+1，突进对路径上的敌人也造成普攻伤害。\n解除与自己相连全部节点的排斥关系。",
+        description: "“我的每一步，皆是为自己而踏。我的剑与盾，只为守护我所珍视的一切——包括我自己。”\n突进段数+1，突进时对路径上的首个碰撞到的敌人造成近战普攻伤害。\n解除与自己相连全部节点的排斥关系。",
         prerequisites: [{ name: '闲适', level: 1 }, { name: '坚定', level: 1 }, { name: '安宁', level: 1 }, { name: '一心', level: 1 }],
         maxLevel: 1,
         costs: [8],
         unlock_excludes: ["闲适", "坚定", "安宁", "一心", "放松", "愉悦", "机敏", "善思"],
         onActivate: (talent, level) => {
             player.dash.dashMaxCount += 1;
-        }
-        //TODO: 突进对路径上的敌人也造成普攻伤害
+            talent.state.hitThisDash = false;
+            talent.state.lastPosition = null;
+        },
+        hooks: (talent, level) => [
+            {
+                event: Events.player.dash,
+                handler: () => {
+                    talent.state.hitThisDash = false;
+                    state.lastPosition = player.hitbox.position.copy();
+                }
+            },
+            {   //突进时对路径上的首个碰撞到的敌人造成近战普攻伤害
+                event: Events.game.tick,
+                handler: () => {
+                    if (!player.dash.isDashing) return;
+                    const state = talent.state;
+                    const currentPos = player.hitbox.position.copy();
+                    if (!state.lastPosition) state.lastPosition = currentPos.copy();
+
+                    if (!state.hitThisDash) {
+                        for (const enemy of game.enemies) {
+                            if (hitbox.checkMovingHit(enemy.hurtBox, state.lastPosition, currentPos)) {
+                                const meleeAttack = player.attack.melee;
+                                meleeAttack.applyDamage(enemy, meleeAttack.damage);
+                                state.hitThisDash = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    state.lastPosition = currentPos.copy();
+                }
+            }
+        ]
     },
 
-    wyzq我应自强: { // 触发格挡、闪避或弹反后攻击力+80%，最多叠加2层，下一次普攻后1秒内清除
+    wyzq我应自强: { // 触发格挡、闪避或弹反后攻击力+80%，最多叠加2层，下一次造成伤害1秒后清除
         name: "我应自强",
         description: "“我不再等待救赎。我的力量，我于逆境中挥出的每一击，都在塑造一个更强大的我。”\n格挡、闪避或弹反后攻击力+80%，最多叠加2层，下一次普攻后1秒内清除。\n解除与自己相连全部节点的排斥关系。",
         prerequisites: [{ name: '向往', level: 1 }, { name: '憧憬', level: 1 }, { name: '不屈', level: 1 }, { name: '自律', level: 1 }],
@@ -622,15 +754,30 @@ export const TalentConfigs = {
                     AM.addAttr(Attrs.player.ATK, 0.8, talent.name, null, 2);
                 }
             },
-            // {   // TODO: 普攻后1秒内清除攻击力加成
-            //     event: Events.player.dealDamage,
-            //     handler: () => {
-            //         setTimeout(() => {
-            //             AM.removeAttrBySource(Attrs.player.ATK, talent.name);
-            //         }, 1000);
-            //     }
-            // }
-        ]
+            {   //造成伤害后启动清除计时器（仅在未启动时开始）
+                event: Events.player.dealDamage,
+                handler: () => {
+                    if (!talent.state.atk_clear_timer.ready()) return; // 已经在倒计时中
+                    talent.state.atk_clear_timer.start();
+                    talent.state.atk_clear_timer_started = true;
+                }
+            },
+            {   //清除攻击力加成（由定时器完成）
+                event: Events.game.tick,
+                handler: ({ deltaTime }) => {
+                    if (!talent.state.atk_clear_timer_started) return;
+                    talent.state.atk_clear_timer.tick(deltaTime);
+                    if (talent.state.atk_clear_timer.ready()) {
+                        AM.removeAttrBySource(Attrs.player.ATK, talent.name);
+                        talent.state.atk_clear_timer_started = false;
+                    }
+                }
+            }
+        ],
+        state: {
+            atk_clear_timer: new Cooldown(1000),
+            atk_clear_timer_started: false
+        }
     },
 
     wyzz我应自尊: { // 对生命值高于50%的敌人造成的伤害提高30%

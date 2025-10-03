@@ -19,7 +19,7 @@ export class Projectile extends Entity {
      */
     constructor(position, velocity, damage, from, config = { color: 'yellow', shape: 'rectangle', size: new Vector(10, 10) }) {
         super(position, config.size, velocity);
-        this.type = "enemy_projectile";
+        this.type = "projectile";
         this.damage = damage;
         this.alive = true;
         this.from = from;
@@ -70,15 +70,17 @@ export class Projectile extends Entity {
         }
 
         // 命中检测
-        this.from.targets.forEach(target => {
+        const targets = this.from.targets || [];
+        for (const target of targets) {
             if (this.hitbox.checkMovingHit(target.hurtBox, beginPosition, this.hitbox.position)) {
-                this.from.applyDamage(target, this.damage);
+                this.from.applyDamage(target, this.damage, this);
                 if (!(this.owner === player && talentManager.hasTalentLevel('专注', 1))) {
                     // 如果弹幕来自玩家且携带天赋“专注”，则允许弹幕穿透
                     this.alive = false;
+                    break;
                 }
             }
-        });
+        }
     }
 
     draw(ctx) {

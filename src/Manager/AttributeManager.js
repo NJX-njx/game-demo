@@ -18,7 +18,8 @@ export const AttributeTypes = {
         MeleeRecoveryTime: "PLAYER_MeleeRecoveryTime",
         RangedStartupTime: "PLAYER_RangedStartupTime",
         RangedRecoveryTime: "PLAYER_RangedRecoveryTime",
-        BlockDamageReduction: "PLAYER_Block_Damage_Reduction"
+        BlockDamageReduction: "PLAYER_Block_Damage_Reduction",
+        PARRY_DMG: "PLAYER_PARRY_DMG", // 弹反伤害
     },
     enemy: {
         ATK: "ENEMY_ATK",
@@ -41,6 +42,10 @@ export const AttributeTypes = {
         MeleeRecoveryTime: "BOSS_MeleeRecoveryTime",
         RangedStartupTime: "BOSS_RangedStartupTime",
         RangedRecoveryTime: "BOSS_RangedRecoveryTime"
+    },
+    other: { // 用于实现一些计时计数效果
+        item: "ITEM_EFFECT",
+        talent: "TALENT_EFFECT"
     }
 };
 

@@ -412,13 +412,13 @@ export const ItemConfigs = {
         effects: {},
         hooks: (item) => [ // TODO: 条件触发，耗尽最后一段突进段数后，附加特殊状态：下一次突进向相反的方向突进，但突进距离增加，无敌帧延长，当次闪避反击造成
             { // 监听冲刺消耗完最后一段时的事件（假设存在 MAP 或 player 的事件，这里用 game.tick 作为占位并暴露接口）
-                event: Events.game.tick,
+                event: Events.player.dash,
                 handler: ({ deltaTime }) => {
-                    // 为兼容性：如果 player 有 state.dashLastConsumed 标识，则触发效果
-                    if (player.dash.dashCount == 0) {
+                    if (player.dash.dashMaxCount > 0 && player.dash.dashCount == 0) {
                         // 给予下一次反向突进
                         player.state.dashReversed = true;
                         // 延长无敌，突进距离增加
+                        AM.addAttr(Attrs.player.DASH_DURATION, 100, item.id, null, 1); // 无敌时间延长100ms
                         // 并且当次闪避反击伤害提高80%
                     }
                 }
@@ -426,26 +426,16 @@ export const ItemConfigs = {
         ]
     },
 
-    bl暴力: { // 【18】【1级】“暴力” 受到的伤害提高40%（DMG%）弹反造成的伤害提高120%（extra）
+    bl暴力: { // 【18】【1级】“暴力” 受到的伤害提高40%（DMG%）弹反造成的伤害提高120%
         name: "暴力",
         description: "【18】【1级】暴力：受到的伤害提高40%；弹反造成的伤害提高120%。",
         level: 1,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
         effects: {
-            [Attrs.player.TAKE_DMG]: 0.4
-        },
-        hooks: (item) => [
-            // { // TODO: 弹反造成的伤害提高120%（extra）
-            //     event: Events.player.dealDamage,
-            //     handler: (payload) => {
-            //         // 如果 payload 标识是弹反（假设 payload.extraType === 'parry'）则放大伤害
-            //         if (payload && payload.extraType === 'parry') {
-            //             return { ...payload, baseDamage: payload.baseDamage * 2.2 };
-            //         }
-            //     }
-            // }
-        ]
+            [Attrs.player.TAKE_DMG]: 0.4,
+            [Attrs.player.PARRY_DMG]: 1.2
+        }
     },
 
     wz畏缩: { // 【19】【1级】“畏缩” 敌人伤害降低10，移动速度-25%（SPD%），攻击-25%（ATK%）；当生命低于50%时：效果翻倍
@@ -484,24 +474,7 @@ export const ItemConfigs = {
         description: "【20】【2级】共情：近战攻击判定范围扩大。",
         level: 2,
         type: ItemTypes.NORMAL,
-        tags: [ItemTags.UNIQUE_SINGLE],
-        // TODO: 近战攻击范围扩大
-        // effects: {
-        //     // 近战攻击范围扩大 —— 没有专门属性时，尝试用一个自定义属性键（如果系统未识别，这只是占位）
-        //     // 这里使用玩家攻击力相关属性不变，改为通过 hooks 在造成近战伤害时修改 hitbox 或 baseDamage 的范围/检测
-        // },
-        // hooks: (item) => [
-        //     { // 在 player 发起近战攻击造成伤害时，扩大判定范围。监听 player.dealDamage 并检测为近战
-        //         event: Events.player.dealDamage,
-        //         handler: (payload) => {
-        //             if (!payload) return;
-        //             if (payload.attackType === 'melee') {
-        //                 // 标记 payload 表示范围扩大，供攻击处理方检查
-        //                 return { ...payload, meleeRangeExtra: 1.0 }; // 扩大 100% 范围
-        //             }
-        //         }
-        //     }
-        // ]
+        tags: [ItemTags.UNIQUE_SINGLE]
     },
 
     qc虔诚: { // 【21】【2级】“虔诚” BOSS的生命上限降低40%
@@ -524,7 +497,7 @@ export const ItemConfigs = {
         hooks: (item) => [
             {
                 event: Events.player.parry,
-                handler: () => {
+                handler: (payload) => {
                     AM.addAttr(Attrs.player.RangedStartupTime, -300, item.id, 2000, 1);
                     AM.addAttr(Attrs.player.RangedRecoveryTime, -400, item.id, 2000, 1);
                 }
@@ -605,16 +578,25 @@ export const ItemConfigs = {
         level: 2,
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
-        hooks: (item) => [
-            {
-                event: Events.player.afterTakeDamage,
-                handler: () => {
-                    if (player.state.hp / player.state.hp_max < 0.4) {
-                        player.takeHeal(player.state.hp_max * 0.12, item.id);
-                    }
+        hooks: (item) => [{
+            event: Events.game.tick,
+            handler: ({ deltaTime }) => {
+                item.state.healTimer.tick(deltaTime);
+            },
+            priority: 1
+        },
+        {
+            event: Events.player.afterTakeDamage,
+            handler: () => {
+                if (player.state.hp / player.state.hp_max < 0.4 && item.state.healTimer.ready()) {
+                    player.takeHeal(player.state.hp_max * 0.12, item.id);
+                    item.state.healTimer.start();
                 }
             }
-        ]
+        }],
+        state: {
+            healTimer: new Cooldown(10000)
+        }
     },
 
     al爱恋: { // 【28】【2级】“爱恋” 随机获得以下效果之一：攻击力+45%；生命上限+30%；受到的伤害降低20固定值（DMG），但不低于原本的10%。该效果在进入新的房间时刷新。同时携带“友谊”时，可同时获取2个效果。此时通关游戏将完成成就“来世的我们”
@@ -846,10 +828,10 @@ export const ItemConfigs = {
             {
                 event: Events.player.takeDamage,
                 handler: (payload) => {
+                    const { baseDamage, attacker, attackType, projectile } = payload;
                     if (item.state.dlTimer.ready() && player.state.hp / player.state.hp_max < 0.3) {
                         item.state.dlTimer.start();
-                        AM.addAttr(Attrs.player.MeleeDmg, 1.0, item.id, null, 1); // 造成双倍伤害
-                        player.block.performParry(); // 视为弹反
+                        player.block.performParry({ damage: baseDamage * 2, attackType, attacker, projectile }); // 视为弹反并造成双倍伤害
                         return { ...payload, baseDamage: 0 }; // 视为未受伤害
                     }
                 }
@@ -974,15 +956,9 @@ export const ItemConfigs = {
         type: ItemTypes.NORMAL,
         tags: [ItemTags.UNIQUE_SINGLE],
         effects: { //TODO: 弹反判定大幅延长
+            [Attrs.player.PARRY_DMG]: 0.5
             // [Attrs.player.DAMAGE_REFLECT]: 0.5
-        },
-        hooks: (item) => [// TODO: 造成的伤害提高50%
-            //     {   
-            //         event: Events.player.parry,
-            //         handler: (payload) => {
-            //         }
-            //     }
-        ]
+        }
     },
 
     ww无畏: { // 【44】【3级】“无畏” 连续造成5次伤害而不受击后，攻击力+20%（ATK%）；每额外造成一次伤害，攻击力再+20%（ATK%），最多叠加至120%。

@@ -13,6 +13,7 @@ import { attributeManager as AM, AttributeTypes as Attrs } from "../Manager/Attr
 import { drawSprite } from "../Utils/canvas";
 import { Decoy } from "./Decoy";
 import { talentManager } from "../System/Talent/TalentManager";
+import { Projectile } from "../System/Attack/Projectile";
 
 class Player_Animation {
     static Framerate = {
@@ -292,32 +293,91 @@ class Player extends Entity {
                 }
             },
 
-            performParry: () => {
-                console.log("执行弹反攻击！");
-                bus.emit(Events.player.parry);
+            // 对敌人造成范围伤害（热烈）
+            applyParryDamageArea: (reflectedDamage) => {
+                const victims = [];
+                if (reflectedDamage <= 0) return victims;
+                const enemies = game.enemies || [];
 
-                // 立即触发一次无前后摇的近战攻击
-                const originalStartupTime = this.state.attack.startupTime.melee;
-                const originalRecoveryTime = this.state.attack.recoveryTime.melee;
+                const center = this.hitbox.getCenter();
+                const radius = 70;
 
-                // 临时设置无前后摇
-                this.state.attack.startupTime.melee = 0;
-                this.state.attack.recoveryTime.melee = 0;
+                enemies.forEach(enemy => {
+                    const enemyCenter = enemy.hurtBox.getCenter();
+                    if (Math.hypot(enemyCenter.x - center.x, enemyCenter.y - center.y) > radius) return;
+                    if (victims.includes(enemy)) return;
+                    enemy.takeDamage(reflectedDamage, 'parry', this);
+                    victims.push(enemy);
+                });
 
-                // 临时增加伤害
-                const originalDamage = this.state.attack.damage.melee;
-                this.state.attack.damage.melee *= this.state.block.parryDamageMultiplier;
+                return victims;
+            },
 
-                this.attack.melee.reset();
-                // 触发攻击
-                this.attack.melee.trigger();
+            // 弹反子弹
+            reflectProjectile: (projectile, reflectedDamage) => {
+                if (!projectile || !projectile.alive) return;
+                projectile.owner = this;
+                projectile.from = this.attack.ranged;
+                projectile.damage = reflectedDamage;
+                projectile.bouncedTimes = 0;
+                projectile.velocity = projectile.velocity.scale(-1);
+                const dir = projectile.velocity.magnitude() > 0 ? projectile.velocity.normalize() : new Vector(this.facing || 1, 0);
+                projectile.hitbox.position = projectile.hitbox.position.addVector(dir.scale(6));
+                projectile.color = '#38bdf8';
+                return projectile;
+            },
 
-                // 恢复原始值
-                setTimeout(() => {
-                    this.state.attack.startupTime.melee = originalStartupTime;
-                    this.state.attack.recoveryTime.melee = originalRecoveryTime;
-                    this.state.attack.damage.melee = originalDamage;
-                }, 50); // 短暂延迟确保攻击完成
+            /**
+             * 执行弹反攻击
+             * @param {Object} context
+             * @param {string} context.attackType 攻击类型 'melee' 或 'ranged'
+             * @param {number} context.damage 原始伤害值
+             * @param {Entity} context.attacker 攻击者实体
+             * @param {Projectile} [context.projectile] 被弹反的子弹实体（仅远程攻击时提供） 
+             */
+            performParry: (context = {}) => {
+                const { attackType = 'melee', damage = 0, attacker = null, projectile = null } = context;
+
+                const multiplier = this.state.block.parryDamageMultiplier;
+                const reflectedDamage = Math.max(0, Math.round(damage * multiplier));
+
+                console.log(`执行弹反攻击！类型:${attackType}，反弹伤害:${reflectedDamage}`);
+
+                const payload = {
+                    player: this,
+                    attackType,
+                    attacker,
+                    incomingDamage: damage ?? 0,
+                    reflectedDamage,
+                    isProjectile: !!projectile,
+                    projectile: projectile || null,
+                    reflectedTargets: [],
+                    timestamp: typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now()
+                };
+
+                const victims = [];
+
+                if (attackType === 'ranged' && projectile) {
+                    payload.reflectedProjectile = this.block.reflectProjectile(projectile, reflectedDamage) || null;
+                    if (talentManager.hasTalentLevel('热烈', 1)) {
+                        const splashVictims = this.block.applyParryDamageArea(reflectedDamage);
+                        splashVictims.forEach(enemy => {
+                            if (!victims.includes(enemy)) victims.push(enemy);
+                        });
+                    }
+                } else if (attackType === 'melee' && attacker && attacker !== this) {
+                    attacker.takeDamage(reflectedDamage, 'parry', this);
+                    victims.push(attacker);
+                }
+
+                payload.reflectedTargets = victims;
+
+                bus.emit(Events.player.parry, payload);
+
+                this.block.isParrying = false;
+                this.block.parryDuration.reset();
+                this.block.stop();
+                this.block.blockCooldown.reset();
             }
         };
 
@@ -458,6 +518,7 @@ class Player extends Entity {
         const dash_charge = AM.getAttrSum(Attrs.player.DASH_CHARGE);
         const dash_duration = AM.getAttrSum(Attrs.player.DASH_DURATION);
         const block_dmg_reduction = AM.getAttrSum(Attrs.player.BlockDamageReduction);
+        const parry_damage = AM.getAttrSum(Attrs.player.PARRY_DMG);
 
         this.state.hp_max = this.baseState.hp_max * (1 + hp);
         this.state.hp = Math.min(this.state.hp, this.state.hp_max);
@@ -483,7 +544,7 @@ class Player extends Entity {
         this.state.block.recoveryTime = this.baseState.block.recoveryTime;
         this.block.blockCooldown.set(this.state.block.recoveryTime);
         this.state.block.damageReduction = this.baseState.block.damageReduction + block_dmg_reduction;
-        this.state.block.parryDamageMultiplier = this.baseState.block.parryDamageMultiplier;
+        this.state.block.parryDamageMultiplier = this.baseState.block.parryDamageMultiplier * (1 + parry_damage);
     }
 
     // 检查攻击方向是否在格挡范围内
@@ -504,7 +565,7 @@ class Player extends Entity {
     }
 
     // 返回当前是否可受击
-    beforeTakeDamage(dmg, attackType = null, attacker = null) {
+    beforeTakeDamage(dmg, attackType = null, attacker = null, projectile = null) {
         if (!this.invinDuration.finished()) return false;
         if (this.dash.isDashing === true) {
             bus.emit(Events.player.dodge);
@@ -512,8 +573,8 @@ class Player extends Entity {
             if (this.state.unlock.dodge) this.dodge.startDodgeWindow();
             return false;
         };
-        if (this.block.isParrying && attacker && this.isAttackFromFront(attacker)) {// 弹反：完全免疫伤害并触发弹反攻击
-            this.block.performParry(attacker);
+        if (this.block.isParrying && attacker && this.isAttackFromFront(projectile ?? attacker)) {// 弹反：完全免疫伤害并触发弹反攻击
+            this.block.performParry({ attackType, damage: dmg, attacker, projectile });
             console.log("弹反成功！");
             return false; // 完全免疫伤害
         }
@@ -521,11 +582,11 @@ class Player extends Entity {
     }
 
     // 受击判定
-    takeDamage(dmg, attackType, attacker = null) {
+    takeDamage(dmg, attackType, attacker = null, projectile = null) {
         if (this._decoy) return;
         let finalDmg = bus.emitReduce(
             Events.player.takeDamage,
-            { baseDamage: dmg },
+            { baseDamage: dmg, attackType, attacker, projectile },
             (_, next) => next
         ).baseDamage;
 
@@ -539,10 +600,11 @@ class Player extends Entity {
 
         finalDmg = Math.max(0, Math.floor(finalDmg));
 
+        const hpBefore = this.state.hp;
         this.state.hp -= finalDmg;
         bus.emit(Events.player.afterTakeDamage, { attackType, attacker, damage: finalDmg, victim: this });
         // 统一的死亡处理
-        this.checkAndHandleDeath();
+        this.checkAndHandleDeath(hpBefore, finalDmg);
     }
 
     /**
@@ -566,9 +628,9 @@ class Player extends Entity {
      * 统一的死亡判定与处理函数。
      * - 当 hp <= 0 时触发可中断的致命伤事件（Events.player.fatelDmg），如果没有被中断，则触发死亡事件。
      */
-    checkAndHandleDeath() {
+    checkAndHandleDeath(hpBefore = 0, dmg = 0) {
         if (this.state.hp < 0)
-            if (!bus.emitInterruptible(Events.player.fatelDmg)) {
+            if (!bus.emitInterruptible(Events.player.fatelDmg, { hpBefore, damage: dmg })) {
                 bus.emit(Events.player.die);
                 alert("你死了");
             }

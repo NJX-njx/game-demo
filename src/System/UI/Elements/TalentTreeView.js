@@ -216,6 +216,7 @@ export class TalentTreeView extends UIElement {
         ctx.translate(this.offset.x, this.offset.y);
 
         this._drawGrid(ctx);
+        this._drawExcludePairs(ctx);
         this._drawLinks(ctx);
         this._drawNodes(ctx);
 
@@ -258,11 +259,86 @@ export class TalentTreeView extends UIElement {
         ctx.restore();
     }
 
+    _drawExcludePairs(ctx) {
+        if (!this.nodes || this.nodes.length === 0) return;
+
+        const pairs = new Set();
+
+        for (const node of this.nodes) {
+            const excludes = node?.talent?.excludes;
+            if (!(excludes instanceof Set) || excludes.size === 0) continue;
+            for (const otherName of excludes) {
+                if (typeof otherName !== "string") continue;
+                const other = this.nodeMap.get(otherName);
+                if (!other) continue;
+                const otherExcludes = other?.talent?.excludes;
+                if (!(otherExcludes instanceof Set) || !otherExcludes.has(node.name)) continue;
+                const key = node.name < other.name ? `${node.name}::${other.name}` : `${other.name}::${node.name}`;
+                pairs.add(key);
+            }
+        }
+
+        if (pairs.size === 0) return;
+
+        // 准备保存 box 信息，供 _drawLinks 使用
+        this._excludePairBoxes = this._excludePairBoxes || new Map();
+        this._nodeToPairKey = this._nodeToPairKey || new Map();
+        // 清理旧数据
+        this._excludePairBoxes.clear();
+        this._nodeToPairKey.clear();
+
+        const { nodeWidth, nodeHeight } = this.options;
+        const padX = Math.max(20, nodeWidth * 0.18);
+        const padY = Math.max(14, nodeHeight * 0.22);
+
+        ctx.save();
+        ctx.lineWidth = 2 / Math.max(this.zoom, 0.0001);
+        ctx.strokeStyle = "rgba(129,140,248,0.45)";
+        ctx.fillStyle = "rgba(129,140,248,0.10)";
+
+        for (const key of pairs) {
+            const [nameA, nameB] = key.split("::");
+            const nodeA = this.nodeMap.get(nameA);
+            const nodeB = this.nodeMap.get(nameB);
+            if (!nodeA || !nodeB) continue;
+
+            const ax = nodeA.cx - nodeWidth / 2;
+            const ay = nodeA.cy - nodeHeight / 2;
+            const bx = nodeB.cx - nodeWidth / 2;
+            const by = nodeB.cy - nodeHeight / 2;
+
+            const left = Math.min(ax, bx) - padX;
+            const top = Math.min(ay, by) - padY;
+            const right = Math.max(ax + nodeWidth, bx + nodeWidth) + padX;
+            const bottom = Math.max(ay + nodeHeight, by + nodeHeight) + padY;
+
+            const width = right - left;
+            const height = bottom - top;
+            const radius = Math.min(28, Math.min(width, height) / 4);
+
+            // 保存 box 的中心和边界
+            const cx = left + width / 2;
+            const cy = top + height / 2;
+            this._excludePairBoxes.set(key, { left, top, width, height, cx, cy });
+            this._nodeToPairKey.set(nodeA.name, key);
+            this._nodeToPairKey.set(nodeB.name, key);
+
+            this._roundRectPath(ctx, left, top, width, height, radius);
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        ctx.restore();
+    }
+
     _drawLinks(ctx) {
         ctx.save();
         ctx.lineWidth = 2.5;
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
+        // 为避免在成对节点被视为一个整体时出现重复连线，我们先准备一个已绘制集合
+        const drawnEdges = new Set();
+
         for (const node of this.nodes) {
             const toCenter = this._getNodeCenter(node);
             const prereqs = node.prerequisites || [];
@@ -270,26 +346,58 @@ export class TalentTreeView extends UIElement {
             prereqs.forEach((pre, index) => {
                 const fromNode = this.nodeMap.get(pre.name);
                 if (!fromNode) return;
-                const fromCenter = this._getNodeCenter(fromNode);
+                // 计算连接的实体键（如果节点属于排斥对，则使用 pairKey 作为实体键）
+                const srcEntity = (this._nodeToPairKey && this._nodeToPairKey.has(fromNode.name)) ? this._nodeToPairKey.get(fromNode.name) : fromNode.name;
+                const dstEntity = (this._nodeToPairKey && this._nodeToPairKey.has(node.name)) ? this._nodeToPairKey.get(node.name) : node.name;
+                const edgeKey = `${srcEntity}-->${dstEntity}`;
+                if (drawnEdges.has(edgeKey)) return; // 已绘制相同有向连接
+                drawnEdges.add(edgeKey);
+                // 计算原始中心点
+                const origFromCenter = this._getNodeCenter(fromNode);
+                const origToCenter = toCenter;
+
+                // 根据节点是否属于互斥对，决定连线点
+                let fromPoint = { x: origFromCenter.x, y: origFromCenter.y };
+                if (this._nodeToPairKey && this._nodeToPairKey.has(fromNode.name)) {
+                    const pairKey = this._nodeToPairKey.get(fromNode.name);
+                    const box = this._excludePairBoxes && this._excludePairBoxes.get(pairKey);
+                    if (box) {
+                        // 若另一端在 box 的右侧，则从 box 的右侧中点连出，否则从左侧中点连出
+                        const otherX = origToCenter.x;
+                        const midY = box.top + box.height / 2;
+                        fromPoint = otherX >= (box.left + box.width / 2) ? { x: box.left + box.width, y: midY } : { x: box.left, y: midY };
+                    }
+                }
+
+                let toPoint = { x: origToCenter.x, y: origToCenter.y };
+                if (this._nodeToPairKey && this._nodeToPairKey.has(node.name)) {
+                    const pairKey = this._nodeToPairKey.get(node.name);
+                    const box = this._excludePairBoxes && this._excludePairBoxes.get(pairKey);
+                    if (box) {
+                        const otherX = origFromCenter.x;
+                        const midY = box.top + box.height / 2;
+                        toPoint = otherX >= (box.left + box.width / 2) ? { x: box.left + box.width, y: midY } : { x: box.left, y: midY };
+                    }
+                }
                 const state = this._evalPrerequisiteState(pre);
-                const spanX = toCenter.x - fromCenter.x;
+                const spanX = toPoint.x - fromPoint.x;
                 const direction = spanX >= 0 ? 1 : -1;
                 const magnitude = Math.max(Math.abs(spanX) * 0.35, this.options.horizontalGap * 0.55);
                 const indexOffset = (index - (count - 1) / 2) * 60;
 
                 const control1 = {
-                    x: fromCenter.x + direction * magnitude,
-                    y: fromCenter.y + indexOffset
+                    x: fromPoint.x + direction * magnitude,
+                    y: fromPoint.y + indexOffset
                 };
                 const control2 = {
-                    x: toCenter.x - direction * magnitude,
-                    y: toCenter.y + indexOffset
+                    x: toPoint.x - direction * magnitude,
+                    y: toPoint.y + indexOffset
                 };
 
                 ctx.strokeStyle = state.met ? (state.excess ? "#38bdf8" : "#3b82f6") : "rgba(148,163,184,0.45)";
                 ctx.beginPath();
-                ctx.moveTo(fromCenter.x, fromCenter.y);
-                ctx.bezierCurveTo(control1.x, control1.y, control2.x, control2.y, toCenter.x, toCenter.y);
+                ctx.moveTo(fromPoint.x, fromPoint.y);
+                ctx.bezierCurveTo(control1.x, control1.y, control2.x, control2.y, toPoint.x, toPoint.y);
                 ctx.stroke();
             });
         }

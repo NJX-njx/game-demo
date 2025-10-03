@@ -25,9 +25,9 @@ export const EventTypes = {
         dodge_attack: "PLAYER_DODGE_ATTACK",//闪避反击
         parry: "PLAYER_PARRY",//弹反
         dealDamage: "PLAYER_DEAL_DAMAGE", // 造成伤害 payload: { baseDamage, attackType, attacker, target }
-        takeDamage: "PLAYER_TAKE_DAMAGE", // 受到伤害 payload: { baseDamage }
+        takeDamage: "PLAYER_TAKE_DAMAGE", // 受到伤害 payload: { baseDamage, attackType, attacker, projectile }
         afterTakeDamage: "PLAYER_AFTER_TAKE_DAMAGE", // 受到伤害后
-        fatelDmg: "PLAYER_FATEL_DAMAGE" // 受到致命伤
+        fatelDmg: "PLAYER_FATEL_DAMAGE" // 受到致命伤 payload: { hpBefore, damage }
     },
     enemy: {
         die: "ENEMY_DIE",               // 敌人死亡 payload: { attackType, attacker, damage, victim }
