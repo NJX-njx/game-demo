@@ -5,18 +5,19 @@ import { Hitbox } from "../../Utils/Hitbox";
 import { mapManager } from "../../Manager/MapManager";
 import { RangedAttack } from "../../System/Attack/RangedArrack";
 import { player } from "../Player";
+import { textureManager } from "../../Manager/TextureManager";
 
 export class Enemy_2 extends EnemyBase {
     constructor(position, size = new Vector(50, 50), velocity = new Vector()) {
         super("2", position, size, velocity);
-        this.animation = new EnemyAnimation(this.enemytype);
+        this.animation = new Enemy_2_Animation();
 
         this.baseState = {
-            hp_max: 100,
+            hp_max: 40,
             attack: {
-                atk: 10,
-                StartupTime: 50,
-                RecoveryTime: 1500
+                atk: 12,
+                StartupTime: 300,
+                RecoveryTime: 2500
             }
         };
 
@@ -33,68 +34,27 @@ export class Enemy_2 extends EnemyBase {
             projectileShape: 'rectangle'
         });
         this.attack.type = "ranged";
-        this.attack.range = 500;
+        this.attack.range = 700;
     }
 
     updateAI(deltaTime) {
+        //玩家纵坐标与自己不大于50且没有遮挡时向玩家攻击。
         this.control.cmd_move = 0;
         this.control.jumpTriggered = false;
         this.control.attackTriggered = false;
-        let lockOnMode = "patrol";
-
-        const enemyCenter = this.hitbox.getCenter();
-        const playerCenter = player.hitbox.getCenter();
+        const enemyCenter = this.hitbox.getCenter();//敌人中心
+        const playerCenter = player.hitbox.getCenter();//玩家中心
         const horizontalDist = Math.abs(enemyCenter.x - playerCenter.x);
         const verticalDist = Math.abs(enemyCenter.y - playerCenter.y);
-        const totalDist = Math.sqrt(horizontalDist ** 2 + verticalDist ** 2);
-        if (verticalDist < 150 && totalDist <= this.attack.range) {
-            lockOnMode = "attack";
+        if (verticalDist <= 50 && horizontalDist < this.attack.range) {
             this.control.attackTriggered = true;
-        } else if (totalDist > this.attack.range && totalDist < this.attack.range + 200) {
-            lockOnMode = "approach"; // 靠近目标
         }
+        this.facing = this.hitbox.position.x < player.hitbox.position.x ? 1 : -1;
+    }
 
-        let move = 0;
-        const enemyCenterX = this.hitbox.getCenter().x;
-        const playerCenterX = player.hitbox.getCenter().x;
-        const distance = Math.abs(enemyCenterX - playerCenterX);
-        switch (lockOnMode) {
-            case "attack":
-                // 攻击模式：保持距离，面向玩家
-                this.facing = enemyCenterX < playerCenterX ? 1 : -1;
-                // 如果距离过近则后退
-                if (distance < this.attack.range * 0.7) {
-                    move = -this.facing * 0.2;
-                } else if (distance > this.attack.range * 0.9) {
-                    // 如果距离过远则前进
-                    move = this.facing * 0.2;
-                } else {
-                    move = 0; // 保持在最佳攻击距离
-                }
-                break;
-
-            case "approach":
-                // 靠近模式：移动到攻击范围内
-                this.facing = enemyCenterX < playerCenterX ? 1 : -1;
-                move = this.facing * 0.25;
-                break;
-
-            default:
-                // 巡逻模式
-                if (Math.random() < 0.002) {
-                    this.facing = Math.random() < 0.5 ? 1 : -1;
-                }
-                const nextX = this.hitbox.position.x + this.facing * 2;
-                const testHitbox = new Hitbox(new Vector(nextX, this.hitbox.position.y), this.hitbox.size);
-                const willHitWall = mapManager.getBlockHitboxes().some(block => testHitbox.checkHit(block));
-
-                if (willHitWall || nextX < 0 || nextX > 1280) {
-                    this.facing = -this.facing;
-                }
-                move = this.facing * 0.15; // 远程怪物巡逻速度稍慢
-                break;
-        }
-        this.control.cmd_move = move;
+    updateMove(deltaTime) {
+        //不移动
+        this.control.cmd_move = 0;
     }
 
     updateAttack(deltaTime) {
@@ -105,7 +65,65 @@ export class Enemy_2 extends EnemyBase {
     }
 
     updateAnimation(deltaTime) {
-        this.animation.setAttackState(this.attack.attacker.isAttacking);
+        //前摇开始时，播放攻击动画
+        if (this.attack.attacker.isAttacking) {
+            this.animation.setStatus("attack");
+        }
+        //否则保持待机动画
+        else {
+            this.animation.setStatus("stand");
+        }
         this.animation.update(deltaTime);
+    }
+}
+
+class Enemy_2_Animation {
+    static Framerate = {
+        "stand": 5,
+        "attack": 5,
+    };
+    static Frames = {
+        "stand": 12,
+        "attack": 5
+    };
+    constructor() {
+        this.status = "stand";
+        this.frame = 1;
+        this.frameRun = 0;
+    }
+
+    setStatus(status) {
+        if (status != this.status) {
+            this.frame = 1;
+            this.frameRun = 0;
+            this.status = status;
+        }
+    }
+
+    update(deltaTime) {
+        this.frameRun += deltaTime;
+        const frameInterval = 1000 / Enemy_2_Animation.Framerate[this.status];
+
+        if (this.frameRun > frameInterval) {
+            this.frame++;
+            this.frameRun = 0;
+        }
+
+        const maxFrame = Enemy_2_Animation.Frames[this.status];
+
+        if (this.frame > maxFrame) {
+            switch (this.status) {
+                default:
+                    this.frame = maxFrame;
+                    break;
+            }
+        } else if (this.frame < 1) {
+            this.frame = 1;
+        }
+    }
+    getFrame() {
+        const hasFrames = Enemy_2_Animation.Frames && Enemy_2_Animation.Frames[this.status];
+        const textureKey = hasFrames ? `${this.status}_${this.frame}` : "default";
+        return textureManager.getTexture("enemy_2", textureKey);
     }
 }

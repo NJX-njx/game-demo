@@ -1,6 +1,8 @@
 import { AttackBase } from "./AttackBase";
 import { Vector } from "../../Utils/Vector";
 import { Projectile } from "./Projectile";
+import { player } from "../../Entities/Player";
+import { eventBus as bus, EventTypes as Events } from "../../Manager/EventBus";
 
 export class RangedAttack extends AttackBase {
     /**

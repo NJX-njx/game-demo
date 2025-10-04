@@ -315,15 +315,14 @@ class Player extends Entity {
 
             // 弹反子弹
             reflectProjectile: (projectile, reflectedDamage) => {
-                if (!projectile || !projectile.alive) return;
+                if (!projectile) return;
                 projectile.owner = this;
                 projectile.from = this.attack.ranged;
                 projectile.damage = reflectedDamage;
                 projectile.bouncedTimes = 0;
                 projectile.velocity = projectile.velocity.scale(-1);
-                const dir = projectile.velocity.magnitude() > 0 ? projectile.velocity.normalize() : new Vector(this.facing || 1, 0);
-                projectile.hitbox.position = projectile.hitbox.position.addVector(dir.scale(6));
                 projectile.color = '#38bdf8';
+                projectile.alive = true;
                 return projectile;
             },
 
@@ -374,8 +373,6 @@ class Player extends Entity {
 
                 bus.emit(Events.player.parry, payload);
 
-                this.block.isParrying = false;
-                this.block.parryDuration.reset();
                 this.block.stop();
                 this.block.blockCooldown.reset();
             }

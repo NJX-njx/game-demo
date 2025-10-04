@@ -73,12 +73,14 @@ export class Projectile extends Entity {
         const targets = this.from.targets || [];
         for (const target of targets) {
             if (this.hitbox.checkMovingHit(target.hurtBox, beginPosition, this.hitbox.position)) {
+                this.alive = false;
                 this.from.applyDamage(target, this.damage, this);
-                if (!(this.owner === player && talentManager.hasTalentLevel('专注', 1))) {
+                if (this.owner === player && talentManager.hasTalentLevel('专注', 1)) {
                     // 如果弹幕来自玩家且携带天赋“专注”，则允许弹幕穿透
-                    this.alive = false;
-                    break;
+                    this.alive = true;
+                    continue;
                 }
+                break;
             }
         }
     }

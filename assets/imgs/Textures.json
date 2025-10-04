@@ -31,13 +31,33 @@
         "1": "assets/imgs/敌对生物/旧版其他/creep1.png",
         "2": "assets/imgs/敌对生物/旧版其他/creep2.png"
     },
-    "enemy_balingzhe": {
+    "enemy_1": {
         "default": "assets/imgs/敌对生物/小怪1 近战 霸凌者/1.png",
         "attack_1": "assets/imgs/敌对生物/小怪1 近战 霸凌者/1.png",
         "attack_2": "assets/imgs/敌对生物/小怪1 近战 霸凌者/2.png",
         "attack_3": "assets/imgs/敌对生物/小怪1 近战 霸凌者/3.png",
         "attack_4": "assets/imgs/敌对生物/小怪1 近战 霸凌者/4.png",
-        "attack_5": "assets/imgs/敌对生物/小怪1 近战 霸凌者/5.png"
+        "attack_recover_1": "assets/imgs/敌对生物/小怪1 近战 霸凌者/5.png"
+    },
+    "enemy_2": {
+        "default": "assets/imgs/敌对生物/小怪2 远程 事不关己/待机/2.png",
+        "stand_1": "assets/imgs/敌对生物/小怪2 远程 事不关己/待机/1.png",
+        "stand_2": "assets/imgs/敌对生物/小怪2 远程 事不关己/待机/2.png",
+        "stand_3": "assets/imgs/敌对生物/小怪2 远程 事不关己/待机/2.png",
+        "stand_4": "assets/imgs/敌对生物/小怪2 远程 事不关己/待机/2.png",
+        "stand_5": "assets/imgs/敌对生物/小怪2 远程 事不关己/待机/2.png",
+        "stand_6": "assets/imgs/敌对生物/小怪2 远程 事不关己/待机/2.png",
+        "stand_7": "assets/imgs/敌对生物/小怪2 远程 事不关己/待机/1.png",
+        "stand_8": "assets/imgs/敌对生物/小怪2 远程 事不关己/待机/3.png",
+        "stand_9": "assets/imgs/敌对生物/小怪2 远程 事不关己/待机/3.png",
+        "stand_10": "assets/imgs/敌对生物/小怪2 远程 事不关己/待机/3.png",
+        "stand_11": "assets/imgs/敌对生物/小怪2 远程 事不关己/待机/3.png",
+        "stand_12": "assets/imgs/敌对生物/小怪2 远程 事不关己/待机/3.png",
+        "attack_1": "assets/imgs/敌对生物/小怪2 远程 事不关己/攻击/2.png",
+        "attack_2": "assets/imgs/敌对生物/小怪2 远程 事不关己/攻击/1.png",
+        "attack_3": "assets/imgs/敌对生物/小怪2 远程 事不关己/攻击/2.png",
+        "attack_4": "assets/imgs/敌对生物/小怪2 远程 事不关己/攻击/3.png",
+        "attack_5": "assets/imgs/敌对生物/小怪2 远程 事不关己/攻击/4.png"
     },
     "backgrounds": {
         "brick_R": "assets/imgs/map/地块元素/砖块深红.png",
@@ -119,7 +139,6 @@
         "观望": "assets/imgs/item/0级观望.png",
         "决心": "assets/imgs/item/0级决心.png",
         "犹疑": "assets/imgs/item/0级犹疑.png",
-
         "暴力": "assets/imgs/item/1级暴力.png",
         "悲怆": "assets/imgs/item/1级悲怆.png",
         "祷告": "assets/imgs/item/1级祷告.png",
@@ -135,7 +154,6 @@
         "休憩": "assets/imgs/item/1级休憩.png",
         "友谊": "assets/imgs/item/1级友谊.png",
         "珍惜": "assets/imgs/item/1级珍惜.png",
-
         "爱恋": "assets/imgs/item/2级爱恋.png",
         "安眠": "assets/imgs/item/2级安眠.png",
         "沉默": "assets/imgs/item/2级沉默.png",
@@ -151,7 +169,6 @@
         "求生": "assets/imgs/item/2级求生.png",
         "卫护": "assets/imgs/item/2级卫护.png",
         "执念": "assets/imgs/item/2级执念.png",
-
         "辩论": "assets/imgs/item/3级辩论.png",
         "慈悲": "assets/imgs/item/3级慈悲.png",
         "对垒": "assets/imgs/item/3级对垒.png",

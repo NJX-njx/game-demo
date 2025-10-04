@@ -39,8 +39,8 @@ class MapManager {
      * @param {number} room 房间编号或名称
      */
     async loadRoom(layer, room) {
+        const url = `assets/stages/Chapter${layer}/Lv${layer}-${room}.json`;
         try {
-            const url = `assets/stages/Chapter${layer}/Lv${layer}-${room}.json`;
             console.log(`🗺️ 开始加载房间: ${url}`)
 
             const data = await dataManager.loadJSON(url);

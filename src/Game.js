@@ -141,10 +141,18 @@ class Game {
         }
 
         //TODO:测试用
-        mapManager.loadRoom(0, 1);
+        mapManager.loadRoom(0, 4);
         itemManager.tryAcquire(Items.xq休憩);
         itemManager.tryAcquire(Items.yy友谊);
         itemManager.tryAcquire(Items.ls朗诵);
+        player.state.unlock = {
+            melee: true,
+            ranged: true,
+            dash: true,
+            block: true,
+            dodge: true,
+            parry: true
+        };
     }
 
     draw() {

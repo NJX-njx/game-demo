@@ -1,21 +1,21 @@
 import { EnemyBase } from "./EnemyBase";
-import { EnemyAnimation } from "./EnemyAnimation";
 import { Vector } from "../../Utils/Vector";
 import { Hitbox } from "../../Utils/Hitbox";
 import { mapManager } from "../../Manager/MapManager";
 import { player } from "../Player";
 import { MeleeAttack } from "../../System/Attack/MeleeAttack";
+import { textureManager } from "../../Manager/TextureManager";
 
 export class Enemy_1 extends EnemyBase {
     constructor(position, size = new Vector(50, 50), velocity = new Vector()) {
         super("1", position, size, velocity);
-        this.animation = new EnemyAnimation(this.enemytype);
+        this.animation = new Enemy_1_Animation();
 
         this.baseState = {
             hp_max: 100,
             attack: {
                 atk: 10,
-                StartupTime: 50,
+                StartupTime: 500,
                 RecoveryTime: 1500
             }
         };
@@ -73,7 +73,73 @@ export class Enemy_1 extends EnemyBase {
     }
 
     updateAnimation(deltaTime) {
-        this.animation.setAttackState(this.attack.attacker.isAttacking);
+        Enemy_1_Animation.Framerate["attack"] = Enemy_1_Animation.Frames["attack"] / (this.state.attack.startupTime / 1000);
+        Enemy_1_Animation.Framerate["attack_recover"] = Enemy_1_Animation.Frames["attack_recover"] / (this.state.attack.startupTime / 1000);
+
+
+        //前摇开始时，播放攻击动画
+        if (this.attack.attacker.isAttacking) {
+            this.animation.setStatus("attack");
+        }
+        //攻击结束后，播放后摇动画，帧率与前摇动画帧率相同
+        if (this.attack.attacker.isAttacking && this.attack.attacker.isInRecovery) {
+            this.animation.setStatus("attack_recover");
+        }
+        //非攻击状态，播放默认动画
+        if (!this.attack.attacker.isAttacking) {
+            this.animation.setStatus("default");
+        }
         this.animation.update(deltaTime);
+    }
+}
+
+class Enemy_1_Animation {
+    static Framerate = {
+        "attack": 5,
+        "attack_recover": 5,
+    };
+    static Frames = {
+        "attack": 4,
+        "attack_recover": 1,
+    };
+    constructor() {
+        this.status = "default";
+        this.frame = 1;
+        this.frameRun = 0;
+    }
+
+    setStatus(status) {
+        if (status != this.status) {
+            this.frame = 1;
+            this.frameRun = 0;
+            this.status = status;
+        }
+    }
+
+    update(deltaTime) {
+        this.frameRun += deltaTime;
+        const frameInterval = 1000 / Enemy_1_Animation.Framerate[this.status];
+
+        if (this.frameRun > frameInterval) {
+            this.frame++;
+            this.frameRun = 0;
+        }
+
+        const maxFrame = Enemy_1_Animation.Frames[this.status];
+
+        if (this.frame > maxFrame) {
+            switch (this.status) {
+                default:
+                    this.frame = maxFrame;
+                    break;
+            }
+        } else if (this.frame < 1) {
+            this.frame = 1;
+        }
+    }
+    getFrame() {
+        const hasFrames = Enemy_1_Animation.Frames && Enemy_1_Animation.Frames[this.status];
+        const textureKey = hasFrames ? `${this.status}_${this.frame}` : "default";
+        return textureManager.getTexture("enemy_1", textureKey);
     }
 }
