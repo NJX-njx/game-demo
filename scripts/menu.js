@@ -127,42 +127,168 @@ function renderSaveSlots() {
     const saveList = document.getElementById('save-list');
     const currentPlayer = JSON.parse(localStorage.getItem("present_data"));
 
-    if (!currentPlayer?.saveSlots) {
-        saveList.innerHTML = '<div class="no-saves">暂无存档</div>';
-        return;
-    }
-
+    // 清空列表
     saveList.innerHTML = '';
-    currentPlayer.saveSlots.forEach((save, index) => {
-        if (!save) return;
 
+    // 检查是否有存档数据
+    const saveSlots = currentPlayer?.saveSlots || [];
+    let hasAnySave = false;
+
+    // 生成8个存档槽位
+    for (let i = 0; i < 8; i++) {
+        const save = saveSlots[i];
         const saveSlot = document.createElement('div');
-        saveSlot.className = 'save-slot';
-        saveSlot.innerHTML = `
-            <div class="save-preview"></div>
-            <div class="save-info">
-                <div class="save-time">${new Date(save.timestamp).toLocaleString()}</div>
-                <div class="save-location">第${save.layer + 1}层 - 房间${save.room + 1}</div>
-            </div>
-            <button class="load-save-btn" data-slot="${index}">加载</button>
-        `;
+        saveSlot.className = `save-slot ${!save ? 'empty' : ''}`;
+        saveSlot.dataset.slot = i + 1;
 
-        saveSlot.querySelector('.load-save-btn').addEventListener('click', () => {
-            localStorage.setItem('selected_slot', String(index + 1));
-            window.location.href = 'game.html';
-        });
+        if (save) {
+            hasAnySave = true;
+            saveSlot.innerHTML = `
+                <div class="save-slot-header">
+                    <span class="save-slot-number">存档 ${i + 1}</span>
+                    <span class="save-slot-status">已保存</span>
+                </div>
+                <div class="save-slot-content">
+                    <div class="save-preview">
+                        <span>🎮</span>
+                    </div>
+                    <div class="save-info">
+                        <div class="save-time">${new Date(save.timestamp).toLocaleString()}</div>
+                        <div class="save-location">第${save.layer + 1}层 - 房间${save.room + 1}</div>
+                        <div class="save-hp">❤️ ${save.playerHp || 100} HP</div>
+                    </div>
+                </div>
+                <div class="save-slot-actions">
+                    <button class="load-save-btn" data-slot="${i + 1}">加载</button>
+                    <button class="delete-save-btn" data-slot="${i + 1}">删除</button>
+                </div>
+            `;
+
+            // 绑定加载事件
+            saveSlot.querySelector('.load-save-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                localStorage.setItem('selected_slot', String(i + 1));
+                window.location.href = 'game.html';
+            });
+
+            // 绑定删除事件
+            saveSlot.querySelector('.delete-save-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (confirm(`确定要删除存档 ${i + 1} 吗？`)) {
+                    deleteSaveSlot(i + 1);
+                }
+            });
+        } else {
+            saveSlot.innerHTML = `
+                <div class="save-slot-header">
+                    <span class="save-slot-number">存档 ${i + 1}</span>
+                    <span class="save-slot-status">空槽位</span>
+                </div>
+                <div class="save-slot-content">
+                    <div class="save-preview empty">
+                        <span>空</span>
+                    </div>
+                    <div class="save-info">
+                        <div class="save-time">暂无存档</div>
+                        <div class="save-location">点击开始游戏创建新存档</div>
+                    </div>
+                </div>
+                <div class="save-slot-actions">
+                    <button class="load-save-btn" disabled>加载</button>
+                    <button class="delete-save-btn" disabled>删除</button>
+                </div>
+            `;
+        }
 
         saveList.appendChild(saveSlot);
-    });
+    }
+
+    // 如果没有任何存档，显示提示信息
+    if (!hasAnySave) {
+        const noSavesDiv = document.createElement('div');
+        noSavesDiv.className = 'no-saves';
+        noSavesDiv.innerHTML = `
+            <div class="no-saves-icon">💾</div>
+            <div class="no-saves-text">暂无存档</div>
+            <div class="no-saves-hint">开始游戏后，在暂停界面选择"存档"来保存进度</div>
+        `;
+        saveList.appendChild(noSavesDiv);
+    }
+}
+
+/**
+ * 删除指定槽位的存档
+ * @param {number} slotId 槽位编号（1-based）
+ */
+function deleteSaveSlot(slotId) {
+    try {
+        const currentPlayer = JSON.parse(localStorage.getItem("present_data"));
+        if (!currentPlayer) return;
+
+        const slotIndex = slotId - 1;
+        if (currentPlayer.saveSlots && currentPlayer.saveSlots[slotIndex]) {
+            delete currentPlayer.saveSlots[slotIndex];
+            localStorage.setItem("present_data", JSON.stringify(currentPlayer));
+            
+            // 重新渲染存档列表
+            renderSaveSlots();
+            
+            // 显示删除成功提示
+            showToast('存档删除成功', 'success');
+        }
+    } catch (error) {
+        console.error('删除存档失败:', error);
+        showToast('删除存档失败', 'error');
+    }
+}
+
+/**
+ * 显示提示消息
+ * @param {string} message 提示消息
+ * @param {string} type 类型：'success' | 'error' | 'info'
+ */
+function showToast(message, type = 'info') {
+    // 创建提示元素
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? 'rgba(34, 197, 94, 0.9)' : type === 'error' ? 'rgba(239, 68, 68, 0.9)' : 'rgba(3, 102, 241, 0.9)'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        z-index: 1000;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+    `;
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    // 显示动画
+    setTimeout(() => {
+        toast.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // 自动隐藏
+    setTimeout(() => {
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            document.body.removeChild(toast);
+        }, 300);
+    }, 3000);
 }
 
 // 开始游戏按钮逻辑
 (() => {
     const startBtn = document.getElementById('start-game');
     startBtn?.addEventListener('click', () => {
-        const selected = localStorage.getItem('selected_slot');
-        const slot = Math.max(1, parseInt(selected || '1', 10) || 1);
-        localStorage.setItem('selected_slot', String(slot));
+        // 清除选中的存档槽位，表示开始新游戏
+        localStorage.removeItem('selected_slot');
         window.location.href = 'game.html';
     });
 })();

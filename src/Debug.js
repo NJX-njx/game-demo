@@ -170,7 +170,7 @@ class Debug {
 
     save(slot = 1) {
         if (!saveManager) return console.warn('saveManager not available');
-        const ctx = { player, enemies: game ? game.enemies : [], mapManager };
+        const ctx = { player, mapManager, itemManager };
         const res = saveManager.save(slot, ctx);
         console.log('save result', res);
         return res;
@@ -178,7 +178,7 @@ class Debug {
 
     async load(slot = 1) {
         if (!saveManager) return console.warn('saveManager not available');
-        const ctx = { player, mapManager };
+        const ctx = { player, mapManager, itemManager };
         const ok = await saveManager.load(slot, ctx);
         console.log('load result', ok);
         return ok;
