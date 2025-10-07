@@ -1,5 +1,5 @@
-import { Talent } from './Talent';
-import { TalentConfigs } from './TalentConfigs';
+import { Talent } from './Talent.js';
+import { TalentConfigs } from './TalentConfigs.js';
 import { eventBus as bus, EventTypes as Events } from '../../Manager/EventBus';
 
 class TalentManager {

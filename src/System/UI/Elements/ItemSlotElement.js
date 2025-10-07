@@ -28,7 +28,7 @@ export class ItemSlotElement extends UIElement {
             ctx.strokeStyle = this.slot.canAccept(itemManager.draggingItem) ? "lime" : "red";
             ctx.lineWidth = 3;
         } else {
-            ctx.strokeStyle = itemManager.getSelectedSlot() === this.slot ? "yellow" : "white";
+            ctx.strokeStyle = itemManager.getSelectedSlot() === this.slot ? "#4a9eff" : "white";
             ctx.lineWidth = itemManager.getSelectedSlot() === this.slot ? 2 : 1;
         }
         ctx.strokeRect(this.x, this.y, this.width, this.height);

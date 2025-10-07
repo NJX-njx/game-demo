@@ -23615,7 +23615,7 @@
                     "event": "chest"
                 }
             ],
-            "tags":[
+            "tags": [
                 "chest"
             ],
             "cond": [
@@ -23665,31 +23665,101 @@
             ],
             "tags": [
                 "autoTrigger"
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【场景】",
+                    "text": "“看，她的每一次呼吸，都成了他们计算的成本。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“何以让一个人心甘情愿地服从自己？先用愧疚填满她的视野。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "（进入战斗）"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "你知道我们多辛苦吗？）"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "你对得起我们吗！）"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "考这么点分。白养你了！）"
+                }
             ]
         },
         {
             "position": {
-                "x": 0,
-                "y": 0
+                "x": 200,
+                "y": 300
             },
             "size": {
-                "x": 1200,
-                "y": 720
+                "x": 80,
+                "y": 120
+            },
+            "dialogs": [
+                {
+                    "speaker": "【场景】",
+                    "text": "你知道我们多辛苦吗？）"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "你对得起我们吗！）"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "考这么点分。白养你了！）"
+                }
+            ],
+            "conditions": [],
+            "events": [
+                {
+                    "event": "plot",
+                    "payout": {
+                        "id": "plot3-3-33-1"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ]
+        },
+        {
+            "position": {
+                "x": 500,
+                "y": 500
+            },
+            "size": {
+                "x": 80,
+                "y": 120
             },
             "events": [
                 {
                     "event": "plot",
                     "payout": {
-                        "id": "33-2"
+                        "id": "plot3-3-33-2"
                     }
                 }
             ],
             "tags": [
                 "autoTrigger"
             ],
-            "cond": [
-                "battle_end"
-            ]
+            "dialogs": [
+                {
+                    "speaker": "【场景】",
+                    "text": "（战斗结束）"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“他们将自己的牺牲化为利刃，最终剖开她的胸膛，检视那颗心是否因愧疚而服从。”"
+                }
+            ],
+            "conditions": []
         }
     ],
     "enemySpawns": [

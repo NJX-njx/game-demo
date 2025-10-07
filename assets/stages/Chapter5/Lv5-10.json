@@ -1,5 +1,8 @@
 {
-    "playerSpawn": { "x": 120, "y": 540 },
+    "playerSpawn": {
+        "x": 120,
+        "y": 540
+    },
     "backgrounds": [
         {
             "position": {
@@ -119,27 +122,6 @@
     "interactions": [
         {
             "position": {
-                "x": 380,
-                "y": 580
-            },
-            "size": {
-                "x": 60,
-                "y": 40
-            },
-            "events": [
-                {
-                    "event": "plot",
-                    "payout": {
-                        "id": "510-1"
-                    }
-                }
-            ],
-            "tags": [
-                "chest"
-            ]
-        },
-        {
-            "position": {
                 "x": 300,
                 "y": 580
             },
@@ -191,6 +173,146 @@
                     }
                 }
             ]
+        },
+        {
+            "position": {
+                "x": 400,
+                "y": 200
+            },
+            "size": {
+                "x": 60,
+                "y": 100
+            },
+            "dialogs": [
+                {
+                    "speaker": "【系统提示】",
+                    "text": "【F】明晰己心"
+                }
+            ],
+            "conditions": [],
+            "events": [
+                {
+                    "event": "teach",
+                    "payout": {
+                        "id": "teach5-10-1"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ]
+        },
+        {
+            "position": {
+                "x": 200,
+                "y": 300
+            },
+            "size": {
+                "x": 80,
+                "y": 120
+            },
+            "events": [
+                {
+                    "event": "plot",
+                    "payout": {
+                        "id": "plot5-10-510-A"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【场景】",
+                    "text": "【若不跳关】"
+                }
+            ],
+            "conditions": []
+        },
+        {
+            "position": {
+                "x": 500,
+                "y": 500
+            },
+            "size": {
+                "x": 80,
+                "y": 120
+            },
+            "events": [
+                {
+                    "event": "plot",
+                    "payout": {
+                        "id": "plot5-10-510-B"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【场景】",
+                    "text": "【若跳关】"
+                }
+            ],
+            "conditions": []
+        },
+        {
+            "position": {
+                "x": 400,
+                "y": 200
+            },
+            "size": {
+                "x": 60,
+                "y": 100
+            },
+            "events": [
+                {
+                    "event": "teach",
+                    "payout": {
+                        "id": "teach5-10-1"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【系统提示】",
+                    "text": "【F】明晰己心"
+                }
+            ],
+            "conditions": []
+        },
+        {
+            "position": {
+                "x": 400,
+                "y": 200
+            },
+            "size": {
+                "x": 60,
+                "y": 100
+            },
+            "events": [
+                {
+                    "event": "teach",
+                    "payout": {
+                        "id": "teach5-10-1"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【系统提示】",
+                    "text": "【F】明晰己心"
+                }
+            ],
+            "conditions": []
         }
     ]
 }

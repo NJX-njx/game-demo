@@ -20745,7 +20745,7 @@
                     "event": "chest"
                 }
             ],
-            "tags":[
+            "tags": [
                 "chest"
             ],
             "cond": [
@@ -20779,50 +20779,79 @@
         },
         {
             "position": {
-                "x": 20,
-                "y": 20
+                "x": 200,
+                "y": 300
             },
             "size": {
-                "x": 260,
-                "y": 140
+                "x": 80,
+                "y": 120
             },
-            "type": "plot",
             "events": [
                 {
                     "event": "plot",
                     "payout": {
-                        "id": "41-1"
+                        "id": "plot4-1-41-1"
                     }
                 }
             ],
             "tags": [
                 "autoTrigger"
-            ]
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【场景】",
+                    "text": "“在她降生于世时，父母曾有过许多美好朴素的期许。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“开心快乐，幸福一生种种……”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“但从出生开始，长辈只是为她灌输‘如何出人头地’的思想。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“全然不知，连‘快乐’为何物，她都只能独自探索。”"
+                }
+            ],
+            "conditions": []
         },
         {
             "position": {
-                "x": 1080,
-                "y": 360
+                "x": 500,
+                "y": 500
             },
             "size": {
-                "x": 180,
-                "y": 240
+                "x": 80,
+                "y": 120
             },
-            "type": "plot",
             "events": [
                 {
                     "event": "plot",
                     "payout": {
-                        "id": "41-2"
+                        "id": "plot4-1-41-2"
                     }
                 }
             ],
             "tags": [
                 "autoTrigger"
             ],
-            "cond": [
-                "battle_end"
-            ]
+            "dialogs": [
+                {
+                    "speaker": "【场景】",
+                    "text": "（战斗结束）"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“兴趣爱好就像是心灵深处的一扇窗，若是连这扇窗也被关上了，心中自然再无任何一缕光。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“人类的心灵需要理想甚于需要物质”‌——雨果"
+                }
+            ],
+            "conditions": []
         }
     ],
     "enemySpawns": [

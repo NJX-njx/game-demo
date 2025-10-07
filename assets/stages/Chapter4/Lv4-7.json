@@ -212,8 +212,7 @@
             "type": "black"
         }
     ],
-    "textures": [
-    ],
+    "textures": [],
     "interactions": [
         {
             "position": {
@@ -253,7 +252,7 @@
                     "event": "chest_boss"
                 }
             ],
-            "tags":[
+            "tags": [
                 "chest"
             ],
             "cond": [
@@ -279,6 +278,32 @@
             ],
             "tags": [
                 "autoTrigger"
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【场景】",
+                    "text": "（强行站住，进入剧情）"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“看，那折翼的天使。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“纯真的部分在痛苦哀鸣，而被扭曲的部分，正沉醉于虚假的欢愉。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“它既是受害者，也是将自身推向更深深渊的推手。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“寻回它，哪怕要彻底重塑自己。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "（战斗开始）"
+                }
             ]
         },
         {
@@ -303,7 +328,193 @@
             ],
             "cond": [
                 "battle_end"
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【场景】",
+                    "text": "（战斗结束）"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“（女主的声音）我曾弃若敝履的，是你们不屑一顾的；而我最终紧握的，恰是你们亲手剥夺的。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“（女主的声音）最终，却是我所抛弃的一切能够在暴雨中拥抱我”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“唯有击碎这虚假的慰藉，才能看见……真正的光在何处。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“重拾所爱的那一刻……梦想才真正生根发芽。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "4-8再次飞翔 剧情房间"
+                }
             ]
+        },
+        {
+            "position": {
+                "x": 400,
+                "y": 200
+            },
+            "size": {
+                "x": 60,
+                "y": 100
+            },
+            "dialogs": [
+                {
+                    "speaker": "【系统提示】",
+                    "text": "【F】明晰己心"
+                }
+            ],
+            "conditions": [],
+            "events": [
+                {
+                    "event": "teach",
+                    "payout": {
+                        "id": "teach4-7-1"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ]
+        },
+        {
+            "position": {
+                "x": 200,
+                "y": 300
+            },
+            "size": {
+                "x": 80,
+                "y": 120
+            },
+            "events": [
+                {
+                    "event": "plot",
+                    "payout": {
+                        "id": "plot4-7-48-1"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【系统提示】",
+                    "text": "【F】明晰己心"
+                }
+            ],
+            "conditions": []
+        },
+        {
+            "position": {
+                "x": 400,
+                "y": 200
+            },
+            "size": {
+                "x": 60,
+                "y": 100
+            },
+            "events": [
+                {
+                    "event": "teach",
+                    "payout": {
+                        "id": "teach4-7-1"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【系统提示】",
+                    "text": "【F】明晰己心"
+                }
+            ],
+            "conditions": []
+        },
+        {
+            "position": {
+                "x": 500,
+                "y": 500
+            },
+            "size": {
+                "x": 80,
+                "y": 120
+            },
+            "events": [
+                {
+                    "event": "plot",
+                    "payout": {
+                        "id": "plot4-7-47-2"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【场景】",
+                    "text": "（战斗结束）"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“（女主的声音）我曾弃若敝履的，是你们不屑一顾的；而我最终紧握的，恰是你们亲手剥夺的。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“（女主的声音）最终，却是我所抛弃的一切能够在暴雨中拥抱我”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“唯有击碎这虚假的慰藉，才能看见……真正的光在何处。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“重拾所爱的那一刻……梦想才真正生根发芽。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "4-8再次飞翔 剧情房间"
+                }
+            ],
+            "conditions": []
+        },
+        {
+            "position": {
+                "x": 400,
+                "y": 200
+            },
+            "size": {
+                "x": 60,
+                "y": 100
+            },
+            "events": [
+                {
+                    "event": "teach",
+                    "payout": {
+                        "id": "teach4-7-1"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【系统提示】",
+                    "text": "【F】明晰己心"
+                }
+            ],
+            "conditions": []
         }
     ],
     "enemySpawns": [

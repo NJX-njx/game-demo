@@ -11,6 +11,8 @@ import { ItemConfigs as Items } from "./System/Item/ItemConfigs";
 import { uiManager } from "./System/UI/UIManager";
 import { interactionManager } from "./Manager/InteractionManager";
 import { saveManager } from "./Manager/SaveManager";
+import { talentManager } from "./System/Talent/TalentManager";
+import { plotModeManager } from "./Manager/PlotModeManager";
 
 class Game {
     constructor() {
@@ -53,6 +55,10 @@ class Game {
         await textureManager.load();
         await soundManager.load();
 
+        // 加载剧情模式设置
+        plotModeManager.loadSettings();
+        console.log(`游戏初始化: 剧情模式设置为 ${plotModeManager.getPlotModeDescription()}`);
+
         // 监听玩家血量变化事件，更新currentHpPercent
         bus.on({
             event: Events.player.hpPercent,
@@ -76,6 +82,13 @@ class Game {
                 event: Events.game.tick,
                 handler: ({ deltaTime }) => attributeManager.update(deltaTime),
                 priority: 0.9
+            });
+
+            // 天赋管理器更新（天赋状态同步）
+            bus.on({
+                event: Events.game.tick,
+                handler: ({ deltaTime }) => talentManager.update(deltaTime),
+                priority: 0.85
             });
 
             // 地图交互更新
@@ -130,6 +143,19 @@ class Game {
             priority: -1
         });
 
+        // 监听敌人死亡事件，每击杀一个怪物增加1个灵魂碎片
+        bus.on({
+            event: Events.enemy.die,
+            handler: (payload) => {
+                // 只有当攻击者是玩家时才增加灵魂碎片
+                if (payload.attacker === player) {
+                    talentManager.addFragments(1);
+                    console.log(`击杀敌人获得灵魂碎片！当前灵魂碎片数量：${talentManager.soulFragments}`);
+                }
+            },
+            priority: 1
+        });
+
         // 读取选中槽位并尝试加载存档
         const selectedSlotRaw = localStorage.getItem('selected_slot');
         const selectedSlot = Math.max(1, parseInt(selectedSlotRaw || '1', 10) || 1);
@@ -164,6 +190,10 @@ class Game {
                 dodge: true,
                 parry: true
             };
+
+            // 给玩家默认4个灵魂碎片
+            talentManager.setFragments(4);
+            console.log('新游戏初始化：给予玩家4个灵魂碎片');
         } else {
             console.log('成功加载存档，跳过默认初始化');
         }
@@ -353,12 +383,12 @@ class Game {
 
     saveGame() {
         const slotToSave = this.currentSlotId && this.currentSlotId > 0 ? this.currentSlotId : 1;
-        const ctx = { player, mapManager, itemManager };
+        const ctx = { player, mapManager, itemManager, talentManager };
         saveManager.save(slotToSave, ctx);
     }
 
     async loadGame(slotId = 1) {
-        const ctx = { player, mapManager, itemManager };
+        const ctx = { player, mapManager, itemManager, talentManager };
         return await saveManager.load(slotId, ctx);
     }
 }

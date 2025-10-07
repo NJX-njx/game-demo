@@ -1,5 +1,6 @@
 import { inputManager } from "../System/Input/InputManager";
 import { eventBus, EventTypes } from "../Manager/EventBus";
+import { plotModeManager } from "./PlotModeManager";
 
 class DialogManager {
     constructor() {
@@ -101,6 +102,16 @@ class DialogManager {
     /** 启动对话流程 */
     startDialog(dialogs) {
         if (dialogs && dialogs.length > 0 && !this.printing) {
+            // 检查剧情模式设置
+            if (plotModeManager.isPlotDisabled()) {
+                console.log('剧情模式已关闭，跳过对话显示');
+                // 即使跳过对话，也要触发对话结束事件，确保游戏状态正确
+                setTimeout(() => {
+                    eventBus.emit(EventTypes.dialog.end);
+                }, 100);
+                return;
+            }
+
             eventBus.emit(EventTypes.dialog.start);
             this.buffer = dialogs;
             this.printing = true;

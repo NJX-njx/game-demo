@@ -1,5 +1,8 @@
 {
-    "playerSpawn": { "x": 1080, "y": 620 },
+    "playerSpawn": {
+        "x": 1080,
+        "y": 620
+    },
     "backgrounds": [
         {
             "position": {
@@ -17981,6 +17984,12 @@
             "tags": [
                 "hidden",
                 "autoTrigger"
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【系统提示】",
+                    "text": "剧情内容加载中..."
+                }
             ]
         },
         {
@@ -18002,6 +18011,12 @@
             ],
             "tags": [
                 "autoTrigger"
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【场景】",
+                    "text": "（走过一扇门时，强制停止数秒，闪回自杀时红色的视野和剧烈的心跳）"
+                }
             ]
         },
         {
@@ -18028,6 +18043,32 @@
                     "payout": {
                         "id": "1-1"
                     }
+                }
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【场景】",
+                    "text": "（黑屏）"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“沉重的躯壳，依旧拖着不肯离去的身影。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“前行，是此刻唯一能做的事，也是本能最后的呼唤。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“往世之章，于此翻开新的一页。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "全国每年有10万以上未成年人死于自杀，另有40万以上自杀未遂。——北医儿童发展中心《中国儿童自杀报告》"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“向前走…这是她唯一的选择。无论多么沉重。”"
                 }
             ]
         },
@@ -18072,6 +18113,174 @@
                     }
                 }
             ]
+        },
+        {
+            "position": {
+                "x": 200,
+                "y": 300
+            },
+            "size": {
+                "x": 80,
+                "y": 120
+            },
+            "events": [
+                {
+                    "event": "plot",
+                    "payout": {
+                        "id": "plot0-1-1-1"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【场景】",
+                    "text": "（黑屏）"
+                }
+            ],
+            "conditions": []
+        },
+        {
+            "position": {
+                "x": 500,
+                "y": 500
+            },
+            "size": {
+                "x": 80,
+                "y": 120
+            },
+            "events": [
+                {
+                    "event": "plot",
+                    "payout": {
+                        "id": "plot0-1-T1-1"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【系统提示】",
+                    "text": ": [AD] 移动"
+                }
+            ],
+            "conditions": []
+        },
+        {
+            "position": {
+                "x": 800,
+                "y": 300
+            },
+            "size": {
+                "x": 80,
+                "y": 120
+            },
+            "events": [
+                {
+                    "event": "plot",
+                    "payout": {
+                        "id": "plot0-1-1-2"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【场景】",
+                    "text": "（走过一扇门时，强制停止数秒，闪回自杀时红色的视野和剧烈的心跳）"
+                }
+            ],
+            "conditions": []
+        },
+        {
+            "position": {
+                "x": 1100,
+                "y": 500
+            },
+            "size": {
+                "x": 80,
+                "y": 120
+            },
+            "events": [
+                {
+                    "event": "plot",
+                    "payout": {
+                        "id": "plot0-1-1-3"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【场景】",
+                    "text": "“曾经的沟壑，她选择坠落。如今的阻碍，她当跃过。”"
+                }
+            ],
+            "conditions": []
+        },
+        {
+            "position": {
+                "x": 1400,
+                "y": 300
+            },
+            "size": {
+                "x": 80,
+                "y": 120
+            },
+            "events": [
+                {
+                    "event": "plot",
+                    "payout": {
+                        "id": "plot0-1-T1-2"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【系统提示】",
+                    "text": "[Space] 跳跃"
+                }
+            ],
+            "conditions": []
+        },
+        {
+            "position": {
+                "x": 1700,
+                "y": 500
+            },
+            "size": {
+                "x": 80,
+                "y": 120
+            },
+            "events": [
+                {
+                    "event": "plot",
+                    "payout": {
+                        "id": "plot0-1-T1-3"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【系统提示】",
+                    "text": "长按[Space]可以跳得更高"
+                }
+            ],
+            "conditions": []
         }
     ]
 }

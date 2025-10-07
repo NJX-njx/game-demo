@@ -1,5 +1,8 @@
 {
-    "playerSpawn": { "x": 120, "y": 540 },
+    "playerSpawn": {
+        "x": 120,
+        "y": 540
+    },
     "backgrounds": [
         {
             "position": {
@@ -133,6 +136,48 @@
                         "id": "38-1"
                     }
                 }
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【场景】",
+                    "text": "“期待的重量，未能将她压垮，反而锤炼了她的脊梁。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“愧疚的刀刃，未能剖出顺从，反而让她看清了真实的亏欠——那本就不该由她背负。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“苦难的涂抹，未能使她黯淡，反而让她更珍惜自己微弱的光芒。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“羞耻的撕裂，未能让她隐藏，反而让她有勇气接纳不完美的自我。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“感恩的索取，未能吸尽她的骨髓，反而让她懂得了何为真正的、双向的给予。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“她终于明白，最大的傲慢，是定义他人存在的价值。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“她不必活成任何蓝图的注解，不必成为任何遗憾的补完。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“她之存在，本身即是意义。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“她俯身，拾起王座的碎片——那不再是枷锁，而是重塑自我的基石。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“镜中的身影，从未如此清晰、坚定。”"
+                }
             ]
         },
         {
@@ -173,6 +218,150 @@
                     }
                 }
             ]
+        },
+        {
+            "position": {
+                "x": 400,
+                "y": 200
+            },
+            "size": {
+                "x": 60,
+                "y": 100
+            },
+            "dialogs": [
+                {
+                    "speaker": "【系统提示】",
+                    "text": "【F】明晰己心"
+                }
+            ],
+            "conditions": [],
+            "events": [
+                {
+                    "event": "teach",
+                    "payout": {
+                        "id": "teach3-8-1"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ]
+        },
+        {
+            "position": {
+                "x": 200,
+                "y": 300
+            },
+            "size": {
+                "x": 80,
+                "y": 120
+            },
+            "events": [
+                {
+                    "event": "plot",
+                    "payout": {
+                        "id": "plot3-8-38-1"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【场景】",
+                    "text": "“期待的重量，未能将她压垮，反而锤炼了她的脊梁。”"
+                }
+            ],
+            "conditions": []
+        },
+        {
+            "position": {
+                "x": 400,
+                "y": 200
+            },
+            "size": {
+                "x": 60,
+                "y": 100
+            },
+            "events": [
+                {
+                    "event": "teach",
+                    "payout": {
+                        "id": "teach3-8-1"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【系统提示】",
+                    "text": "【F】明晰己心"
+                }
+            ],
+            "conditions": []
+        },
+        {
+            "position": {
+                "x": 500,
+                "y": 500
+            },
+            "size": {
+                "x": 80,
+                "y": 120
+            },
+            "events": [
+                {
+                    "event": "plot",
+                    "payout": {
+                        "id": "plot3-8-38-2"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【场景】",
+                    "text": "（若携带“思念”）"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“（手写字体）‘我’之一字，非由他塑，乃是我生之所铸，我行之所证。”"
+                }
+            ],
+            "conditions": []
+        },
+        {
+            "position": {
+                "x": 400,
+                "y": 200
+            },
+            "size": {
+                "x": 60,
+                "y": 100
+            },
+            "events": [
+                {
+                    "event": "teach",
+                    "payout": {
+                        "id": "teach3-8-1"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【系统提示】",
+                    "text": "【F】明晰己心"
+                }
+            ],
+            "conditions": []
         }
     ]
 }

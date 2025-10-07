@@ -10,6 +10,7 @@ import { eventBus, EventTypes } from "./EventBus";
 import { uiManager } from "../System/UI/UIManager";
 import { itemManager } from "../System/Item/ItemManager";
 import { exchangeScreen } from "../System/UI/Screens/ExchangeScreen";
+import { plotModeManager } from "./PlotModeManager";
 
 export class Event {
     constructor(config) {
@@ -58,8 +59,6 @@ export class Interaction extends Hitbox {
      * @param {CanvasRenderingContext2D} ctx
      */
     draw(ctx) {
-        // 可选调试：打开绘制交互区域边框
-        const showDebugBox = true;
 
         ctx.save();
 
@@ -110,12 +109,7 @@ export class Interaction extends Hitbox {
             return;
         }
 
-        // 其它类型暂不绘制特殊内容，但如果开启调试框则绘制边框
-        if (showDebugBox) {
-            ctx.lineWidth = 1;
-            ctx.strokeStyle = '#ffcc00';
-            ctx.strokeRect(this.position.x, this.position.y, this.size.x, this.size.y);
-        }
+        // 其它类型暂不绘制特殊内容
 
         ctx.restore();
     }
@@ -194,7 +188,7 @@ class InteractionManager {
                     case 'plot':
                     case 'teach':
                     case 'attack_unlock':
-                        this.handlePlotEvent(evName, evData);
+                        this.handlePlotEvent(evName, interaction);
                         break;
                     case 'npc':
                     case 'angel':
@@ -237,12 +231,28 @@ class InteractionManager {
     /**
      * 处理剧情事件
      * @param {string} event - 事件名称
-     * @param {Object} data - 交互点数据
+     * @param {Object} interaction - 交互点数据
      */
-    handlePlotEvent(event, data) {
-        console.log('剧情事件触发:', event, data);
-        // dialogManager.startDialog(data.dialogs)
-        // TODO: 实现剧情事件逻辑
+    handlePlotEvent(event, interaction) {
+        console.log('剧情事件触发:', event, interaction);
+        
+        // 检查剧情模式设置
+        if (plotModeManager.isPlotDisabled()) {
+            console.log('剧情模式已关闭，跳过剧情事件:', event);
+            return;
+        }
+        
+        // 处理新的剧情事件格式
+        if (interaction && interaction.dialogs && Array.isArray(interaction.dialogs)) {
+            console.log('使用新格式剧情事件，包含对话数:', interaction.dialogs.length);
+            
+            // 直接开始显示对话
+            dialogManager.startDialog(interaction.dialogs);
+        } else {
+            // 处理旧的剧情事件格式
+            console.log('使用旧格式的剧情事件，需要根据事件ID加载对应剧情');
+            console.log('交互点数据:', interaction);
+        }
     }
 
     /**

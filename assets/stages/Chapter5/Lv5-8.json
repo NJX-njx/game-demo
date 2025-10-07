@@ -110,6 +110,64 @@
                         "id": "58-1"
                     }
                 }
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【系统提示】",
+                    "text": "【F】回忆往事"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "（CG：心理医生在为家长解释问题）"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“无论子女多么努力，家长也无法满足。他们只想看到自己期望的。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“当事与愿违，一切归于徒劳时，他们从不反思自己的失败。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“亲子反目，家庭破碎，满盘皆输。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "都是你自己不努力，才会变成这样！）"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "她本身就很差！一点出息没有！）"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "都是谈恋爱谈的，玩手机玩的！）"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“即使做法被全盘否定……”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“他们也总有理由去嘴硬。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "我们明明付出了那么多！）"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "“也总有一句话，似乎可以洗去一切过错。”"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "（CG：父母在心理咨询室中委屈哭诉）"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "我这都是为了她好！）"
+                }
             ]
         },
         {
@@ -150,6 +208,134 @@
             "tags": [
                 "demon"
             ]
+        },
+        {
+            "position": {
+                "x": 200,
+                "y": 300
+            },
+            "size": {
+                "x": 80,
+                "y": 120
+            },
+            "dialogs": [
+                {
+                    "speaker": "【场景】",
+                    "text": "都是你自己不努力，才会变成这样！）"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "她本身就很差！一点出息没有！）"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "都是谈恋爱谈的，玩手机玩的！）"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "我们明明付出了那么多！）"
+                },
+                {
+                    "speaker": "【场景】",
+                    "text": "我这都是为了她好！）"
+                }
+            ],
+            "conditions": [],
+            "events": [
+                {
+                    "event": "plot",
+                    "payout": {
+                        "id": "plot5-8-58-1"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ]
+        },
+        {
+            "position": {
+                "x": 400,
+                "y": 200
+            },
+            "size": {
+                "x": 60,
+                "y": 100
+            },
+            "dialogs": [
+                {
+                    "speaker": "【系统提示】",
+                    "text": "【F】回忆往事"
+                }
+            ],
+            "conditions": [],
+            "events": [
+                {
+                    "event": "teach",
+                    "payout": {
+                        "id": "teach5-8-1"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ]
+        },
+        {
+            "position": {
+                "x": 400,
+                "y": 200
+            },
+            "size": {
+                "x": 60,
+                "y": 100
+            },
+            "events": [
+                {
+                    "event": "teach",
+                    "payout": {
+                        "id": "teach5-8-1"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【系统提示】",
+                    "text": "【F】回忆往事"
+                }
+            ],
+            "conditions": []
+        },
+        {
+            "position": {
+                "x": 400,
+                "y": 200
+            },
+            "size": {
+                "x": 60,
+                "y": 100
+            },
+            "events": [
+                {
+                    "event": "teach",
+                    "payout": {
+                        "id": "teach5-8-1"
+                    }
+                }
+            ],
+            "tags": [
+                "autoTrigger"
+            ],
+            "dialogs": [
+                {
+                    "speaker": "【系统提示】",
+                    "text": "【F】回忆往事"
+                }
+            ],
+            "conditions": []
         }
     ],
     "playerSpawn": {

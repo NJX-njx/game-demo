@@ -33,7 +33,7 @@ export class SaveManager {
      * @param {object} ctx { player, mapManager, itemManager }
      */
     save(slotId = 1, ctx = {}) {
-        const { player, mapManager, itemManager } = ctx;
+        const { player, mapManager, itemManager, talentManager } = ctx;
         const slotIndex = Math.max(0, slotId - 1);
 
         // 获取道具信息
@@ -52,6 +52,16 @@ export class SaveManager {
             }
         }
 
+        // 获取天赋等级信息
+        const talents = {};
+        if (talentManager && talentManager.levels) {
+            for (const [name, level] of Object.entries(talentManager.levels)) {
+                if (level > 0) {
+                    talents[name] = level;
+                }
+            }
+        }
+
         const saveData = {
             // 只保存玩家血量
             playerHp: player?.state?.hp ?? 100,
@@ -60,6 +70,10 @@ export class SaveManager {
             room: mapManager?.currentRoom ?? 1,
             // 保存道具信息
             items: items,
+            // 保存灵魂碎片数量
+            soulFragments: talentManager?.soulFragments ?? 0,
+            // 保存天赋等级信息
+            talents: talents,
             timestamp: new Date().toISOString()
         };
 
@@ -71,6 +85,8 @@ export class SaveManager {
                 layer: saveData.layer,
                 room: saveData.room,
                 itemsCount: items.filter(item => item !== null).length,
+                talentsCount: Object.keys(talents).length,
+                soulFragments: saveData.soulFragments,
                 timestamp: saveData.timestamp
             });
         }
@@ -93,7 +109,7 @@ export class SaveManager {
      * @param {object} ctx { player, mapManager, itemManager }
      */
     async load(slotId = 1, ctx = {}) {
-        const { player, mapManager, itemManager } = ctx;
+        const { player, mapManager, itemManager, talentManager } = ctx;
         const slotIndex = Math.max(0, slotId - 1);
         const container = this._readStorage();
         const saveData = container.saveSlots?.[slotIndex];
@@ -132,6 +148,54 @@ export class SaveManager {
                 console.warn('无法恢复玩家血量:', { player: !!player, playerHp: saveData.playerHp });
             }
 
+            // 2.5. 恢复灵魂碎片数量
+            if (talentManager && saveData.soulFragments != null) {
+                if (process.env.NODE_ENV === 'development') {
+                    console.log(`恢复灵魂碎片数量: ${saveData.soulFragments}`);
+                }
+                talentManager.setFragments(saveData.soulFragments);
+                if (process.env.NODE_ENV === 'development') {
+                    console.log(`灵魂碎片恢复完成: ${talentManager.soulFragments}`);
+                }
+            } else {
+                console.warn('无法恢复灵魂碎片:', { talentManager: !!talentManager, soulFragments: saveData.soulFragments });
+            }
+
+            // 2.6. 恢复天赋等级并重新激活
+            if (talentManager && saveData.talents && typeof saveData.talents === 'object') {
+                if (process.env.NODE_ENV === 'development') {
+                    console.log('开始恢复天赋等级:', saveData.talents);
+                }
+                
+                // 先重置所有天赋等级为0
+                for (const talentName of Object.keys(talentManager.levels)) {
+                    talentManager.levels[talentName] = 0;
+                }
+                
+                // 恢复保存的天赋等级
+                let restoredCount = 0;
+                for (const [talentName, level] of Object.entries(saveData.talents)) {
+                    if (talentManager.hasTalent(talentName) && level > 0) {
+                        talentManager.levels[talentName] = level;
+                        restoredCount++;
+                        if (process.env.NODE_ENV === 'development') {
+                            console.log(`恢复天赋: ${talentName} 等级 ${level}`);
+                        }
+                    } else {
+                        console.warn(`无法恢复天赋: ${talentName} (等级: ${level})`);
+                    }
+                }
+                
+                // 重新激活所有天赋效果
+                talentManager.update();
+                
+                if (process.env.NODE_ENV === 'development') {
+                    console.log(`天赋恢复完成: 共恢复 ${restoredCount} 个天赋`);
+                }
+            } else {
+                console.warn('无法恢复天赋:', { talentManager: !!talentManager, talents: saveData.talents });
+            }
+
             // 3. 恢复道具
             if (itemManager && saveData.items && Array.isArray(saveData.items)) {
                 // 清空当前道具
@@ -166,6 +230,15 @@ export class SaveManager {
                     }
                 }
                 console.log('道具恢复完成');
+            }
+
+            // 4. 最终验证：确保所有系统状态正确
+            if (process.env.NODE_ENV === 'development') {
+                console.log('存档加载完成，最终状态验证:');
+                console.log(`- 玩家血量: ${player?.state?.hp}/${player?.state?.hp_max}`);
+                console.log(`- 灵魂碎片: ${talentManager?.soulFragments}`);
+                console.log(`- 已激活天赋数量: ${talentManager ? Object.values(talentManager.levels).filter(lvl => lvl > 0).length : 0}`);
+                console.log(`- 当前房间: 第${mapManager?.currentLayer + 1}层 - 房间${mapManager?.currentRoom + 1}`);
             }
 
         } catch (e) {

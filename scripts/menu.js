@@ -79,6 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initSaveSystem();
     // 初始化制作人员系统
     initCreditsSystem();
+    // 初始化剧情模式选择系统
+    initPlotModeSystem();
     // 初始化成就系统
     if (window.initAchievementSystem) {
         window.initAchievementSystem();
@@ -381,4 +383,71 @@ function initCreditsSystem() {
             closeCreditsPanel();
         }
     });
+}
+
+// ==============================================
+// 6. 剧情模式选择系统实现
+// ==============================================
+function initPlotModeSystem() {
+    // 获取DOM元素
+    const plotModeOnBtn = document.getElementById('plot-mode-on');
+    const plotModeOffBtn = document.getElementById('plot-mode-off');
+
+    // 从localStorage加载剧情模式设置，默认为有剧情
+    const savedPlotMode = Store.get('plot_mode') || 'on';
+    
+    // 初始化按钮状态
+    updatePlotModeButtons(savedPlotMode);
+
+    // 绑定点击事件
+    plotModeOnBtn?.addEventListener('click', () => {
+        setPlotMode('on');
+    });
+
+    plotModeOffBtn?.addEventListener('click', () => {
+        setPlotMode('off');
+    });
+}
+
+/**
+ * 设置剧情模式
+ * @param {string} mode - 'on' 或 'off'
+ */
+function setPlotMode(mode) {
+    // 保存到localStorage
+    Store.set('plot_mode', mode);
+    
+    // 更新按钮状态
+    updatePlotModeButtons(mode);
+    
+    // 显示提示
+    const modeText = mode === 'on' ? '有剧情' : '无剧情';
+    showToast(`已切换到${modeText}模式`, 'success');
+    
+    console.log(`剧情模式已设置为: ${modeText}`);
+}
+
+/**
+ * 更新剧情模式按钮状态
+ * @param {string} mode - 'on' 或 'off'
+ */
+function updatePlotModeButtons(mode) {
+    const plotModeOnBtn = document.getElementById('plot-mode-on');
+    const plotModeOffBtn = document.getElementById('plot-mode-off');
+    
+    if (mode === 'on') {
+        plotModeOnBtn?.classList.add('active');
+        plotModeOffBtn?.classList.remove('active');
+    } else {
+        plotModeOnBtn?.classList.remove('active');
+        plotModeOffBtn?.classList.add('active');
+    }
+}
+
+/**
+ * 获取当前剧情模式设置
+ * @returns {string} 'on' 或 'off'
+ */
+function getPlotMode() {
+    return Store.get('plot_mode') || 'on';
 }
