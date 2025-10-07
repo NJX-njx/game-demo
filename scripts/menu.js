@@ -192,7 +192,7 @@ function renderSaveSlots() {
                     </div>
                     <div class="save-info">
                         <div class="save-time">暂无存档</div>
-                        <div class="save-location">点击开始游戏创建新存档</div>
+                        <div class="save-location">点击开始游戏</div>
                     </div>
                 </div>
                 <div class="save-slot-actions">

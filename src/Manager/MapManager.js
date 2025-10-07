@@ -133,6 +133,8 @@ class MapManager {
         // 优先用 TextureManager 获取贴图
         let texture = textureManager.getTexture(type + 's', item.type);
         if (texture) {
+            // 对于像素艺术，禁用插值算法以保持锐利边缘
+            ctx.imageSmoothingEnabled = false;
             ctx.drawImage(texture, item.position.x, item.position.y, item.size.x, item.size.y);
         } else {
             // 没有贴图时用不同颜色区分
