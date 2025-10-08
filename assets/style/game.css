@@ -6,32 +6,30 @@ body {
     width: 100%;
     height: 100%;
     background: black;
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
 
-/* 游戏容器 — 保持设计宽高比 (1440x720)，并根据可视区缩放 */
-#game {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    max-width: 100vw;
-    max-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-/* 这个内部包装用于保持固定的宽高比并限制最大占用视口 */
-.game-viewport {
-    width: 100%;
-    max-width: 100%;
-    height: auto;
-    max-height: 100%;
-    aspect-ratio: 1440 / 720;
-    position: relative;
+body {
     overflow: hidden;
+}
+
+/* 游戏容器占满视口，内部子元素通过 transform 进行缩放适配 */
+#game {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    background: transparent;
+    overflow: hidden;
+}
+
+/* 视窗以设计分辨率为基准，通过 JS 控制 transform 进行缩放与居中 */
+.game-viewport {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: calc(var(--design-width) * 1px);
+    height: calc(var(--design-height) * 1px);
+    transform-origin: 0 0;
     background: transparent;
 }
 
@@ -48,8 +46,8 @@ body {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: calc(var(--design-width) * 1px);
+    height: calc(var(--design-height) * 1px);
     z-index: 0;
     display: block;
 }

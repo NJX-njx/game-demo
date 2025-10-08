@@ -37,6 +37,9 @@ export const EventTypes = {
     interaction: {
         trigger: "MAP_INTERACTION_TRIGGER"
     },
+    plot: {
+        trigger: "PLOT_TRIGGER"
+    },
     dialog: {
         start: "DIALOG_START",
         end: "DIALOG_END"
@@ -246,3 +249,5 @@ class EventBus {
 }
 
 export const eventBus = new EventBus();
+
+EventTypes.PLOT_TRIGGER = EventTypes.plot.trigger;

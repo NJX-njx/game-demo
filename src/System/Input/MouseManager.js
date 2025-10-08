@@ -1,5 +1,6 @@
 import { textureManager } from "../../Manager/TextureManager";
 import { Vector } from "../../Utils/Vector";
+import { sizes } from "../../Utils/canvas";
 import { game } from "../../Game"; // 假设 game 有 pause/resume 方法
 
 class MouseManager {
@@ -29,11 +30,14 @@ class MouseManager {
 
     move(e) {
         const rect = this.canvas.getBoundingClientRect();
-        this.x = (e.clientX - rect.left) * (this.canvas.width / rect.width);
-        this.y = (e.clientY - rect.top) * (this.canvas.height / rect.height);
+        const scaleX = rect.width / sizes.width || 1;
+        const scaleY = rect.height / sizes.height || 1;
 
-        this.x = Math.max(0, Math.min(this.x, this.canvas.width));
-        this.y = Math.max(0, Math.min(this.y, this.canvas.height));
+        this.x = (e.clientX - rect.left) / scaleX;
+        this.y = (e.clientY - rect.top) / scaleY;
+
+        this.x = Math.max(0, Math.min(this.x, sizes.width));
+        this.y = Math.max(0, Math.min(this.y, sizes.height));
     }
 
     down(e) {

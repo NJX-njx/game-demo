@@ -4,6 +4,7 @@ import { SlotTypes } from "../../Item/Slot";
 import { mouseManager } from "../../Input/MouseManager";
 import { uiManager } from "../UIManager";
 import { textureManager } from "../../../Manager/TextureManager";
+import { sizes } from "../../../Utils/canvas";
 
 export class ItemSlotElement extends UIElement {
     constructor(slot, x, y, size) {
@@ -68,18 +69,57 @@ export class ItemSlotElement extends UIElement {
         // 如果鼠标悬停且槽内有物品，注册 tooltip 到 uiManager 以便顶层绘制
         if (this.hovering && this.slot.item) {
             try {
-                const lines = this.slot.item.getDescription ? this.slot.item.getDescription() : [this.slot.item.name];
+                const linesSource = this.slot.item.getDescription ? this.slot.item.getDescription() : [this.slot.item.name];
+                const baseLines = Array.isArray(linesSource) && linesSource.length > 0 ? linesSource : [this.slot.item.name || ""];
                 const padding = 8;
                 const lineHeight = 18;
-                const maxWidth = Math.max(...lines.map(l => ctx.measureText(l).width)) + padding * 2;
-                const boxWidth = Math.min(maxWidth, 300);
+                const maxLineWidth = 220; // 文本在黑色提示框内的最大宽度
 
-                let tx = mouseManager.x + 12;
-                let ty = mouseManager.y + 12;
+                ctx.save();
+                ctx.font = '14px sans-serif';
+                const wrappedLines = [];
+                for (const raw of baseLines) {
+                    const text = String(raw ?? "");
+                    if (text.length === 0) {
+                        wrappedLines.push('');
+                        continue;
+                    }
+                    let current = '';
+                    for (const ch of [...text]) {
+                        const candidate = current + ch;
+                        if (ctx.measureText(candidate).width <= maxLineWidth) {
+                            current = candidate;
+                        } else {
+                            if (current.length > 0) wrappedLines.push(current);
+                            current = ch;
+                        }
+                    }
+                    if (current.length > 0) wrappedLines.push(current);
+                }
+                if (wrappedLines.length === 0) wrappedLines.push('');
+                const boxWidth = maxLineWidth + padding * 2;
+                const boxHeight = wrappedLines.length * lineHeight + padding * 2;
+                ctx.restore();
+                const margin = 12;
+                let tx = mouseManager.x + margin;
+                let ty = mouseManager.y + margin;
 
-                // 使用 rawText 让 UIManager 在顶层负责按 width 自动换行
-                const rawText = lines.join('\n');
-                uiManager.setTooltip({ x: tx, y: ty, rawText, width: boxWidth, padding, lineHeight, font: '14px sans-serif' });
+                if (tx + boxWidth > sizes.width - 8) {
+                    tx = Math.max(8, mouseManager.x - margin - boxWidth);
+                }
+                if (ty + boxHeight > sizes.height - 8) {
+                    ty = Math.max(8, mouseManager.y - margin - boxHeight);
+                }
+
+                uiManager.setTooltip({
+                    x: tx,
+                    y: ty,
+                    lines: wrappedLines,
+                    width: boxWidth,
+                    padding,
+                    lineHeight,
+                    font: '14px sans-serif'
+                });
             } catch (e) {
                 // ignore
             }

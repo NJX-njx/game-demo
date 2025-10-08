@@ -6,6 +6,7 @@ import { soundSettings } from "./Screens/SoundSettings";
 import { exchangeScreen } from "./Screens/ExchangeScreen";
 import { talentScreen } from "./Screens/TalentScreen";
 import { textureManager } from "../../Manager/TextureManager";
+import { sizes } from "../../Utils/canvas";
 import { game } from "../../Game";
 
 class UIManager {
@@ -268,27 +269,78 @@ class UIManager {
      * - currentScreen 接收事件
      */
     handleEvent(event) {
+        const canvas = document.getElementById('ui-canvas');
+        const normalizedEvent = this._normalizeCanvasEvent(event, canvas);
+        const evt = normalizedEvent || event;
         const talentActive = this.currentScreen === talentScreen && this.currentScreen?.visible;
         // persistent 屏幕先处理事件
         for (let name of this.persistentScreens) {
             if (talentActive && name === itemBar.name) continue;
             const screen = this.screens[name];
             if (screen.visible && typeof screen.handleEvent === 'function') {
-                if (screen.handleEvent(event)) return;
+                if (screen.handleEvent(evt)) return;
             }
         }
 
         // 再处理当前操作界面事件
         if (this.currentScreen && typeof this.currentScreen.handleEvent === 'function') {
-            if (this.currentScreen.handleEvent(event)) return;
+            if (this.currentScreen.handleEvent(evt)) return;
         }
 
-        if (event.type === "mouseup") {
+        if (evt.type === "mouseup") {
             itemManager.dragging = false;
             itemManager.draggingFrom = null;
             itemManager.draggingItem = null;
             return true;
         }
+        return false;
+    }
+
+    _normalizeCanvasEvent(event, canvas) {
+        if (!event || !canvas || typeof event.clientX !== 'number' || typeof event.clientY !== 'number') {
+            return event;
+        }
+
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = rect.width / sizes.width || 1;
+        const scaleY = rect.height / sizes.height || 1;
+        const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+        const mappedX = clamp((event.clientX - rect.left) / scaleX, 0, sizes.width);
+        const mappedY = clamp((event.clientY - rect.top) / scaleY, 0, sizes.height);
+
+        const normalized = {
+            type: event.type,
+            offsetX: mappedX,
+            offsetY: mappedY,
+            clientX: event.clientX,
+            clientY: event.clientY,
+            movementX: event.movementX ?? 0,
+            movementY: event.movementY ?? 0,
+            button: event.button,
+            buttons: event.buttons,
+            ctrlKey: event.ctrlKey,
+            shiftKey: event.shiftKey,
+            altKey: event.altKey,
+            metaKey: event.metaKey,
+            deltaX: event.deltaX ?? 0,
+            deltaY: event.deltaY ?? 0,
+            deltaMode: event.deltaMode ?? 0,
+            target: canvas,
+            currentTarget: canvas,
+            originalEvent: event,
+            designX: mappedX,
+            designY: mappedY,
+            designScaleX: scaleX,
+            designScaleY: scaleY
+        };
+
+        const noop = () => {};
+        normalized.preventDefault = event.preventDefault?.bind(event) || noop;
+        normalized.stopPropagation = event.stopPropagation?.bind(event) || noop;
+        normalized.stopImmediatePropagation = event.stopImmediatePropagation?.bind(event) || noop;
+
+        return normalized;
     }
 }
 

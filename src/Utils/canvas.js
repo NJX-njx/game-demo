@@ -2,7 +2,8 @@ export const canvas_game = document.getElementById('game-canvas');
 export const canvas_ui = document.getElementById('ui-canvas');
 export const ctx_game = canvas_game.getContext('2d');
 export const ctx_ui = canvas_ui.getContext('2d');
-export const sizes = { width: 1440, height: 720 }
+export const sizes = { width: 1440, height: 720 };
+const viewportEl = document.querySelector('.game-viewport');
 
 /**
  * Sync canvas internal pixel buffer size with the CSS display size.
@@ -11,42 +12,47 @@ export const sizes = { width: 1440, height: 720 }
  */
 export function setupCanvasResize() {
     function resizeOnce() {
+        if (!viewportEl) return;
+
         const dpr = window.devicePixelRatio || 1;
+        const designWidth = sizes.width;
+        const designHeight = sizes.height;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const scale = Math.min(viewportWidth / designWidth, viewportHeight / designHeight) || 1;
+        const offsetX = (viewportWidth - designWidth * scale) / 2;
+        const offsetY = (viewportHeight - designHeight * scale) / 2;
 
-        // get the computed size of the canvas in CSS pixels
-        const rectGame = canvas_game.getBoundingClientRect();
-        const rectUI = canvas_ui.getBoundingClientRect();
+        // 同步视窗的平移与缩放，使游戏区域始终居中显示
+        viewportEl.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
 
-        // set actual pixel size
-        const targetGameWidth = Math.max(1, Math.round(rectGame.width * dpr));
-        const targetGameHeight = Math.max(1, Math.round(rectGame.height * dpr));
-        if (canvas_game.width !== targetGameWidth || canvas_game.height !== targetGameHeight) {
-            canvas_game.width = targetGameWidth;
-            canvas_game.height = targetGameHeight;
-            // scale the drawing context so existing drawing code using design coords still works
-            ctx_game.setTransform(dpr, 0, 0, dpr, 0, 0);
+        // 更新 Canvas 的像素缓冲尺寸，确保在高 DPI 屏幕上保持清晰
+        const targetWidth = Math.max(1, Math.round(designWidth * dpr));
+        const targetHeight = Math.max(1, Math.round(designHeight * dpr));
+        if (canvas_game.width !== targetWidth || canvas_game.height !== targetHeight) {
+            canvas_game.width = targetWidth;
+            canvas_game.height = targetHeight;
+        }
+        if (canvas_ui.width !== targetWidth || canvas_ui.height !== targetHeight) {
+            canvas_ui.width = targetWidth;
+            canvas_ui.height = targetHeight;
         }
 
-        const targetUIWidth = Math.max(1, Math.round(rectUI.width * dpr));
-        const targetUIHeight = Math.max(1, Math.round(rectUI.height * dpr));
-        if (canvas_ui.width !== targetUIWidth || canvas_ui.height !== targetUIHeight) {
-            canvas_ui.width = targetUIWidth;
-            canvas_ui.height = targetUIHeight;
-            ctx_ui.setTransform(dpr, 0, 0, dpr, 0, 0);
-        }
+        ctx_game.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx_ui.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx_game.imageSmoothingEnabled = false;
+        ctx_ui.imageSmoothingEnabled = false;
 
-        // Apply visual transform to game canvas to shift the middle viewport by design offset
-        // Compute scale factor between CSS display and design resolution
-        const scaleX = rectGame.width / sizes.width;
-        const scaleY = rectGame.height / sizes.height;
-        const scale = Math.min(scaleX || 1, scaleY || 1) || 1;
+        // 视觉上右移游戏画面，给左侧 UI（血条）保留空间
         const offset = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--game-offset')) || 80;
-        const offsetPx = offset * scale;
-        // Use CSS transform to translate the visuals (doesn't change internal coordinates)
-        canvas_game.style.transform = `translateX(${offsetPx}px) scale(${scale / (dpr || 1)})`;
-        canvas_ui.style.transform = `scale(${scale / (dpr || 1)})`;
+        canvas_game.style.transform = `translateX(${offset}px)`;
+        canvas_ui.style.transform = 'translateZ(0)';
         canvas_game.style.transformOrigin = '0 0';
         canvas_ui.style.transformOrigin = '0 0';
+
+        document.documentElement.style.setProperty('--viewport-scale', scale.toString());
+        document.documentElement.style.setProperty('--viewport-offset-x', `${offsetX}px`);
+        document.documentElement.style.setProperty('--viewport-offset-y', `${offsetY}px`);
     }
 
     // debounce resize

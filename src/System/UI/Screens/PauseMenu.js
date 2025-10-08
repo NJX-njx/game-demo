@@ -18,7 +18,8 @@ class PauseMenu extends UIScreen {
         const buttonHeight = 50;
         const gap = 20;
 
-        const startY = cy - 60;
+    const startY = cy - 60;
+    this.firstButtonTop = startY;
 
         this.addElement(new UIButton(cx - buttonWidth / 2, startY, buttonWidth, buttonHeight, "继续游戏", () => {
             uiManager.closeAll();
@@ -47,11 +48,16 @@ class PauseMenu extends UIScreen {
         ctx.fillStyle = "rgba(30,41,59,0.8)";
         ctx.fillRect(80, 0, 1280, ctx.canvas.height);
 
-        // 标题
+        // 标题位于按钮组上方并保持居中
         ctx.fillStyle = "#f8fafc";
-        ctx.font = "20px Inter";
+        ctx.font = "26px Inter";
         ctx.textAlign = "center";
-        ctx.fillText("暂停菜单", ctx.canvas.width / 2, ctx.canvas.height / 2 - 100);
+        ctx.textBaseline = "bottom";
+        const maskX = 80;
+        const maskWidth = 1280;
+        const titleX = maskX + maskWidth / 2;
+        const titleY = Math.max(48, this.firstButtonTop - 32);
+        ctx.fillText("暂停菜单", titleX, titleY);
 
         ctx.restore();
 
