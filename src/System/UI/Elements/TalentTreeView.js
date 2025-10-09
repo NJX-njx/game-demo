@@ -942,15 +942,35 @@ export class TalentTreeView extends UIElement {
             const affordable = talentManager.hasFragments(state.cost);
             lines.push(`状态：${affordable ? "可升级" : "碎片不足"}`);
         }
+        // 计算当前悬浮节点中心的屏幕坐标，作为 tooltip 锚点
+        const center = this._getNodeCenter(node);
+        const screenPt = this._worldToScreen(center.x, center.y);
+        // 默认显示在节点右上方
+        const baseX = screenPt.x + 28;
+        const baseY = screenPt.y - 20;
         uiManager.setTooltip({
             rawText: lines.join("\n"),
-            x: this.x + this.width + 16,
-            y: this.y + 24,
+            x: baseX,
+            y: baseY,
             width: 360,
             padding: 12,
             lineHeight: 20,
-            font: '14px "Noto Sans SC", sans-serif'
+            font: '14px "Noto Sans SC", sans-serif',
+            autoFit: true,          // 启用自动防溢出定位
+            anchorX: screenPt.x,    // 锚点（节点中心）
+            anchorY: screenPt.y,
+            prefer: { right: true, top: true } // 初始尝试方向
         });
+    }
+
+    // 将世界坐标转换为屏幕坐标（与 _screenToWorld 相反）
+    _worldToScreen(wx, wy) {
+        const centerX = this.x + this.width / 2;
+        const centerY = this.y + this.height / 2;
+        return {
+            x: centerX + (wx + this.offset.x) * this.zoom,
+            y: centerY + (wy + this.offset.y) * this.zoom
+        };
     }
 
     _updateZoomFromSlider(pointerX) {

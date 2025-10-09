@@ -148,10 +148,49 @@ class UIManager {
                 if (!lines || lines.length === 0) lines = [''];
 
                 const boxHeight = lines.length * lineHeight + padding * 2;
-                if (tx + boxWidth > ctx.canvas.width) tx = Math.max(8, ctx.canvas.width - boxWidth - 8);
-                if (ty + boxHeight > ctx.canvas.height) ty = Math.max(8, ctx.canvas.height - boxHeight - 8);
-                if (tx + boxWidth > ctx.canvas.width) tx = Math.max(8, ctx.canvas.width - boxWidth - 8);
-                if (ty + boxHeight > ctx.canvas.height) ty = Math.max(8, ctx.canvas.height - boxHeight - 8);
+
+                // 自动防溢出：如果提供 autoFit，则尝试根据锚点和偏好方向调整
+                if (tip.autoFit) {
+                    const canvasW = ctx.canvas.width;
+                    const canvasH = ctx.canvas.height;
+                    const margin = 8;
+                    const anchorX = typeof tip.anchorX === 'number' ? tip.anchorX : tx;
+                    const anchorY = typeof tip.anchorY === 'number' ? tip.anchorY : ty;
+                    const prefer = tip.prefer || { right: true, top: true };
+                    // 初始假设：在右侧（或左侧）与上方（或下方）
+                    let placeRight = !!prefer.right;
+                    let placeAbove = !!prefer.top; // top 表示向上偏移（上方显示）
+
+                    // 尝试放置函数
+                    const computePos = () => {
+                        const gapX = 12;
+                        const gapY = 12;
+                        const px = placeRight ? anchorX + gapX : anchorX - gapX - boxWidth;
+                        const py = placeAbove ? anchorY - gapY - boxHeight : anchorY + gapY;
+                        return { px, py };
+                    };
+
+                    let { px, py } = computePos();
+                    // 若水平溢出，翻转方向
+                    if (px < margin) { placeRight = true; ({ px, py } = computePos()); }
+                    if (px + boxWidth > canvasW - margin) { placeRight = false; ({ px, py } = computePos()); }
+                    // 再判断溢出，必要时夹紧
+                    if (px < margin) px = margin;
+                    if (px + boxWidth > canvasW - margin) px = Math.max(margin, canvasW - margin - boxWidth);
+
+                    // 垂直方向翻转
+                    if (py < margin) { placeAbove = false; ({ px, py } = computePos()); }
+                    if (py + boxHeight > canvasH - margin) { placeAbove = true; ({ px, py } = computePos()); }
+                    if (py < margin) py = margin;
+                    if (py + boxHeight > canvasH - margin) py = Math.max(margin, canvasH - margin - boxHeight);
+
+                    tx = px; ty = py;
+                } else {
+                    if (tx + boxWidth > ctx.canvas.width) tx = Math.max(8, ctx.canvas.width - boxWidth - 8);
+                    if (ty + boxHeight > ctx.canvas.height) ty = Math.max(8, ctx.canvas.height - boxHeight - 8);
+                    if (tx < 8) tx = 8;
+                    if (ty < 8) ty = 8;
+                }
 
                 ctx.save();
                 ctx.globalAlpha = 0.95;
