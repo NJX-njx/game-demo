@@ -1,6 +1,9 @@
 {
-    "playerSpawn": { "x": 60, "y": 640 },
-    "enemySpawns":[
+    "playerSpawn": {
+        "x": 60,
+        "y": 640
+    },
+    "enemySpawns": [
         {
             "x": 40,
             "y": 60,
@@ -22926,7 +22929,7 @@
                     "event": "chest"
                 }
             ],
-            "tags":[
+            "tags": [
                 "chest"
             ],
             "cond": [
@@ -22989,12 +22992,6 @@
             },
             "events": [
                 {
-                    "event": "plot",
-                    "payout": {
-                        "id": "15-2"
-                    }
-                },
-                {
                     "event": "teach",
                     "payout": {
                         "id": "15-1"
@@ -23006,27 +23003,6 @@
             ],
             "cond": [
                 "battle_end"
-            ]
-        },
-        {
-            "position": {
-                "x": 0,
-                "y": 0
-            },
-            "size": {
-                "x": 1280,
-                "y": 720
-            },
-            "events": [
-                {
-                    "event": "plot",
-                    "payout": {
-                        "id": "15-1"
-                    }
-                }
-            ],
-            "tags": [
-                "autoTrigger"
             ]
         }
     ]

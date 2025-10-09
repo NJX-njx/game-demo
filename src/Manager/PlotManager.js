@@ -13,6 +13,7 @@ class PlotManager {
         this.interactionDialogIndex = new Map();
         this.triggeredEvents = new Set();
         this._loadingPromise = null;
+        this.currentPlotEventId = null; // 当前播放的剧情事件ID
 
         this._loadingPromise = this._loadAndIndexPlotData();
         this._registerEventListeners();
@@ -94,6 +95,7 @@ class PlotManager {
         }
 
         if (dedupeKey) this.triggeredEvents.add(dedupeKey);
+        this.currentPlotEventId = eventId; // 记录当前播放的剧情ID
         dialogManager.startDialog(dialogs);
         return true;
     }

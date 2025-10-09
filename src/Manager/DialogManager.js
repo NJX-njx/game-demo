@@ -10,6 +10,7 @@ class DialogManager {
         this.triggeredEvents = new Set(); // 已触发的自动事件
         this.CTRL_KEYS = ['LCtrl', 'RCtrl']; // 加速/继续键
         this.isActive = false;
+        this.ENDING_PLOT_ID = 'plot6-3-63-1'; // 通关剧情ID
     }
 
     /** 创建对话框DOM结构 */
@@ -207,6 +208,24 @@ class DialogManager {
         // 所有行打印完毕，关闭对话框
         await this.close();
         eventBus.emit(EventTypes.dialog.end);
+        
+        // 检查是否是通关剧情，如果是则返回菜单
+        this._checkEndingPlot();
+    }
+
+    /** 检查是否是通关剧情并处理跳转 */
+    _checkEndingPlot() {
+        // 动态导入 plotManager 避免循环依赖
+        import('./PlotManager.js').then(module => {
+            const plotManager = module.plotManager;
+            if (plotManager.currentPlotEventId === this.ENDING_PLOT_ID) {
+                console.log('通关剧情结束，准备返回菜单页面...');
+                // 延迟跳转，给玩家一点时间
+                setTimeout(() => {
+                    window.location.href = 'menu.html';
+                }, 1000);
+            }
+        });
     }
 
     /** 清空对话（强制关闭） */

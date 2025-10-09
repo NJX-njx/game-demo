@@ -1,6 +1,9 @@
 {
-    "playerSpawn": { "x": 580, "y": 620 },
-    "enemySpawns":[
+    "playerSpawn": {
+        "x": 580,
+        "y": 620
+    },
+    "enemySpawns": [
         {
             "x": 400,
             "y": 620,
@@ -23919,53 +23922,8 @@
                     "event": "chest"
                 }
             ],
-            "tags":[
+            "tags": [
                 "chest"
-            ],
-            "cond": [
-                "battle_end"
-            ]
-        },
-        {
-            "position": {
-                "x": 0,
-                "y": 0
-            },
-            "size": {
-                "x": 1260,
-                "y": 720
-            },
-            "events": [
-                {
-                    "event": "plot",
-                    "payout": {
-                        "id": "13-1"
-                    }
-                }
-            ],
-            "tags": [
-                "autoTrigger"
-            ]
-        },
-        {
-            "position": {
-                "x": 20,
-                "y": 0
-            },
-            "size": {
-                "x": 1260,
-                "y": 720
-            },
-            "events": [
-                {
-                    "event": "plot",
-                    "payout": {
-                        "id": "13-2"
-                    }
-                }
-            ],
-            "tags": [
-                "autoTrigger"
             ],
             "cond": [
                 "battle_end"

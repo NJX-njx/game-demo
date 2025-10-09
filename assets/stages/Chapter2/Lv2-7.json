@@ -179,52 +179,8 @@
             "type": "block"
         }
     ],
-    "textures": [
-        
-    ],
+    "textures": [],
     "interactions": [
-        {
-            "position": {
-                "x": 20,
-                "y": 520
-            },
-            "size": {
-                "x": 340,
-                "y": 180
-            },
-            "events": [
-                {
-                    "event": "plot",
-                    "payout": {
-                        "id": "27-1"
-                    }
-                }
-            ],
-            "tags": [
-                "autoTrigger"
-            ]
-        },
-        {
-            "position": {
-                "x": 900,
-                "y": 520
-            },
-            "size": {
-                "x": 360,
-                "y": 180
-            },
-            "events": [
-                {
-                    "event": "plot",
-                    "payout": {
-                        "id": "27-2"
-                    }
-                }
-            ],
-            "tags": [
-                "autoTrigger"
-            ]
-        },
         {
             "position": {
                 "x": 20,
@@ -243,8 +199,7 @@
                 "autoTrigger",
                 "hidden"
             ],
-            "cond": [
-            ]
+            "cond": []
         },
         {
             "position": {
@@ -264,9 +219,7 @@
                 "autoTrigger",
                 "hidden"
             ],
-            "cond": [
-                
-            ]
+            "cond": []
         },
         {
             "position": {
@@ -286,9 +239,7 @@
                 "autoTrigger",
                 "hidden"
             ],
-            "cond": [
-                
-            ]
+            "cond": []
         },
         {
             "position": {
@@ -308,9 +259,7 @@
                 "autoTrigger",
                 "hidden"
             ],
-            "cond": [
-                
-            ]
+            "cond": []
         },
         {
             "position": {
@@ -350,7 +299,7 @@
                     "event": "chest_boss"
                 }
             ],
-            "tags":[
+            "tags": [
                 "chest"
             ],
             "cond": [

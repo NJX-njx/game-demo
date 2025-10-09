@@ -1,5 +1,8 @@
 {
-    "playerSpawn": { "x": 40, "y": 20 },
+    "playerSpawn": {
+        "x": 40,
+        "y": 20
+    },
     "enemySpawns": [
         {
             "x": 60,
@@ -21206,32 +21209,11 @@
                     "event": "chest"
                 }
             ],
-            "tags":[
+            "tags": [
                 "chest"
             ],
             "cond": [
                 "battle_end"
-            ]
-        },
-        {
-            "position": {
-                "x": 20,
-                "y": 20
-            },
-            "size": {
-                "x": 160,
-                "y": 240
-            },
-            "events": [
-                {
-                    "event": "plot",
-                    "payout": {
-                        "id": "12-1"
-                    }
-                }
-            ],
-            "tags": [
-                "autoTrigger"
             ]
         }
     ]

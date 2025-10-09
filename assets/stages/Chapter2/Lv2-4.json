@@ -371,51 +371,6 @@
     "interactions": [
         {
             "position": {
-                "x": 0,
-                "y": 0
-            },
-            "size": {
-                "x": 1200,
-                "y": 720
-            },
-            "events": [
-                {
-                    "event": "plot",
-                    "payout": {
-                        "id": "24-1"
-                    }
-                }
-            ],
-            "tags": [
-                "autoTrigger"
-            ]
-        },
-        {
-            "position": {
-                "x": 0,
-                "y": 0
-            },
-            "size": {
-                "x": 1280,
-                "y": 720
-            },
-            "events": [
-                {
-                    "event": "plot",
-                    "payout": {
-                        "id": "24-2"
-                    }
-                }
-            ],
-            "tags": [
-                "autoTrigger"
-            ],
-            "cond": [
-                "battle_end"
-            ]
-        },
-        {
-            "position": {
                 "x": 1040,
                 "y": 600
             },
@@ -428,7 +383,7 @@
                     "event": "chest"
                 }
             ],
-            "tags":[
+            "tags": [
                 "chest"
             ],
             "cond": [

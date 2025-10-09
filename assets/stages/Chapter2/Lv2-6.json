@@ -157,9 +157,7 @@
             "type": "black"
         }
     ],
-    "textures": [
-        
-    ],
+    "textures": [],
     "interactions": [
         {
             "position": {
@@ -175,7 +173,7 @@
                     "event": "chest"
                 }
             ],
-            "tags":[
+            "tags": [
                 "chest"
             ],
             "cond": [
@@ -208,51 +206,6 @@
         },
         {
             "position": {
-                "x": 20,
-                "y": 600
-            },
-            "size": {
-                "x": 180,
-                "y": 100
-            },
-            "events": [
-                {
-                    "event": "plot",
-                    "payout": {
-                        "id": "26-1"
-                    }
-                }
-            ],
-            "tags": [
-                "autoTrigger"
-            ]
-        },
-        {
-            "position": {
-                "x": 780,
-                "y": 480
-            },
-            "size": {
-                "x": 480,
-                "y": 220
-            },
-            "events": [
-                {
-                    "event": "plot",
-                    "payout": {
-                        "id": "26-2"
-                    }
-                }
-            ],
-            "tags": [
-                "autoTrigger"
-            ],
-            "cond": [
-                "battle_end"
-            ]
-        },
-        {
-            "position": {
                 "x": 740,
                 "y": 640
             },
@@ -262,7 +215,7 @@
             },
             "events": [
                 {
-                "event": "angel"
+                    "event": "angel"
                 }
             ],
             "cond": [

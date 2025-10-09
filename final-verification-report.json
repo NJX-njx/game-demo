@@ -1,0 +1,22 @@
+{
+  "plotDuplicates": {
+    "status": "passed",
+    "details": []
+  },
+  "yellowBoxes": {
+    "status": "passed",
+    "details": [
+      {
+        "file": "InteractionManager.js",
+        "issue": "调试框可能仍开启",
+        "status": "needs_check"
+      },
+      {
+        "file": "ItemSlotElement.js",
+        "issue": "yellow颜色已替换",
+        "status": "fixed"
+      }
+    ]
+  },
+  "overall": "passed"
+}

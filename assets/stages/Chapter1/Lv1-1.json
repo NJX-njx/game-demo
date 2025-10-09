@@ -1,5 +1,8 @@
 {
-    "playerSpawn": { "x": 560, "y": 60 },
+    "playerSpawn": {
+        "x": 560,
+        "y": 60
+    },
     "enemySpawns": [
         {
             "x": 240,
@@ -14337,27 +14340,6 @@
         },
         {
             "position": {
-                "x": 20,
-                "y": 20
-            },
-            "size": {
-                "x": 160,
-                "y": 240
-            },
-            "events": [
-                {
-                    "event": "plot",
-                    "payout": {
-                        "id": "11-1"
-                    }
-                }
-            ],
-            "tags": [
-                "autoTrigger"
-            ]
-        },
-        {
-            "position": {
                 "x": 60,
                 "y": 600
             },
@@ -14373,24 +14355,6 @@
                     "event": "next_room",
                     "payout": {
                         "id": "1-2"
-                    }
-                }
-            ]
-        },
-        {
-            "position": {
-                "x": 520,
-                "y": 660
-            },
-            "size": {
-                "x": 60,
-                "y": 40
-            },
-            "events": [
-                {
-                    "event": "plot",
-                    "payout": {
-                        "id": "11-2"
                     }
                 }
             ]
@@ -14430,7 +14394,7 @@
                     "event": "chest"
                 }
             ],
-            "tags":[
+            "tags": [
                 "chest"
             ],
             "cond": [

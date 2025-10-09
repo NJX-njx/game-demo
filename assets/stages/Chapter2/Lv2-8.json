@@ -1,5 +1,8 @@
 {
-    "playerSpawn": { "x": 120, "y": 540 },
+    "playerSpawn": {
+        "x": 120,
+        "y": 540
+    },
     "backgrounds": [
         {
             "position": {
@@ -117,24 +120,6 @@
         }
     ],
     "interactions": [
-        {
-            "position": {
-                "x": 380,
-                "y": 580
-            },
-            "size": {
-                "x": 60,
-                "y": 40
-            },
-            "events": [
-                {
-                    "event": "plot",
-                    "payout": {
-                        "id": "28-1"
-                    }
-                }
-            ]
-        },
         {
             "position": {
                 "x": 1000,

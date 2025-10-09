@@ -1,5 +1,8 @@
 {
-    "playerSpawn": { "x": 60, "y": 650 },
+    "playerSpawn": {
+        "x": 60,
+        "y": 650
+    },
     "enemySpawns": [
         {
             "x": 540,
@@ -99,8 +102,7 @@
             "type": "black"
         }
     ],
-    "textures": [
-    ],
+    "textures": [],
     "interactions": [
         {
             "position": {
@@ -140,50 +142,8 @@
                     "event": "chest_boss"
                 }
             ],
-            "tags":[
-                "chest"
-            ],
-            "cond": [
-                "battle_end"
-            ]
-        },
-        {
-            "position": {
-                "x": 0,
-                "y": 0
-            },
-            "size": {
-                "x": 1240,
-                "y": 720
-            },
-            "events": [
-                {
-                    "event": "plot",
-                    "payout": {
-                        "id": "17-1"
-                    }
-                }
-            ]
-        },
-        {
-            "position": {
-                "x": 20,
-                "y": 0
-            },
-            "size": {
-                "x": 1240,
-                "y": 720
-            },
-            "events": [
-                {
-                    "event": "plot",
-                    "payout": {
-                        "id": "17-2"
-                    }
-                }
-            ],
             "tags": [
-                "autoTrigger"
+                "chest"
             ],
             "cond": [
                 "battle_end"
