@@ -5,6 +5,7 @@ import { dataManager } from "./DataManager";
 import { player } from "../Entities/Player";
 import { spawnEnemy } from "../Entities/Enemys/Enemy";
 import { Interaction } from "./InteractionManager";
+import { plotManager } from "./PlotManager";
 
 // Block类，继承自Hitbox
 class Block extends Hitbox {
@@ -51,7 +52,30 @@ class MapManager {
             this.backgrounds = (data.backgrounds || []).map(obj => ({ ...obj }));
             this.blocks = (data.blocks || []).map(obj => new Block(obj.position, obj.size, obj.type));
             this.textures = (data.textures || []).map(obj => ({ ...obj }));
-            this.interactions = (data.interactions || []).map(obj => new Interaction(obj.position, obj.size, obj));
+
+            const { sanitizedInteractions, legacyPlotMap } = this._sanitizeInteractions(data.interactions || []);
+            const baseInteractions = sanitizedInteractions
+                .map(obj => new Interaction(obj.position, obj.size, obj));
+
+            await plotManager.ensureReady();
+            const plotInteractionConfigs = await plotManager.getRoomInteractions(layer, room);
+            plotManager.resetRoomEvents(layer, room, plotInteractionConfigs
+                .map(cfg => cfg?.events?.find(ev => ev?.event === 'plot')?.payout?.id)
+                .filter(Boolean));
+            const plotInteractions = plotInteractionConfigs.map(obj => {
+                const plotEventId = obj?.events?.find(ev => ev?.event === 'plot')?.payout?.id;
+                const legacyArea = plotEventId ? legacyPlotMap.get(plotEventId) : null;
+                const merged = legacyArea
+                    ? {
+                        ...obj,
+                        position: legacyArea.position ? { ...legacyArea.position } : obj.position,
+                        size: legacyArea.size ? { ...legacyArea.size } : obj.size
+                    }
+                    : obj;
+                return new Interaction(merged.position, merged.size, merged);
+            });
+
+            this.interactions = [...baseInteractions, ...plotInteractions];
 
             // 检查所引用的贴图是否存在，尽早在加载阶段警告缺失的资源
             const checkTexture = (kind, item, source) => {
@@ -81,6 +105,64 @@ class MapManager {
         } catch (e) {
             console.error(`加载房间失败: ${url}，error:`, e);
         }
+    }
+
+    _sanitizeInteractions(rawInteractions) {
+        const sanitized = [];
+        const legacyPlotMap = new Map();
+        const dropEventTypes = new Set(['plot', 'teach', 'attack_unlock']);
+
+        for (const inter of rawInteractions) {
+            if (!inter) continue;
+            const events = Array.isArray(inter.events) ? inter.events : [];
+            const removedEvents = [];
+            const filteredEvents = events
+                .filter(ev => {
+                    if (ev && dropEventTypes.has(ev.event)) {
+                        removedEvents.push(ev);
+                        return false;
+                    }
+                    return !!ev;
+                })
+                .map(ev => ({ ...ev }));
+
+            if (filteredEvents.length === 0) {
+                for (const ev of removedEvents) {
+                    const eventId = ev?.payout?.id;
+                    if (!eventId) continue;
+                    legacyPlotMap.set(eventId, {
+                        position: inter.position ? { ...inter.position } : undefined,
+                        size: inter.size ? { ...inter.size } : undefined
+                    });
+                }
+                continue;
+            }
+
+            const cleaned = {
+                ...inter,
+                position: inter.position ? { ...inter.position } : inter.position,
+                size: inter.size ? { ...inter.size } : inter.size,
+                tags: Array.isArray(inter.tags) ? [...inter.tags] : undefined,
+                cond: Array.isArray(inter.cond) ? [...inter.cond] : undefined,
+                conditions: Array.isArray(inter.conditions) ? [...inter.conditions] : undefined,
+                events: filteredEvents
+            };
+
+            if (filteredEvents.length !== events.length) {
+                delete cleaned.dialogs;
+            }
+
+            sanitized.push(cleaned);
+            for (const ev of removedEvents) {
+                const eventId = ev?.payout?.id;
+                if (!eventId) continue;
+                legacyPlotMap.set(eventId, {
+                    position: inter.position ? { ...inter.position } : undefined,
+                    size: inter.size ? { ...inter.size } : undefined
+                });
+            }
+        }
+        return { sanitizedInteractions: sanitized, legacyPlotMap };
     }
 
     async nextRoom() {

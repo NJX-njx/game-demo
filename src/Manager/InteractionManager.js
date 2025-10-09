@@ -1,6 +1,5 @@
 import { player } from "../Entities/Player";
 import { game } from "../Game";
-import { dialogManager } from "./DialogManager";
 import { mapManager } from "./MapManager";
 import { textureManager } from "./TextureManager";
 import { inputManager } from "../System/Input/InputManager";
@@ -10,7 +9,7 @@ import { eventBus, EventTypes } from "./EventBus";
 import { uiManager } from "../System/UI/UIManager";
 import { itemManager } from "../System/Item/ItemManager";
 import { exchangeScreen } from "../System/UI/Screens/ExchangeScreen";
-import { plotModeManager } from "./PlotModeManager";
+import { plotManager } from "./PlotManager";
 
 export class Event {
     constructor(config) {
@@ -235,23 +234,14 @@ class InteractionManager {
      */
     handlePlotEvent(event, interaction) {
         console.log('剧情事件触发:', event, interaction);
-        
-        // 检查剧情模式设置
-        if (plotModeManager.isPlotDisabled()) {
-            console.log('剧情模式已关闭，跳过剧情事件:', event);
-            return;
-        }
-        
-        // 处理新的剧情事件格式
-        if (interaction && interaction.dialogs && Array.isArray(interaction.dialogs)) {
-            console.log('使用新格式剧情事件，包含对话数:', interaction.dialogs.length);
-            
-            // 直接开始显示对话
-            dialogManager.startDialog(interaction.dialogs);
-        } else {
-            // 处理旧的剧情事件格式
-            console.log('使用旧格式的剧情事件，需要根据事件ID加载对应剧情');
-            console.log('交互点数据:', interaction);
+        const eventId = event?.payout?.id ?? event?.id ?? null;
+        const fallbackDialogs = Array.isArray(interaction?.dialogs) ? interaction.dialogs : [];
+        const dedupeKey = interaction?.dedupeKey;
+
+        const played = plotManager.playPlot(eventId, fallbackDialogs, { dedupeKey });
+
+        if (!played) {
+            console.warn('剧情事件未播放，可能是剧情模式关闭或缺少内容:', eventId, interaction);
         }
     }
 

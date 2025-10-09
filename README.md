@@ -103,3 +103,12 @@ npm run build
 - 如需打包其他入口文件，请修改 [`vite.config.js`](/vite.config.js)  
 
 ---
+
+## 📖 剧情数据加载说明
+
+- 所有剧情文本、触发条件和交互点在 `Plot.V3/plot-data.json` 中维护，`plotData` 字段存储章节剧情，`interactions` 字段记录各关卡的剧情触发点。
+- 地图文件中的 `plot` 事件会在加载时自动剥离，仅保留非剧情事件，剧情交互由 `PlotManager` 根据章节/关卡动态注入。
+- `PlotManager` 会尊重 `PlotModeManager` 的开关设置；关闭剧情模式时，剧情交互仍会触发但不会展示文本。
+- 如需新增剧情，只需在 `plot-data.json` 中补充相应章节与关卡的定义，无需修改关卡地图文件。
+
+---

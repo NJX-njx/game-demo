@@ -1,174 +1,186 @@
-
-/**
- * 剧情管理器
- * 管理游戏中的剧情触发和显示
- */
-
-import { dialogManager } from '../Manager/DialogManager';
-import { eventBus, EventTypes } from '../Manager/EventBus';
+import { dialogManager } from "./DialogManager";
+import { eventBus, EventTypes } from "./EventBus";
+import { plotModeManager } from "./PlotModeManager";
 
 class PlotManager {
     constructor() {
-        this.plotData = null;
+        if (PlotManager.instance) return PlotManager.instance;
+        PlotManager.instance = this;
+
+        this.plotData = {};
+        this.interactionsData = {};
         this.dialogIndex = new Map();
-        this.triggeredKeys = new Set();
-        this.pendingEvents = [];
-        this._handlePlotTrigger = this.handlePlotTrigger.bind(this);
-        this.loadPlotData();
-        this.setupEventListeners();
+        this.interactionDialogIndex = new Map();
+        this.triggeredEvents = new Set();
+        this._loadingPromise = null;
+
+        this._loadingPromise = this._loadAndIndexPlotData();
+        this._registerEventListeners();
     }
 
     /**
-     * 加载剧情数据
+     * 强制重新加载剧情数据
      */
-    async loadPlotData() {
-        try {
-            const response = await fetch('Plot.V3/plot-data.json');
-            this.plotData = await response.json();
-            this.indexPlotDialogs();
-            this.flushPendingEvents();
-            console.log('剧情数据加载完成');
-        } catch (error) {
-            console.error('加载剧情数据失败:', error);
+    async reload() {
+        this._loadingPromise = this._loadAndIndexPlotData(true);
+        return this._loadingPromise;
+    }
+
+    /**
+     * 确保剧情数据已加载
+     */
+    async ensureReady() {
+        if (!this._loadingPromise) {
+            this._loadingPromise = this._loadAndIndexPlotData();
+        }
+        return this._loadingPromise;
+    }
+
+    /**
+     * 获取指定房间的剧情交互配置
+     * @param {number|string} layer
+     * @param {number|string} room
+     * @returns {Promise<Array<object>>}
+     */
+    async getRoomInteractions(layer, room) {
+        await this.ensureReady();
+
+        const chapterKey = `Chapter${layer}`;
+        const roomKey = `Lv${layer}-${room}`;
+        const rawList = this.interactionsData?.[chapterKey]?.[roomKey] || [];
+
+        return rawList.map(raw => this._transformInteraction(raw));
+    }
+
+    /**
+     * 重置指定房间内剧情的去重标记（用于重新进入房间时再次播放）
+     */
+    resetRoomEvents(layer, room, eventIds = []) {
+        const prefix = `id:plot${layer}-${room}-`;
+        const dedupeKeys = new Set(eventIds.filter(Boolean).map(id => `id:${id}`));
+
+        for (const key of [...this.triggeredEvents]) {
+            if (key.startsWith(prefix) || dedupeKeys.has(key)) {
+                this.triggeredEvents.delete(key);
+            }
         }
     }
 
     /**
-     * 建立剧情ID与对话的索引表，便于快速查询
+     * 播放剧情
+     * @param {string|null} eventId
+     * @param {Array} fallbackDialogs
+     * @param {object} options
+     * @param {string} [options.dedupeKey]
+     * @param {boolean} [options.allowReplay=false]
+     * @returns {boolean}
      */
-    indexPlotDialogs() {
-        this.dialogIndex = new Map();
+    playPlot(eventId, fallbackDialogs = [], options = {}) {
+        if (plotModeManager.isPlotDisabled()) {
+            console.log('剧情模式已关闭，跳过剧情事件:', eventId || '(fallback)');
+            return false;
+        }
 
-        const plotData = this.plotData?.plotData;
-        if (!plotData) return;
+        const dedupeKey = options.dedupeKey || (eventId ? `id:${eventId}` : this._makeFallbackKey(fallbackDialogs));
+        if (!options.allowReplay && dedupeKey && this.triggeredEvents.has(dedupeKey)) {
+            console.log('剧情事件已播放，跳过重复:', dedupeKey);
+            return false;
+        }
 
-        for (const [chapterKey, chapterValue] of Object.entries(plotData)) {
+        const dialogs = this._resolveDialogs(eventId, fallbackDialogs);
+        if (!dialogs.length) {
+            console.warn('未找到剧情内容，无法播放:', eventId);
+            return false;
+        }
+
+        if (dedupeKey) this.triggeredEvents.add(dedupeKey);
+        dialogManager.startDialog(dialogs);
+        return true;
+    }
+
+    /**
+     * 解析剧情事件ID
+     */
+    parseEventId(eventId) {
+        const match = typeof eventId === 'string' ? eventId.match(/plot(\d+)-(\d+)-(.+)/) : null;
+        if (!match) return null;
+        return {
+            chapterKey: match[1],
+            sceneKey: match[2],
+            triggerId: match[3]
+        };
+    }
+
+    /**
+     * 内部：加载并索引剧情数据
+     */
+    async _loadAndIndexPlotData(force = false) {
+        if (this._loadingPromise && !force) {
+            return this._loadingPromise;
+        }
+
+        const promise = (async () => {
+            try {
+                const res = await fetch('Plot.V3/plot-data.json');
+                if (!res.ok) throw new Error(`Failed to load plot data: ${res.status}`);
+                const data = await res.json();
+                this.plotData = data?.plotData ?? {};
+                this.interactionsData = data?.interactions ?? {};
+                this._buildDialogIndexes();
+                console.log('剧情数据加载完成');
+            } catch (error) {
+                console.error('加载剧情数据失败:', error);
+                throw error;
+            }
+        })();
+
+        if (!force) {
+            this._loadingPromise = promise;
+        }
+
+        return promise;
+    }
+
+    _buildDialogIndexes() {
+        this.dialogIndex.clear();
+        this.interactionDialogIndex.clear();
+
+        // 先处理剧情主体
+        for (const [chapterKey, chapterValue] of Object.entries(this.plotData || {})) {
             if (!chapterValue) continue;
-            for (const [sceneKey, sceneValue] of Object.entries(chapterValue)) {
-                const triggers = sceneValue?.triggers;
-                if (!Array.isArray(triggers)) continue;
-
+            for (const [sceneKey, sceneValue] of Object.entries(chapterValue || {})) {
+                const triggers = Array.isArray(sceneValue?.triggers) ? sceneValue.triggers : [];
                 for (const trigger of triggers) {
-                    if (!trigger) continue;
-                    const dialogs = Array.isArray(trigger.dialogs) ? trigger.dialogs : [];
-                    if (!trigger.id) continue;
-
-                    const compositeId = `plot${chapterKey}-${sceneKey}-${trigger.id}`;
+                    if (!trigger?.id) continue;
+                    const compositeId = `plot${chapterKey.replace('Chapter', '')}-${sceneKey}-${trigger.id}`;
+                    const dialogs = this._composeTriggerDialogs(trigger);
                     if (!this.dialogIndex.has(compositeId)) {
                         this.dialogIndex.set(compositeId, dialogs);
                     }
-
                     if (!this.dialogIndex.has(trigger.id)) {
                         this.dialogIndex.set(trigger.id, dialogs);
                     }
                 }
             }
         }
-    }
 
-    /**
-     * 获取指定剧情ID的对话内容
-     * @param {string} eventId
-     * @returns {Array|null}
-     */
-    getDialogsById(eventId) {
-        if (!eventId) return null;
-        if (!this.dialogIndex || this.dialogIndex.size === 0) return null;
-        return this.dialogIndex.get(eventId) || null;
-    }
-
-    /**
-     * 根据剧情ID播放剧情（带重复保护）
-     * @param {string|null} eventId
-     * @param {Array|null} fallbackDialogs 当数据尚未加载或缺失时的后备对话
-     * @param {Object} [options]
-     * @param {string} [options.dedupeKey] 自定义去重键
-     * @returns {boolean} 是否成功播放
-     */
-    playPlotById(eventId, fallbackDialogs = null, options = {}) {
-        const key = this.makeEventKey(eventId, fallbackDialogs, options);
-
-        if (this.triggeredKeys.has(key)) {
-            console.log('剧情事件已播放，跳过重复:', eventId || key);
-            return false;
-        }
-
-        const dialogsReady = this.dialogIndex && this.dialogIndex.size > 0;
-        let dialogs = null;
-
-        if (eventId && dialogsReady) {
-            dialogs = this.getDialogsById(eventId);
-        }
-
-        if (!dialogs && fallbackDialogs && Array.isArray(fallbackDialogs) && fallbackDialogs.length) {
-            dialogs = fallbackDialogs;
-        }
-
-        if (!dialogs) {
-            if (!dialogsReady && eventId) {
-                const exists = this.pendingEvents.some(evt => evt.key === key);
-                if (!exists) {
-                    this.pendingEvents.push({ eventId, fallbackDialogs, key });
+        // 再处理交互定义中的对话，作为覆盖/补充
+        for (const chapterValue of Object.values(this.interactionsData || {})) {
+            if (!chapterValue) continue;
+            for (const interactions of Object.values(chapterValue)) {
+                if (!Array.isArray(interactions)) continue;
+                for (const interaction of interactions) {
+                    if (!interaction?.event) continue;
+                    const dialogs = this._normalizeDialogList(interaction.dialogs);
+                    if (dialogs.length) {
+                        this.interactionDialogIndex.set(interaction.event, dialogs);
+                    }
                 }
-                return false;
             }
-
-            console.warn('未找到剧情内容，无法播放:', eventId);
-            return false;
-        }
-
-        this.triggeredKeys.add(key);
-        this.showPlotDialogue(dialogs);
-        return true;
-    }
-
-    /**
-     * 处理等待剧情数据加载完成后未播放的剧情
-     */
-    flushPendingEvents() {
-        if (!this.pendingEvents.length) return;
-        const events = [...this.pendingEvents];
-        this.pendingEvents.length = 0;
-
-        for (const { eventId, fallbackDialogs, key } of events) {
-            if (this.triggeredKeys.has(key)) continue;
-
-            let dialogs = this.getDialogsById(eventId);
-            if ((!dialogs || !dialogs.length) && Array.isArray(fallbackDialogs) && fallbackDialogs.length) {
-                dialogs = fallbackDialogs;
-            }
-
-            if (!dialogs || !dialogs.length) {
-                console.warn('等待队列中的剧情缺少对话内容，被跳过:', eventId);
-                continue;
-            }
-
-            this.triggeredKeys.add(key);
-            this.showPlotDialogue(dialogs);
         }
     }
 
-    /**
-     * 生成剧情事件的唯一键值
-     * @param {string|null} eventId
-     * @param {Array|null} fallbackDialogs
-     * @param {Object} options
-     * @returns {string}
-     */
-    makeEventKey(eventId, fallbackDialogs, options = {}) {
-        if (options?.dedupeKey) return options.dedupeKey;
-        if (eventId) return `id:${eventId}`;
-        if (Array.isArray(fallbackDialogs) && fallbackDialogs.length) {
-            const serialized = fallbackDialogs.map(dialog => `${dialog?.speaker ?? ''}|${dialog?.text ?? ''}`).join('||');
-            return `dialogs:${serialized}`;
-        }
-        return `unknown:${Date.now()}`;
-    }
-
-    /**
-     * 设置事件监听器
-     */
-    setupEventListeners() {
+    _registerEventListeners() {
         const plotEventName = EventTypes?.plot?.trigger || EventTypes?.PLOT_TRIGGER;
         if (!plotEventName) {
             console.warn('PlotManager: 未找到剧情事件类型，跳过事件监听注册');
@@ -177,65 +189,88 @@ class PlotManager {
 
         eventBus.on({
             event: plotEventName,
-            handler: this._handlePlotTrigger,
+            handler: (eventId) => this.playPlot(eventId),
             source: 'PlotManager'
         });
     }
 
-    /**
-     * 处理剧情触发
-     * @param {string} eventId 事件ID
-     */
-    handlePlotTrigger(eventId) {
-        this.playPlotById(eventId);
+    _transformInteraction(raw) {
+        const tags = new Set(Array.isArray(raw?.tags) ? raw.tags : []);
+        if (raw?.autoTrigger) tags.add('autoTrigger');
+        if (raw?.type && raw.type !== 'plot') tags.add(raw.type);
+
+        return {
+            position: { ...raw.position },
+            size: { ...raw.size },
+            tags: Array.from(tags),
+            events: [
+                {
+                    event: 'plot',
+                    payout: { id: raw.event }
+                }
+            ],
+            dialogs: this._normalizeDialogList(raw?.dialogs),
+            cond: Array.isArray(raw?.conditions) ? raw.conditions.slice() : [],
+            dedupeKey: raw?.event ? `id:${raw.event}` : undefined
+        };
     }
 
-    /**
-     * 解析事件ID
-     * @param {string} eventId 事件ID
-     * @returns {Object|null} 解析结果
-     */
-    parseEventId(eventId) {
-        const match = eventId.match(/plot(\d+)-(\d+)-(.+)/);
-        if (match) {
-            return {
-                chapter: match[1],
-                scene: match[2],
-                triggerId: match[3]
-            };
+    _composeTriggerDialogs(trigger) {
+        const dialogs = [];
+        if (Array.isArray(trigger?.dialogs)) {
+            dialogs.push(...this._normalizeDialogList(trigger.dialogs));
         }
-        return null;
+        if (Array.isArray(trigger?.systemPrompts)) {
+            dialogs.push(...trigger.systemPrompts.map(text => this._normalizeDialogEntry({ speaker: '【系统提示】', text })));
+        }
+        if (Array.isArray(trigger?.screenTexts)) {
+            dialogs.push(...trigger.screenTexts.map(text => this._normalizeDialogEntry({ speaker: '【场景】', text })));
+        }
+        return dialogs;
     }
 
-    /**
-     * 显示剧情对话
-     * @param {Array} dialogues 对话数组
-     */
-    showPlotDialogue(dialogues) {
-        if (!dialogManager) {
-            console.error('DialogManager未初始化');
-            return;
+    _normalizeDialogList(list) {
+        if (!Array.isArray(list)) return [];
+        return list.map(entry => this._normalizeDialogEntry(entry)).filter(item => item.text.length > 0 || item.speaker.length > 0);
+    }
+
+    _normalizeDialogEntry(entry) {
+        if (!entry) return { speaker: '', text: '' };
+        if (typeof entry === 'string') {
+            return { speaker: '', text: entry };
+        }
+        return {
+            speaker: entry.speaker ?? '',
+            text: entry.text ?? ''
+        };
+    }
+
+    _resolveDialogs(eventId, fallbackDialogs) {
+        if (eventId && this.interactionDialogIndex.has(eventId)) {
+            return this.interactionDialogIndex.get(eventId);
         }
 
-        // 将对话添加到缓冲区
-        dialogues.forEach(dialog => {
-            dialogManager.addToBuffer(dialog.speaker, dialog.text);
-        });
+        if (eventId && this.dialogIndex.has(eventId)) {
+            return this.dialogIndex.get(eventId);
+        }
 
-        // 开始显示对话
-        dialogManager.startDialog();
+        const parsed = this.parseEventId(eventId);
+        if (parsed) {
+            const scene = this.plotData?.[parsed.chapterKey]?.[parsed.sceneKey];
+            const triggers = Array.isArray(scene?.triggers) ? scene.triggers : [];
+            const trigger = triggers.find(t => t?.id === parsed.triggerId);
+            if (trigger) {
+                return this._composeTriggerDialogs(trigger);
+            }
+        }
+
+        return this._normalizeDialogList(fallbackDialogs);
     }
 
-    /**
-     * 获取场景标题
-     * @param {string} chapter 章节编号
-     * @param {string} scene 场景编号
-     * @returns {string} 场景标题
-     */
-    getSceneTitle(chapter, scene) {
-        return this.plotData?.plotData[chapter]?.[scene]?.title || '';
+    _makeFallbackKey(dialogs) {
+        if (!Array.isArray(dialogs) || !dialogs.length) return '';
+        return dialogs.map(dialog => `${dialog?.speaker ?? ''}|${dialog?.text ?? ''}`).join('||');
     }
 }
 
-// 创建单例实例
 export const plotManager = new PlotManager();
