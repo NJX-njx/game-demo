@@ -176,7 +176,7 @@ class Game {
         // 如果没有成功加载存档，则开始新游戏
         if (!loaded) {
             console.log('开始新游戏，加载默认房间');
-            await mapManager.loadRoom(6, 3);
+            await mapManager.loadRoom(0, 1);
 
             // 测试用的初始道具（仅新游戏时）
             itemManager.tryAcquire(Items.xq休憩);
