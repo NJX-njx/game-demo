@@ -13,6 +13,7 @@ import { interactionManager } from "./Manager/InteractionManager";
 import { saveManager } from "./Manager/SaveManager";
 import { talentManager } from "./System/Talent/TalentManager";
 import { plotModeManager } from "./Manager/PlotModeManager";
+import { aiManager } from "./Manager/AIManager";
 
 class Game {
     constructor() {
@@ -89,6 +90,13 @@ class Game {
                 event: Events.game.tick,
                 handler: ({ deltaTime }) => talentManager.update(deltaTime),
                 priority: 0.85
+            });
+
+            // AI管理器更新（玩家表现追踪、动态难度调整）
+            bus.on({
+                event: Events.game.tick,
+                handler: ({ deltaTime }) => aiManager.update(deltaTime),
+                priority: 0.82
             });
 
             // 地图交互更新
